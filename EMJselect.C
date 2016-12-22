@@ -69,7 +69,10 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *count = new TH1F("count","counts",20,0.,20.);
+  TH1F *count = new TH1F("count","counts",3,0,3);
+  count->SetStats(0);
+  count->SetCanExtend(TH1::kAllAxes);
+
   TH1F *hjetcut = new TH1F("hjetcut","jetcut counts",20,0.,20.);
   TH1F *hjetchf = new TH1F("hjetchf","jet charged hadron fr",20,0.,1.2);
   TH1F *h_nemg = new TH1F("h_nemg","number of emerging jets",20,0.,20.);
@@ -94,9 +97,7 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
   Int_t nentries = (Int_t)tt->GetEntries();
   for (Int_t i=0; i<nentries; i++) {
     std::cout<<"event "<<i<<std::endl;
-    float icnt_=0.5;
-    count->Fill(icnt_);  // count number of events
-    icnt_+=1.;
+    count->Fill("All",1);  // count number of events
     tt->GetEntry(i);
     cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<endl;
 
@@ -125,23 +126,20 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
 
     // require at least 4 jets
     if((*jet_index).size()<3) continue;
-    count->Fill(icnt_);
-    icnt_+=1.;
+    count->Fill("4 jets",1);
 
     // calculate HT
     double HT = (*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3]+(*jet_pt)[4];
     H_T->Fill(HT);
     if(HT<HTcut) continue;
-    count->Fill(icnt_);
-    icnt_+=1.;
+    count->Fill("HT",1);
     H_T2->Fill(HT);
 
     // do pT cuts on jets  
     bool sel=false;
     if(((*jet_pt)[1]>400)&&((*jet_pt)[2]>200)&&((*jet_pt)[3]>125)&&((*jet_pt)[4]>50)) {
       sel=true;
-      count->Fill(icnt_);
-      icnt_+=1.;
+      count->Fill("jet pt cuts",1);
     }
 
       if(!sel) continue;
@@ -181,8 +179,9 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
       // require at least N emerging jets
       if(nemerging<NemergingCut) continue;
 
-      count->Fill(icnt_);
-      icnt_+=1.;
+
+      count->Fill("emerging",1);
+
 
 
 
@@ -198,6 +197,10 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
   //  t1->StartViewer();
 
   TFile myfile("histos.root","RECREATE");
+  count->LabelsDeflate();
+  count->LabelsOption("v");
+  //  count->LabelsOption("a");
+
   count->Write();
   hjetcut->Write();
   hpt->Write();
