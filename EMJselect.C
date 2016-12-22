@@ -95,13 +95,16 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
 
   //read all entries and fill the histograms
   Int_t nentries = (Int_t)tt->GetEntries();
+
+
+  // loop over events
   for (Int_t i=0; i<nentries; i++) {
     std::cout<<"event "<<i<<std::endl;
     count->Fill("All",1);  // count number of events
     tt->GetEntry(i);
     cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<endl;
 
-    // make some basic plots
+    // make some basic plots on all events before any selections
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
     hnjet->Fill((*jet_index).size()+0.5);
@@ -120,15 +123,15 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
 	}
       }
+     }  // end of loop over jets
 
-
-    }  // end of loop over jets
+    // now start the event selections
 
     // require at least 4 jets
     if((*jet_index).size()<3) continue;
     count->Fill("4 jets",1);
 
-    // calculate HT
+    // calculate HT and require it greater than some cut value
     double HT = (*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3]+(*jet_pt)[4];
     H_T->Fill(HT);
     if(HT<HTcut) continue;
@@ -144,7 +147,7 @@ void EMJselect(float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut
 
       if(!sel) continue;
 
-
+      //now look and see if any of the jets are emerging
 
       bool emerging[4];
       emerging[0]=false;emerging[1]=false;emerging[2]=false;emerging[3]=false;
