@@ -278,6 +278,8 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
   delete track_vertex_weight;
   delete track_ipZ;
 
+  f->Close();
+  myfile.Close();
 
   //In the browser, click on "ROOT Files", then on "tree1.root"
   //You can click on the histogram icons in the right panel to draw
