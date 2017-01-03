@@ -35,6 +35,10 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
 
 
   TFile *f = new TFile(inputfilename);
+
+  // get histogram of events before trigger
+  TH1F* eventCountPreTrigger = static_cast<TH1F*>(f->Get("eventCountPreTrigger/eventCountPreTrigger")->Clone());
+
   TTree *tt = (TTree*)f->Get("emJetAnalyzer/emJetTree");
 
   Int_t nVtx, event;
@@ -62,8 +66,11 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
   vector<vector<float> > *track_vertex_weight =0;
   vector<vector<float> > *track_ipZ =0;
 
+  //get event count pre trigger
 
 
+
+  //for ntuple
   tt->SetBranchAddress("nVtx",&nVtx);
   tt->SetBranchAddress("event",&event);
   tt->SetBranchAddress("met_pt",&met_pt);
@@ -231,6 +238,7 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
   count->LabelsOption("v");
   //  count->LabelsOption("a");
 
+  eventCountPreTrigger->Write();
   acount->Write();
   count->Write();
   hjetcut->Write();

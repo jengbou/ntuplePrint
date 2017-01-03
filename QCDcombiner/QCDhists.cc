@@ -58,6 +58,7 @@ void QCDhists() {
 
   // now add up all the files for one bin
   std::cout<<" adding up histos within a bin"<<std::endl;
+  vector<TH1F*> sumeventCountPreTrigger(nbin);
   vector<TH1F*> sumacount(nbin);
   vector<TH1F*> sumH_T(nbin);
   for(int i=0;i<nbin;i++) {  // for each bin
@@ -65,24 +66,41 @@ void QCDhists() {
       inputfile="histos"+binnames[i]+std::to_string(j)+".root";
       TFile *in = new TFile(inputfile.c_str());
       if(j==0) {
+	sumeventCountPreTrigger[i] = static_cast<TH1F*>(in->Get("eventCountPreTrigger")->Clone());
 	sumacount[i] = static_cast<TH1F*>(in->Get("acount")->Clone());
 	sumH_T[i] = static_cast<TH1F*>(in->Get("H_T")->Clone());
       } else {
-	TH1F* tmp = static_cast<TH1F*>(in->Get("acount")->Clone());
+	TH1F* tmp = static_cast<TH1F*>(in->Get("eventCountPreTrigger")->Clone());
+	sumeventCountPreTrigger[i]->Add(tmp);
+	tmp = static_cast<TH1F*>(in->Get("acount")->Clone());
 	sumacount[i]->Add(tmp);
 	tmp = static_cast<TH1F*>(in->Get("H_T")->Clone());
 	sumH_T[i]->Add(tmp);
       }
     }
   }
+
   // reweight to int lum
   std::cout<<" reweighting to inst lum of "<<goalintlum<<" for each bin"<<std::endl;
+  for(int i=0;i<nbin;i++) {
+    // get total number of events before filter
+    float ntotal = sumeventCountPreTrigger[i]->GetBinContent(2);
+    std::cout<<" for bin "<<i<<" number of pretrigger events is "<<ntotal<<std::endl;
+    float fileLum= ntotal/xsec[i];
+    float norm = goalintlum/fileLum;
+    sumeventCountPreTrigger[i]->Scale(norm);
+    sumacount[i]->Scale(norm);
+    sumH_T[i]->Scale(norm);
+  }
+
 
   //add the bins
   std::cout<<" adding bins"<<std::endl;
+  TH1F* SUMeventCountPreTrigger=static_cast<TH1F*>((sumeventCountPreTrigger[0])->Clone());
   TH1F* SUMacount=static_cast<TH1F*>((sumacount[0])->Clone());
   TH1F* SUMH_T=static_cast<TH1F*>((sumH_T[0])->Clone());
   for(int i=1;i<nbin;i++) {
+    SUMeventCountPreTrigger->Add(sumeventCountPreTrigger[i]);
     SUMacount->Add(sumacount[i]);
     SUMH_T->Add(sumH_T[i]);
   }
@@ -92,6 +110,7 @@ void QCDhists() {
   outputfile="SumHistos.root";
   TFile out(outputfile.c_str(),"RECREATE");
 
+  SUMeventCountPreTrigger->Write();
   SUMacount->Write();
   SUMH_T->Write();
 
