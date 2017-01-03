@@ -66,19 +66,26 @@ void QCDhists() {
 
   //make and  output summed and renormalized histograms
   std::cout<<"doing the stuff"<<std::endl;
-  TH1F* SUMH_T = HistMan("H_T",norm);
-  TH1F* SUMhpt = HistMan("hpt",norm);
-  TH1F* SUMheta = HistMan("heta",norm);
+  const int nhist=7;
+  std::vector<TH1F*> vv(nhist);
+  std::string histnames[nhist]={"H_T","hpt","heta","heta2","H_T2","h_nemg","hjetchf"};
+  for(int i=0;i<nhist;i++) {
+    vv[i]=HistMan(histnames[i],norm);
+  }
+
 
 
   std::cout<<"outputting histograms"<<std::endl;
   outputfile="SumHistos.root";
   TFile out(outputfile.c_str(),"RECREATE");
-
+  for(int i=0;i<nhist;i++) {
+    vv[i]->Write();
+  }
+      /*
   SUMH_T->Write();
   SUMhpt->Write();
   SUMheta->Write();
-
+      */
   return;
 }
 
