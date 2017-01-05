@@ -27,8 +27,8 @@ TH1F* HistMan(std::string thisHIST,double* histnorm);
 float goalintlum=20; // fb-1
 const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb
-const int nfiles[nbin]={3,3,3,3,3};
-//const int nfiles[nbin]={138,133,50,40,23};
+//const int nfiles[nbin]={3,3,3,3,3};
+const int nfiles[nbin]={138,133,50,40,23};
 const std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 std::string aaname = "/data/users/eno/outputQCD/";
 std::string bbname = "./";
@@ -70,7 +70,7 @@ void QCDhists() {
   std::cout<<"doing the stuff"<<std::endl;
   const int nhist=19;
   std::vector<TH1F*> vv(nhist);
-  std::string histnames[nhist]={"count","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
+  std::string histnames[nhist]={"acount","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
 
   for(int i=0;i<nhist;i++) {
     vv[i]=HistMan(histnames[i],norm);
