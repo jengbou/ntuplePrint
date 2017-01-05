@@ -27,8 +27,8 @@ TH1F* HistMan(std::string thisHIST,double* histnorm);
 float goalintlum=20; // fb-1
 const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb
-//const int nfiles[nbin]={1,1,1,1,1};
-const int nfiles[nbin]={138,133,50,40,23};
+const int nfiles[nbin]={2,2,2,2,2};
+//const int nfiles[nbin]={138,133,50,40,23};
 const std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 std::string aaname = "/data/users/eno/outputQCD/";
 std::string bbname = "./";
@@ -97,20 +97,20 @@ TH1F* HistMan(std::string thisHIST,double* norm) {
   std::string inputfile;
 
 
-
   // now add up all the files for one bin
   std::cout<<" adding up histos within a bin"<<std::endl;
-  vector<TH1F*> sum(nbin);
+  vector<TH1F> sum(nbin);
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
       inputfile="histos"+binnames[i]+"_"+std::to_string(j)+".root";
-      TFile *in = new TFile(inputfile.c_str());
+      TFile* in = new TFile(inputfile.c_str());
       if(j==0) {
-	sum[i] = static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone());
+	sum[i] = *(static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone()));
       } else {
 	TH1F* tmp = static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone());
-	sum[i]->Add(tmp);
+	sum[i].Add(tmp);
       }
+      in->Close();
     }
   }
 
@@ -124,37 +124,42 @@ TH1F* HistMan(std::string thisHIST,double* norm) {
     std::cout<<" equ lum for bin is "<<fileLum<<" fb-1"<<std::endl;
     float norm = goalintlum/fileLum;
     std::cout<<" scaling by a factor of "<<norm<<std::endl;
-    sum[i]->Scale(norm);
+    sum[i].Scale(norm);
   }
 
 
   //add the bins
   std::cout<<" adding bins"<<std::endl;
-  TH1F* SUM=static_cast<TH1F*>((sum[0])->Clone());
+  TH1F* SUM=static_cast<TH1F*>((sum[0]).Clone());
   for(int i=1;i<nbin;i++) {
-    SUM->Add(sum[i]);
+    SUM->Add(&sum[i]);
   }
+
 
   return SUM;
 }
 
 void  HistNorm(double* norm) {
 
-  std::string inputfile;
+  std::cout<<"entering HistNorm"<<std::endl; 
 
+  std::string inputfile;
+  TFile * in;
 
   // now add up all the files for one bin
-  vector<TH1F*> sum(nbin);
+  vector<TH1F> sum(nbin);
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
       inputfile="histos"+binnames[i]+"_"+std::to_string(j)+".root";
-      TFile *in = new TFile(inputfile.c_str());
+      std::cout<<i<<" "<<j<<" "<<inputfile<<std::endl;
+      in = new TFile(inputfile.c_str());
       if(j==0) {
-	sum[i] = static_cast<TH1F*>(in->Get("eventCountPreTrigger")->Clone());
+	sum[i] = *(static_cast<TH1F*>(in->Get("eventCountPreTrigger")->Clone()));
       } else {
 	TH1F* tmp = static_cast<TH1F*>(in->Get("eventCountPreTrigger")->Clone());
-	sum[i]->Add(tmp);
+	sum[i].Add(tmp);
       }
+      in->Close();
     }
   }
 
@@ -162,8 +167,9 @@ void  HistNorm(double* norm) {
 
   for(int i=0;i<nbin;i++) {
     // get total number of events before filter
-    norm[i] = sum[i]->GetBinContent(2);
+    norm[i] = sum[i].GetBinContent(2);
   }
+
 
   return;
 }
