@@ -68,9 +68,9 @@ void QCDhists() {
 
   //make and  output summed and renormalized histograms
   std::cout<<"doing the stuff"<<std::endl;
-  const int nhist=20;
+  const int nhist=19;
   std::vector<TH1F*> vv(nhist);
-  std::string histnames[nhist]={"acount","count","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
+  std::string histnames[nhist]={"count","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
 
   for(int i=0;i<nhist;i++) {
     vv[i]=HistMan(histnames[i],norm);
