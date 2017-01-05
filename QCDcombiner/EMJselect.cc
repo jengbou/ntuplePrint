@@ -226,7 +226,7 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
   }  // end of loop over events
   // We do not close the file. We want to keep the generated
   // histograms we open a browser and the TreeViewer
-  if (gROOT->IsBatch()) return;
+  //if (gROOT->IsBatch()) return;
   //  TCanvas *c1 = new TCanvas("c1","Vertex Plots",200,10,700,500);
   //  hpt->Draw();
   //c1->Modified();

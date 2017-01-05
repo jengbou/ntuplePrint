@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# requires 1 argument inputs:   
+# requires 2 argument inputs:   
 # RUN_DIR - running directory (CMSSW_X_Y_Z/subdir)   
+# mode.  should be 1 or 2
 
 #
 # header 
@@ -9,6 +10,7 @@
 
 
 RUN_DIR=$1
+RUN_MODE=$2
 
 echo ""
 echo "CMSSW on Condor"
@@ -16,7 +18,6 @@ echo ""
 
 START_TIME=`/bin/date`
 echo "started at $START_TIME"
-
 
 
 #
@@ -27,15 +28,12 @@ export VO_CMS_SW_DIR=/sharesoft/cmssw
 cd $RUN_DIR
 eval `scramv1 runtime -sh`
 
-#
-# modify parameter-set
-#
 
 
 #
 # run c
 #
-./main >& main.log
+./main $RUN_MODE >& main.log
 
 
 
