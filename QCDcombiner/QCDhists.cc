@@ -27,8 +27,8 @@ TH1F* HistMan(std::string thisHIST,double* histnorm);
 float goalintlum=20; // fb-1
 const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb
-const int nfiles[nbin]={1,1,1,1,1};
-//const int nfiles[nbin]={138,133,50,40,23};
+//const int nfiles[nbin]={1,1,1,1,1};
+const int nfiles[nbin]={138,133,50,40,23};
 const std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 std::string aaname = "/data/users/eno/outputQCD/";
 std::string bbname = "./";
