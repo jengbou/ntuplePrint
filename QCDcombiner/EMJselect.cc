@@ -128,11 +128,11 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
 
   // loop over events
   for (Int_t i=0; i<nentries; i++) {
-    std::cout<<"event "<<i<<std::endl;
+    if(i%100 == 0) std::cout<<"event "<<i<<std::endl;
     count->Fill("All",1);  // count number of events
     acount->Fill(0.5);
     tt->GetEntry(i);
-    std::cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<std::endl;
+    //    std::cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<std::endl;
 
     // make some basic plots on all events before any selections
     // jets
@@ -204,7 +204,7 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
 	        hacut_cef->Fill((*jet_cef)[ij]);
 	        emerging[ij]=true;
 	        nemerging+=1.;
-		std::cout<<" an emerging jet"<<std::endl;
+		//		std::cout<<" an emerging jet"<<std::endl;
 	      }
 	    }
 	  }
