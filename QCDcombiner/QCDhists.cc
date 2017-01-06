@@ -15,11 +15,13 @@ using std::vector;
 #include <TStyle.h>
 #include <TCanvas.h>
 
-void EMJselect(const char* inputfilename,const char* outputfilename,
-	       float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingCut\
+int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
+float HTcut, float pt1cut, float pt2cut,float pt3cut, float pt4cut,
+float alphaMaxcut, float NemfracCut,float CemfracCut,
+	       int ntrk1cut, int NemergingCut	\
 	       );
 void  HistNorm(double* norm);
-TH1F* HistMan(std::string thisHIST,double* histnorm);
+TH1F* HistMan(std::string thisHIST,double* histnorm, double* outnorm);
 
 
 // need to update this section below
@@ -27,8 +29,8 @@ TH1F* HistMan(std::string thisHIST,double* histnorm);
 float goalintlum=20; // fb-1
 const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb
-//const int nfiles[nbin]={3,3,3,3,3};
-const int nfiles[nbin]={138,133,50,40,23};
+const int nfiles[nbin]={2,2,2,2,2};
+//const int nfiles[nbin]={138,133,50,40,23};
 const std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 std::string aaname = "/data/users/eno/outputQCD/";
 std::string bbname = "./";
@@ -45,12 +47,32 @@ void QCDhists() {
   std::cout<<"making histograms for each file in each bin"<<std::endl;
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-
       inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
-      EMJselect(inputfile.c_str(),outputfile.c_str(),1000., 0.2,0.9,0.9,1);
+      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1);
+    }
+  }
+
+  //do some cut optimization
+
+  const int ncutscan=10;
+  float acut=0.2;
+  int ipass[ncutscan][nbin];
+  for(int k=0;k<ncutscan;k++) {
+    float acut2=(acut/(ncutscan))*(k+1);
+    std::cout<<" cut value is "<<acut2<<std::endl;
+    for(int i=0;i<nbin;i++) ipass[k][i]=0;
+    for(int i=0;i<nbin;i++) {  // for each bin
+      for(int j=0;j<nfiles[i];j++) { //for each file for that bin
+	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
+      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+      std::cout<<"input file is "<<inputfile<<std::endl;
+	int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),1000., 400.,200.,125.,50.,acut2,0.9,0.9,0,1);
+	ipass[k][i]+=iii;
+	std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
+      }
     }
   }
 
@@ -71,9 +93,23 @@ void QCDhists() {
   const int nhist=19;
   std::vector<TH1F*> vv(nhist);
   std::string histnames[nhist]={"acount","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
-
+  double outnorm[nbin];
   for(int i=0;i<nhist;i++) {
-    vv[i]=HistMan(histnames[i],norm);
+    vv[i]=HistMan(histnames[i],norm,outnorm);
+  }
+
+  // normalize cut scan and sum bins
+  int fpass[ncutscan];
+  for(int i=0;i<ncutscan;i++) fpass[i]=0;
+  for(int k=0;k<ncutscan;k++) {
+    for(int i=0;i<nbin;i++) {
+      fpass[k]+=ipass[k][i]*outnorm[i];
+    }
+    std::cout<<" fpass"<<k<<" "<<fpass[k]<<std::endl;
+  }
+  TH1F* cutscan = new TH1F("cutscan","n pass versus cut",ncutscan,0.,ncutscan);
+  for(int i=0;i<ncutscan;i++){
+    cutscan->AddBinContent(i+1,fpass[i]);
   }
 
 
@@ -82,6 +118,7 @@ void QCDhists() {
   outputfile=bbname+"SumHistos.root";
   TFile out(outputfile.c_str(),"RECREATE");
   normhst->Write();
+  cutscan->Write();
   for(int i=0;i<nhist;i++) {
     vv[i]->Write();
   }
@@ -92,7 +129,7 @@ void QCDhists() {
 
 
 
-TH1F* HistMan(std::string thisHIST,double* norm) {
+TH1F* HistMan(std::string thisHIST,double* norm,double* outnorm) {
 
   std::string inputfile;
 
@@ -122,9 +159,9 @@ TH1F* HistMan(std::string thisHIST,double* norm) {
     std::cout<<" for bin "<<i<<" number of pretrigger events is "<<ntotal<<std::endl;
     float fileLum= ntotal/xsec[i];
     std::cout<<" equ lum for bin is "<<fileLum<<" fb-1"<<std::endl;
-    float norm = goalintlum/fileLum;
-    std::cout<<" scaling by a factor of "<<norm<<std::endl;
-    sum[i].Scale(norm);
+    outnorm[i] = goalintlum/fileLum;
+    std::cout<<" scaling by a factor of "<<outnorm[i]<<std::endl;
+    sum[i].Scale(outnorm[i]);
   }
 
 
