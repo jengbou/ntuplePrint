@@ -20,25 +20,31 @@ float HTcut, float pt1cut, float pt2cut,float pt3cut, float pt4cut,
 float alphaMaxcut, float NemfracCut,float CemfracCut,
 	       int ntrk1cut, int NemergingCut	\
 	       );
-void  HistNorm(double* norm);
-TH1F* HistMan(std::string thisHIST,double* histnorm, double* outnorm);
+void  HistNorm(float goalintlum,vector<double>& norm,int nbin,float* xsec, int* nfiles, std::string* binnames);
+TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& histnorm, vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames);
 
 
 // need to update this section below
-
+/*
 float goalintlum=20; // fb-1
 const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb
-//const int nfiles[nbin]={1,1,1,1,1};
-const int nfiles[nbin]={138,133,50,40,23};
+const int nfiles[nbin]={2,2,2,2,2};
+//const int nfiles[nbin]={138,133,50,40,23};
 const std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 std::string aaname = "/data/users/eno/outputQCD/";
+*/
+
+
+
 std::string bbname = "./";
 
 
 
 
-void QCDhists() {
+//void QCDhists() 
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname) 
+{
 
   std::string inputfile;
   std::string outputfile;
@@ -60,9 +66,10 @@ void QCDhists() {
 
   //do some cut optimization
 
-  const int ncutscan=10;
+  const int ncutscan=5;
   float acut=0.2;
-  int ipass[ncutscan][nbin];
+  //  int ipass[ncutscan][nbin];
+  vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
   for(int k=0;k<ncutscan;k++) {
     float acut2=(acut/(ncutscan))*(k+1);
     std::cout<<" cut value is "<<acut2<<std::endl;
@@ -80,8 +87,9 @@ void QCDhists() {
   }
 
   // get normalization
-  double norm[nbin];
-  HistNorm(norm);
+  //  double norm[nbin];
+  vector<double> norm(nbin);
+  HistNorm(goalintlum,norm,nbin,xsec,nfiles,binnames);
   for(int i=0;i<nbin;i++) {
     std::cout<<"total number events in bin "<<i<<" is "<<norm[i]<<std::endl;
   }
@@ -96,9 +104,9 @@ void QCDhists() {
   const int nhist=19;
   std::vector<TH1F*> vv(nhist);
   std::string histnames[nhist]={"acount","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax"};
-  double outnorm[nbin];
+  vector<double> outnorm(nbin);
   for(int i=0;i<nhist;i++) {
-    vv[i]=HistMan(histnames[i],norm,outnorm);
+    vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames);
   }
 
   // normalize cut scan and sum bins
@@ -118,7 +126,7 @@ void QCDhists() {
 
 
   std::cout<<"outputting histograms"<<std::endl;
-  outputfile=bbname+"SumHistos.root";
+  outputfile=bbname+ohname;
   TFile out(outputfile.c_str(),"RECREATE");
   normhst->Write();
   cutscan->Write();
@@ -132,7 +140,7 @@ void QCDhists() {
 
 
 
-TH1F* HistMan(std::string thisHIST,double* norm,double* outnorm) {
+TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames) {
 
   std::string inputfile;
 
@@ -179,7 +187,7 @@ TH1F* HistMan(std::string thisHIST,double* norm,double* outnorm) {
   return SUM;
 }
 
-void  HistNorm(double* norm) {
+void  HistNorm(float goalintlum,vector<double>& norm,int nbin,float* xsec, int* nfiles, std::string* binnames) {
 
   std::cout<<"entering HistNorm"<<std::endl; 
 
@@ -208,6 +216,7 @@ void  HistNorm(double* norm) {
   for(int i=0;i<nbin;i++) {
     // get total number of events before filter
     norm[i] = sum[i].GetBinContent(2);
+    std::cout<<"norm "<<i<<" "<<norm[i]<<std::endl;
   }
 
 
