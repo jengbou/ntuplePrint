@@ -37,7 +37,7 @@ std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500
 // for signal model B.  mediat mass is 1000
 const int snbin=1; 
 float sxsec[nbin]={18.45}; // fb 
-//int snfiles[nbin]={10}; 
+//int snfiles[nbin]={50}; 
 int snfiles[nbin]={15}; 
 std::string sbinnames[nbin]={"modelB"};
 
