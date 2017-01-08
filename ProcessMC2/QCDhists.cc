@@ -67,7 +67,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
-      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1);
+      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),1000., 400.,300.,170.,100.,0.2,0.9,0.9,0,2);
     }
   }
 
@@ -112,7 +112,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
       inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
-	int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),1000., 400.,200.,125.,50.,acut2,0.9,0.9,0,1);
+	int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),1000., 400.,300.,170.,100.,acut2,0.9,0.9,0,2);
 	ipass[k][i]+=iii;
 	std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
       }
@@ -144,7 +144,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
 
   // normalize cut scan and sum bins
-  int ffpass[iicut];
+  double ffpass[iicut];
   for(int i=0;i<iicut;i++) ffpass[i]=0;
   for(int k=0;k<iicut;k++) {
     for(int i=0;i<nbin;i++) {
@@ -159,7 +159,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
 
   // normalize cut scan and sum bins
-  int fpass[ncutscan];
+  double fpass[ncutscan];
   for(int i=0;i<ncutscan;i++) fpass[i]=0;
   for(int k=0;k<ncutscan;k++) {
     for(int i=0;i<nbin;i++) {
