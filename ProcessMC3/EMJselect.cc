@@ -168,52 +168,9 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       }
      }  // end of loop over jets
 
-    // now start the event selections
-
-    // require at least 4 jets
-    bool C4jet=true;
-    if((*jet_index).size()<3) C4jet=false;
-    if(!C4jet) continue;
-    if(otfile) count->Fill("4 jets",1);
-    if(otfile) acount->Fill(1.5);
-
-    // calculate HT and require it greater than some cut value
-    double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
-    if(otfile) H_T->Fill(HT);
-    bool CHT=true;
-    if(HT<HTcut) CHT=false;
-    if(!CHT) continue;
-    if(otfile) count->Fill("HT",1);
-    if(otfile) acount->Fill(2.5);
-    if(otfile) H_T2->Fill(HT);
-
-    // do pT cuts on jets  
-    bool Cpt1=true;
-    bool Cpt2=true;
-    bool Cpt3=true;
-    bool Cpt4=true;
-    if((*jet_pt)[0]<pt1cut) Cpt1=false;
-    if(!Cpt1) continue;
-    if(otfile) count->Fill("jet pt1",1);
-    if(otfile) acount->Fill(3.5);
-
-    if((*jet_pt)[1]<pt2cut) Cpt2=false;
-    if(!Cpt2) continue;
-    if(otfile) count->Fill("jet pt2",1);
-    if(otfile) acount->Fill(4.5);
-
-    if((*jet_pt)[2]<pt3cut) Cpt3=false;
-    if(!Cpt3) continue;
-    if(otfile) count->Fill("jet pt3",1);
-    if(otfile) acount->Fill(5.5);
-
-    if((*jet_pt)[3]<pt4cut) Cpt4=false;
-    if(!Cpt4) continue;
-    if(otfile) count->Fill("jet pt4",1);
-    if(otfile) acount->Fill(6.5);
 
 
-      //now look and see if any of the jets are emerging
+      //now look and see if any of the 4 lead jets are emerging
 
       bool emerging[4];
       emerging[0]=false;emerging[1]=false;emerging[2]=false;emerging[3]=false;
@@ -221,19 +178,19 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       for(int ij=0;ij<4;ij++) {
 	if(otfile) hjetcut->Fill(0.5);
 	if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
-	if((*jet_alphaMax)[ij]<alphaMaxcut) {
+	if((*jet_alphaMax)[ij]<alphaMaxcut) { // alpha max
 	  if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
 	  if(otfile) hjetcut->Fill(1.5);
 	  if(otfile) hbcut_nef->Fill((*jet_nef)[ij]);
-	  if((*jet_nef)[ij]<NemfracCut) {
+	  if((*jet_nef)[ij]<NemfracCut) {  // neutral fraction
 	    if(otfile) hacut_nef->Fill((*jet_nef)[ij]);
 	    if(otfile) hjetcut->Fill(2.5);
 	    if(otfile) hbcut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
-	    if(jet_ntrkpt1[ij]>ntrk1cut) {
+	    if(jet_ntrkpt1[ij]>ntrk1cut) {  // tracks pt>1
 	      if(otfile) hacut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
 	      if(otfile) hjetcut->Fill(3.5);
 	      if(otfile) hbcut_cef->Fill((*jet_cef)[ij]);
-	      if((*jet_cef)[ij]<CemfracCut) {
+	      if((*jet_cef)[ij]<CemfracCut) {  //charged fraction
 	        if(otfile) hacut_cef->Fill((*jet_cef)[ij]);
 	        emerging[ij]=true;
 	        nemerging+=1.;
@@ -245,9 +202,79 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       }
       if(otfile) h_nemg->Fill(nemerging);
 
+
+      //*************************************************************
+    // now start the event selections
+      //*************************************************************
+
+    // require at least 4 jets
+    bool C4jet=true;
+    if((*jet_index).size()<3) C4jet=false;
+    // HT
+    double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
+    if(otfile) H_T->Fill(HT);
+    bool CHT=true;
+    if(HT<HTcut) CHT=false;
+    // jet pt
+    bool Cpt1=true;
+    bool Cpt2=true;
+    bool Cpt3=true;
+    bool Cpt4=true;
+    if((*jet_pt)[0]<pt1cut) Cpt1=false;
+    if((*jet_pt)[1]<pt2cut) Cpt2=false;
+    if((*jet_pt)[2]<pt3cut) Cpt3=false;
+    if((*jet_pt)[3]<pt4cut) Cpt4=false;
+    // number emerging jets
+    bool Cnem = true;
+    if(nemerging<NemergingCut) Cnem=false;
+
+
+    // do N-1 plots
+    if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem) hHTnm1->Fill(HT);
+    if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem) hpt1nm1->Fill((*jet_pt)[0]);
+    if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem) hpt2nm1->Fill((*jet_pt)[1]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt4&&Cnem) hpt3nm1->Fill((*jet_pt)[2]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cnem) hpt4nm1->Fill((*jet_pt)[3]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) hnemnm1->Fill(nemerging);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) {
+      for(int i=0;i<3;i++) halphanm1->Fill((*jet_alphaMax)[i]);
+    }
+
+    // apply cuts sequentially
+
+    if(!C4jet) continue;
+    if(otfile) count->Fill("4 jets",1);
+    if(otfile) acount->Fill(1.5);
+
+    // calculate HT and require it greater than some cut value
+    if(!CHT) continue;
+    if(otfile) count->Fill("HT",1);
+    if(otfile) acount->Fill(2.5);
+    if(otfile) H_T2->Fill(HT);
+
+    // do pT cuts on jets  
+    if(!Cpt1) continue;
+    if(otfile) count->Fill("jet pt1",1);
+    if(otfile) acount->Fill(3.5);
+
+
+    if(!Cpt2) continue;
+    if(otfile) count->Fill("jet pt2",1);
+    if(otfile) acount->Fill(4.5);
+
+
+    if(!Cpt3) continue;
+    if(otfile) count->Fill("jet pt3",1);
+    if(otfile) acount->Fill(5.5);
+
+
+    if(!Cpt4) continue;
+    if(otfile) count->Fill("jet pt4",1);
+    if(otfile) acount->Fill(6.5);
+
+
+
       // require at least N emerging jets
-      bool Cnem = true;
-      if(nemerging<NemergingCut) Cnem=false;
       if(!Cnem) continue;
 
 
