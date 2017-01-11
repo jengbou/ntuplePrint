@@ -169,7 +169,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(otfile) acount->Fill(1.5);
 
     // calculate HT and require it greater than some cut value
-    double HT = (*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3]+(*jet_pt)[4];
+    double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
     if(otfile) H_T->Fill(HT);
     if(HT<HTcut) continue;
     if(otfile) count->Fill("HT",1);
@@ -178,7 +178,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
     // do pT cuts on jets  
     bool sel=false;
-    if(((*jet_pt)[1]>pt1cut)&&((*jet_pt)[2]>pt2cut)&&((*jet_pt)[3]>pt3cut)&&((*jet_pt)[4]>pt4cut)) {
+    if(((*jet_pt)[0]>pt1cut)&&((*jet_pt)[1]>pt2cut)&&((*jet_pt)[2]>pt3cut)&&((*jet_pt)[3]>pt4cut)) {
       sel=true;
       if(otfile) count->Fill("jet pt cuts",1);
       if(otfile) acount->Fill(3.5);

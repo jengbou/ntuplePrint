@@ -119,7 +119,7 @@ vector<int> EMJscan(const char* inputfilename,
      }  // end of loop over jets
 
 
-    double HT = (*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3]+(*jet_pt)[4];
+    double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
     // now start the event selections
 
       //now look and see if any of the jets are emerging
@@ -176,10 +176,10 @@ vector<int> EMJscan(const char* inputfilename,
 		  if(icut==iicut) EMJscanFirst= false;
 		}
 	          if(HT>HTcut) {
-	            if((*jet_pt)[1]>pt1cut) {
-	              if((*jet_pt)[2]>pt2cut) {
-	                if((*jet_pt)[3]>pt3cut) {
-	                  if((*jet_pt)[4]>pt4cut) {
+	            if((*jet_pt)[0]>pt1cut) {
+	              if((*jet_pt)[1]>pt2cut) {
+	                if((*jet_pt)[2]>pt3cut) {
+	                  if((*jet_pt)[3]>pt4cut) {
 	                    if(nemerging>NemergingCut) {
                               npass[icut]+=1;
 	                    }

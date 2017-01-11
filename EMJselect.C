@@ -156,7 +156,7 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
     acount->Fill(1.5);
 
     // calculate HT and require it greater than some cut value
-    double HT = (*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3]+(*jet_pt)[4];
+    double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
     H_T->Fill(HT);
     if(HT<HTcut) continue;
     count->Fill("HT",1);
@@ -165,7 +165,7 @@ float HTcut, float alphaMaxcut, float NemfracCut,float CemfracCut,int NemergingC
 
     // do pT cuts on jets  
     bool sel=false;
-    if(((*jet_pt)[1]>400)&&((*jet_pt)[2]>200)&&((*jet_pt)[3]>125)&&((*jet_pt)[4]>50)) {
+    if(((*jet_pt)[0]>400)&&((*jet_pt)[1]>200)&&((*jet_pt)[2]>125)&&((*jet_pt)[3]>50)) {
       sel=true;
       count->Fill("jet pt cuts",1);
     acount->Fill(3.5);
