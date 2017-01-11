@@ -1,0 +1,10 @@
+universe = vanilla
+Executable = condor-executable.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+Requirements = TARGET.FileSystemDomain == "privnet"
+Output = QCDhists_sce_$(cluster)_$(process).stdout
+Error = QCDhists_sce_$(cluster)_$(process).stderr
+Log = QCDhists_sce_$(cluster)_$(process).condor
+Arguments = BACKGROUND $(process) /data/users/eno/emergingJets5/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD/ 1 1 0
+Queue 1
