@@ -24,8 +24,7 @@ Int_t           fCurrent; //!current Tree number in a TChain
 
 
 int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
-	       float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut,
-	       float alphaMaxcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
+	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
   // "ntuple.root", "histos.root"
   // suggest cuts 1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1
   // right now this code hard wires the jet pT cut and requires emerging jets to have at least
@@ -103,7 +102,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1;
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4;
   if(otfile) {
   acount = new TH1F("acount","counts",20,0.,20.);
   count = new TH1F("count","counts",3,0,3);
@@ -120,6 +119,10 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   halpha   = new TH1F("halpha","jet alphaMax distribution",100,0.,1.5);
   H_T      = new TH1F("H_T"," HT distribution before cut", 100,0.,5000.);
   H_T2      = new TH1F("H_T2"," HT distribution after cut", 100,0.,5000.);
+  hpt1 = new TH1F("hpt1"," pT of leading jet",200,0.,1000.);
+  hpt2 = new TH1F("hpt2"," pT of second jet",200,0.,1000.);
+  hpt3 = new TH1F("hpt3"," pT of third jet",200,0.,1000.);
+  hpt4 = new TH1F("hpt4"," pT of fourth jet",200,0.,1000.);
   hbcut_ntrkpt1 = new TH1F("hbcut_ntrkpt1","number tracks pt>1 before cut",10,0.,20.);
   hacut_ntrkpt1 = new TH1F("hacut_ntrkpt1","number tracks pt>1 after cut",10,0.,20.);
   hbcut_nef = new TH1F("hbcut_nef","neutral em fraction before cut",10,0.,1.2);
@@ -153,7 +156,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
     if(otfile) hnjet->Fill((*jet_index).size()+0.5);
-    for(Int_t j=0; j<(*jet_index).size(); j++) {
+    int NNNjet = (*jet_index).size();
+    for(Int_t j=0; j<NNNjet; j++) {
       if(otfile) hpt->Fill((*jet_pt)[j]);
       if(otfile) heta->Fill((*jet_eta)[j]);
       if(otfile) hjetchf->Fill((*jet_chf)[j]);
@@ -177,7 +181,9 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       bool emerging[4];
       emerging[0]=false;emerging[1]=false;emerging[2]=false;emerging[3]=false;
       int nemerging=0;
-      for(int ij=0;ij<4;ij++) {
+      int iijjkk = 4;
+      if(NNNjet<4) iijjkk=NNNjet;
+      for(int ij=0;ij<iijjkk;ij++) {
 	if(otfile) hjetcut->Fill(0.5);
 	if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
 	if((*jet_alphaMax)[ij]<alphaMaxcut) { // alpha max
@@ -211,10 +217,14 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
     // require at least 4 jets
     bool C4jet=true;
-    if((*jet_index).size()<3) C4jet=false;
+    if(NNNjet<3) C4jet=false;
     // HT
     double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
     if(otfile) H_T->Fill(HT);
+    if(otfile) hpt1->Fill((*jet_pt)[0]);
+    if(otfile) hpt2->Fill((*jet_pt)[1]);
+    if(otfile) hpt3->Fill((*jet_pt)[2]);
+    if(otfile) hpt4->Fill((*jet_pt)[3]);
     bool CHT=true;
     if(HT<HTcut) CHT=false;
     // jet pt
@@ -222,10 +232,10 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     bool Cpt2=true;
     bool Cpt3=true;
     bool Cpt4=true;
-    if((*jet_pt)[0]<pt1cut) Cpt1=false;
-    if((*jet_pt)[1]<pt2cut) Cpt2=false;
-    if((*jet_pt)[2]<pt3cut) Cpt3=false;
-    if((*jet_pt)[3]<pt4cut) Cpt4=false;
+    if(((*jet_pt)[0]<pt1cut)&&(abs((*jet_eta)[0])<jetacut)) Cpt1=false;
+    if(((*jet_pt)[1]<pt2cut)&&(abs((*jet_eta)[1])<jetacut)) Cpt2=false;
+    if(((*jet_pt)[2]<pt3cut)&&(abs((*jet_eta)[2])<jetacut)) Cpt3=false;
+    if(((*jet_pt)[3]<pt4cut)&&(abs((*jet_eta)[3])<jetacut)) Cpt4=false;
     // number emerging jets
     bool Cnem = true;
     if(nemerging<NemergingCut) Cnem=false;
@@ -309,6 +319,10 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     halpha->Write();
     H_T->Write();
     H_T2->Write();
+    hpt1->Write();
+    hpt2->Write();
+    hpt3->Write();
+    hpt4->Write();
     h_nemg->Write();
     hjetchf->Write();
     hbcut_ntrkpt1->Write();

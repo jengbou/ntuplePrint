@@ -30,6 +30,7 @@ vector<int> EMJscan(const char* inputfilename,
                float pt3cutmin,  int Npt3cut,float pt3cutSS,
                float pt4cutmin, int Npt4cut,float pt4cutSS,
 		    int NemergingCutmin, int NNemergingCut, int NNemergingCutSS,
+		    float jetacut,
 		    float alphaMaxcut, float NemfracCut,float CemfracCut,int ntrk1cut) {
 
  
@@ -186,10 +187,10 @@ vector<int> EMJscan(const char* inputfilename,
 		  if(icut==iicut) EMJscanFirst= false;
 		}
 	          if(HT>HTcut) {
-	            if((*jet_pt)[0]>pt1cut) {
-	              if((*jet_pt)[1]>pt2cut) {
-	                if((*jet_pt)[2]>pt3cut) {
-	                  if((*jet_pt)[3]>pt4cut) {
+	            if(((*jet_pt)[0]>pt1cut)&&(abs((*jet_eta)[0])<jetacut)) {
+	              if((*jet_pt)[1]>pt2cut&&(abs((*jet_eta)[1])<jetacut)) {
+	                if((*jet_pt)[2]>pt3cut&&(abs((*jet_eta)[2])<jetacut)) {
+	                  if((*jet_pt)[3]>pt4cut&&(abs((*jet_eta)[3])<jetacut)) {
 	                    if(nemerging>NemergingCut) {
                               npass[icut]+=1;
 	                    }
