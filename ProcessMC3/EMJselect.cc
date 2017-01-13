@@ -43,6 +43,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   TH1F *eventCountPreTrigger;
   if(otfile) eventCountPreTrigger = static_cast<TH1F*>(f->Get("eventCountPreTrigger/eventCountPreTrigger")->Clone());
 
+
+
   TTree *tt = (TTree*)f->Get("emJetAnalyzer/emJetTree");
 
   Int_t nVtx, event;
@@ -230,6 +232,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
 
     // do N-1 plots
+    if(otfile) {
     if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem) hHTnm1->Fill(HT);
     if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem) hpt1nm1->Fill((*jet_pt)[0]);
     if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem) hpt2nm1->Fill((*jet_pt)[1]);
@@ -238,6 +241,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) hnemnm1->Fill(nemerging);
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) {
       for(int i=0;i<3;i++) halphanm1->Fill((*jet_alphaMax)[i]);
+    }
     }
 
     // apply cuts sequentially
@@ -326,25 +330,59 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   }
 
   tt->ResetBranchAddresses();
+  
   delete jet_index;
   delete jet_source;
   delete jet_pt;
   delete jet_eta;
   delete jet_phi;
   delete jet_alphaMax;
+  delete jet_cef;
+  delete jet_nef;
+  delete jet_chf;
+  delete jet_phf;
   delete track_pt;
   delete track_eta;
   delete track_source;
   delete track_index;
   delete track_jet_index;
-  delete track_algo;
   delete track_vertex_index;
+  delete track_algo;
   delete track_vertex_weight;
   delete track_ipZ;
+  
+
 
   f->Close();
   
-
+  /*  
+  delete count;
+  delete acount;
+  delete hjetcut;
+  delete h_nemg;
+  delete hnjet;
+  delete hpt;
+  delete heta;
+  delete heta2;
+  delete halpha;
+  delete H_T;
+  delete H_T2;
+  delete hbcut_ntrkpt1;
+  delete hacut_ntrkpt1;
+  delete hbcut_nef;
+  delete hacut_nef;
+  delete hbcut_cef;
+  delete hacut_cef;
+  delete hbcut_alphamax;
+  delete hacut_alphamax;
+  delete hHTnm1;
+  delete hpt1nm1;
+  delete hpt2nm1;
+  delete hpt3nm1;
+  delete hpt4nm1;
+  delete halphanm1;
+  delete hnemnm1;
+  */
 
 
   return npass;

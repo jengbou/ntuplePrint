@@ -62,14 +62,14 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   const int ncutscan=5;
   
 
-  /*
-  // another set
-  float DHTcut=1500;
-  float Dpt1cut=500;
-  float Dpt2cut=300;
-  float Dpt3cut=225;
-  float Dpt4cut=150;
-  float Dalphacut=0.2;
+  /*  
+  // modelA opt
+  float DHTcut=1100;
+  float Dpt1cut=400;
+  float Dpt2cut=200;
+  float Dpt3cut=200;
+  float Dpt4cut=110;
+  float Dalphacut=0.04;
   int Dnemcut=2;
   // for alpha max scan
   const int ncutscan=5;
@@ -167,13 +167,20 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   std::cout<<"normalizing histograms"<<std::endl;
   const int nhist=27;
   std::vector<TH1F*> vv(nhist);
-  std::string histnames[nhist]={"count","acount","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax",
-"hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1","hnemnm1"
+  std::string histnames[nhist]={"count","acount","hjetcut","hjetchf","h_nemg","hnjet","hpt","heta","heta2","halpha","H_T","H_T2","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef","hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1","hnemnm1"
 };
   vector<double> outnorm(nbin);
   for(int i=0;i<nhist;i++) {
     vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames);
   }
+  // output total event count
+  std::cout<<" initial event count before and after norm is"<<std::endl;
+  double ttotal=0;
+  for(int i=0;i<nbin;i++) {
+    std::cout<<" bin "<<i<<" norm "<<norm[i]<<" times outnorm is "<<norm[i]*outnorm[i]<<std::endl;
+    ttotal = ttotal + norm[i]*outnorm[i];
+  }
+  std::cout<<"total is "<<ttotal<<std::endl;;
 
 
   // normalize cut scan and sum bins

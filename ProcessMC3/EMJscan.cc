@@ -210,21 +210,28 @@ vector<int> EMJscan(const char* inputfilename,
 
 
   tt->ResetBranchAddresses();
+
   delete jet_index;
   delete jet_source;
   delete jet_pt;
   delete jet_eta;
   delete jet_phi;
   delete jet_alphaMax;
+  delete jet_cef;
+  delete jet_nef;
+  delete jet_chf;
+  delete jet_phf;
   delete track_pt;
   delete track_eta;
   delete track_source;
   delete track_index;
   delete track_jet_index;
-  delete track_algo;
   delete track_vertex_index;
+  delete track_algo;
   delete track_vertex_weight;
   delete track_ipZ;
+
+
 
   f->Close();
   
@@ -270,6 +277,8 @@ vector<float> Decode(int icode, int ncut,vector<int> nstep, vector<float> stepsi
   for(int i=0;i<ncut;i++) std::cout<<" "<<jcut[i];
   std::cout<<std::endl;
   
+
+
 
   return dd;
 }
