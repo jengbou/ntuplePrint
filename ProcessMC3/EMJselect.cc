@@ -220,6 +220,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(NNNjet<3) C4jet=false;
     // HT
     double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
+    std::cout<<" event is "<<event<<" jet pt 0-3 are "<<(*jet_pt)[0]<<" "<<(*jet_pt)[1]<<" "<<(*jet_pt)[2]<<" "<<(*jet_pt)[3]<<" HT is "<<HT<<std::endl;
     if(otfile) H_T->Fill(HT);
     if(otfile) hpt1->Fill((*jet_pt)[0]);
     if(otfile) hpt2->Fill((*jet_pt)[1]);
@@ -228,14 +229,14 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     bool CHT=true;
     if(HT<HTcut) CHT=false;
     // jet pt
-    bool Cpt1=true;
-    bool Cpt2=true;
-    bool Cpt3=true;
-    bool Cpt4=true;
-    if(((*jet_pt)[0]<pt1cut)&&(abs((*jet_eta)[0])<jetacut)) Cpt1=false;
-    if(((*jet_pt)[1]<pt2cut)&&(abs((*jet_eta)[1])<jetacut)) Cpt2=false;
-    if(((*jet_pt)[2]<pt3cut)&&(abs((*jet_eta)[2])<jetacut)) Cpt3=false;
-    if(((*jet_pt)[3]<pt4cut)&&(abs((*jet_eta)[3])<jetacut)) Cpt4=false;
+    bool Cpt1=false;
+    bool Cpt2=false;
+    bool Cpt3=false;
+    bool Cpt4=false;
+    if(((*jet_pt)[0]>pt1cut)&&(abs((*jet_eta)[0])<jetacut)) Cpt1=true;
+    if(((*jet_pt)[1]>pt2cut)&&(abs((*jet_eta)[1])<jetacut)) Cpt2=true;
+    if(((*jet_pt)[2]>pt3cut)&&(abs((*jet_eta)[2])<jetacut)) Cpt3=true;
+    if(((*jet_pt)[3]>pt4cut)&&(abs((*jet_eta)[3])<jetacut)) Cpt4=true;
     // number emerging jets
     bool Cnem = true;
     if(nemerging<NemergingCut) Cnem=false;
