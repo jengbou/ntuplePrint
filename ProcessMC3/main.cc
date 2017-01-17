@@ -75,8 +75,9 @@ std::string bbinnames[nbin]={"modelB"};
 // for debugging
 const int dnbin=1; 
 float dxsec[nbin]={18.45}; // fb 
-int dnfiles[nbin]={2}; 
-std::string dbinnames[nbin]={"modelB"};
+ int dnfiles[nbin]={1}; 
+ if(imode==3) aaname = "/home/eno/em5/EmergingJetAnalysis/";
+std::string dbinnames[nbin]={"tmpStore"};
 
 
 

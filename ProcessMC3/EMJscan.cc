@@ -31,7 +31,8 @@ vector<int> EMJscan(const char* inputfilename,
                float pt4cutmin, int Npt4cut,float pt4cutSS,
 		    int NemergingCutmin, int NNemergingCut, int NNemergingCutSS,
 		    float jetacut,
-		    float alphaMaxcut, float NemfracCut,float CemfracCut,int ntrk1cut) {
+		    float alphaMaxcut, float meanIPcut,
+float NemfracCut,float CemfracCut,int ntrk1cut) {
 
  
   int iicut = NHTcut*Npt1cut*Npt2cut*Npt3cut*Npt4cut*NNemergingCut;
@@ -66,7 +67,8 @@ vector<int> EMJscan(const char* inputfilename,
   vector<vector<int> > *track_algo = 0;
   vector<vector<float> > *track_vertex_weight =0;
   vector<vector<float> > *track_ipZ =0;
-
+  vector<vector<float> > *track_ipXY = 0;
+  vector<vector<float> > *track_ipXYSig = 0;
 
   //for ntuple
   tt->SetBranchAddress("nVtx",&nVtx);
@@ -93,7 +95,8 @@ vector<int> EMJscan(const char* inputfilename,
   tt->SetBranchAddress("track_vertex_index",&track_vertex_index);
   tt->SetBranchAddress("track_vertex_weight",&track_vertex_weight);
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
-
+  tt->SetBranchAddress("track_ipXY",&track_ipXY);
+  tt->SetBranchAddress("track_ipXYSig",&track_ipXYSig);
 
   //read all entries and fill the histograms
   Int_t nentries = (Int_t)tt->GetEntries();
@@ -107,16 +110,22 @@ vector<int> EMJscan(const char* inputfilename,
 
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
+    vector<float> jet_meanip((*jet_index).size());
     for(Int_t j=0; j<(*jet_index).size(); j++) {
       //      calculate  number of tracks with pt > 1
       jet_ntrkpt1[j]=0;
+
       vector<float> track_pts = track_pt->at(j);
       vector<int> track_sources = track_source->at(j);
+      vector<float> track_ipXYs = track_ipXY->at(j);
+      vector<float> track_ipXYSigs = track_ipXYSig->at(j);
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
+	  jet_meanip[j]=jet_meanip[j]+track_ipXYs[itrack];
 	}
       }
+      if(track_pts.size()>0) jet_meanip[j]=jet_meanip[j]/track_pts.size();
      }  // end of loop over jets
 
 
@@ -133,9 +142,11 @@ vector<int> EMJscan(const char* inputfilename,
 	  if((*jet_nef)[ij]<NemfracCut) {
 	    if(jet_ntrkpt1[ij]>ntrk1cut) {
 	      if((*jet_cef)[ij]<CemfracCut) {
-	        emerging[ij]=true;
-	        nemerging+=1.;
+		if(jet_meanip[ij]>meanIPcut) {
+	          emerging[ij]=true;
+	          nemerging+=1.;
 		//		std::cout<<" an emerging jet"<<std::endl;
+		}
 	      }
 	    }
 	  }
@@ -231,7 +242,8 @@ vector<int> EMJscan(const char* inputfilename,
   delete track_algo;
   delete track_vertex_weight;
   delete track_ipZ;
-
+  delete track_ipXY;
+  delete track_ipXYSig;
 
 
   f->Close();
