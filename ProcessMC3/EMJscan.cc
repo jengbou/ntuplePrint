@@ -128,6 +128,9 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
       if(track_pts.size()>0) jet_meanip[j]=jet_meanip[j]/track_pts.size();
      }  // end of loop over jets
 
+    // require at least 4 jets
+    if((*jet_index).size()<3) continue;
+
 
     double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
     // now start the event selections
@@ -155,8 +158,6 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 
 
 
-    // require at least 4 jets
-    if((*jet_index).size()<3) continue;
 
 
     int icut=0;
