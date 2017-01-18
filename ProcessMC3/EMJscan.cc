@@ -129,6 +129,7 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
      }  // end of loop over jets
 
     // require at least 4 jets
+    if((*jet_index).size()<3) std::cout<<"DANGER DANGER"<<std::endl;
     if((*jet_index).size()<3) continue;
 
 
@@ -203,7 +204,7 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 	              if((*jet_pt)[1]>pt2cut&&(abs((*jet_eta)[1])<jetacut)) {
 	                if((*jet_pt)[2]>pt3cut&&(abs((*jet_eta)[2])<jetacut)) {
 	                  if((*jet_pt)[3]>pt4cut&&(abs((*jet_eta)[3])<jetacut)) {
-	                    if(nemerging>NemergingCut) {
+	                    if(nemerging>=NemergingCut) {
                               npass[icut]+=1;
 	                    }
 	                  }

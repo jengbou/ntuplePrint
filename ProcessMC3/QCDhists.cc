@@ -66,19 +66,19 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   */
 
     
-  // modelB opt
+  // opt
   float DHTcut=1000;
   float Dpt1cut=400;
-  float Dpt2cut=320;
-  float Dpt3cut=265;
-  float Dpt4cut=230;
+  float Dpt2cut=200;
+  float Dpt3cut=200;
+  float Dpt4cut=100;
   float Dalphacut=0.04;
-  float DmeanIPcut=-1.;
+  float DmeanIPcut=-1;
   float Djetacut = 2.;
   int Dnemcut=2;
   // for alpha max scan
-  //  const int ncutscan=5;
-  const int ncutscan=1;
+  const int ncutscan=5;
+  //const int ncutscan=1;
   
 
   // first make histograms for each file in each bin for the qcd sample
@@ -100,8 +100,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   vector<int> nstep {10,10,10,10,10,3};
   //vector<int> nstep {2,2,2,2,2,2};
   // ht pt1 pt2 pt3 pt4 nemerging
-  vector<float> cutmin {1000.,400.,200.,125.,50.,0};
-  vector<float> ss {100,20,20,20,20,1};
+  vector<float> cutmin {1000.,400.,200.,200.,100.,0};
+  vector<float> ss {50,10,10,10,10,1};
 
 
   int iicut =nstep[0];
@@ -137,12 +137,12 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
 
   //const int ncutscan=2;
-  float acut=-1;
+  float acut=0.3;
   //  int ipass[ncutscan][nbin];
   vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
   if(doopta==1) {
   for(int k=0;k<ncutscan;k++) {
-    float acut2=(acut/(ncutscan))*(k+1);
+    float acut2=(acut/(ncutscan))*(k);
     std::cout<<" cut value is "<<acut2<<std::endl;
     for(int i=0;i<nbin;i++) ipass[k][i]=0;
     for(int i=0;i<nbin;i++) {  // for each bin
