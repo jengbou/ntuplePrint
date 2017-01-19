@@ -37,7 +37,7 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
  
   int iicut = NHTcut*Npt1cut*Npt2cut*Npt3cut*Npt4cut*NNemergingCut;
   vector<int> npass(iicut);
-  for(int i=0;i<sizeof(npass);i++) npass[i]=0;
+  for(int i=0;i<iicut;i++) npass[i]=0;
 
   TFile *f = new TFile(inputfilename);
 
