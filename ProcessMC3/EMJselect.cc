@@ -9,6 +9,7 @@
 #include "vector"
 #include "vector"
 using std::vector;
+#include "algorithm"
 
 #include <TH2.h>
 #include <TStyle.h>
@@ -24,7 +25,7 @@ Int_t           fCurrent; //!current Tree number in a TChain
 
 
 int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
-	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float meanIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
+	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
   // "ntuple.root", "histos.root"
   // suggest cuts 1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1
   // right now this code hard wires the jet pT cut and requires emerging jets to have at least
@@ -106,14 +107,18 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   tt->SetBranchAddress("track_ipXYSig",&track_ipXYSig);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
-    *hipXYSigEJ,*hipXYSignEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
+    *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
+
+  TH2F *aMip;
+
   if(otfile) {
   acount = new TH1F("acount","counts",20,0.,20.);
   count = new TH1F("count","counts",3,0,3);
   count->SetStats(0);
   count->SetCanExtend(TH1::kAllAxes);
 
+  // 1d
   hjetcut = new TH1F("hjetcut","jetcut counts",20,0.,20.);
   hjetchf = new TH1F("hjetchf","jet charged hadron fr",20,0.,1.2);
   h_nemg = new TH1F("h_nemg","number of emerging jets",20,0.,20.);
@@ -141,7 +146,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   hpt2nm1 = new TH1F("hpt2nm1","pt2 n-1",200,0.,1000.);
   hpt3nm1 = new TH1F("hpt3nm1","pt3 n-1",200,0.,1000.);
   hpt4nm1 = new TH1F("hpt4nm1","pt4 n-1",200,0.,1000.);
-  halphanm1 = new TH1F("halphanm1","alpha max n-1",50,0.,1.5);
+  halphanm1 = new TH1F("halphanm1","alpha max n-1",200,0.,1.5);
+  hmaxipnm1 = new TH1F("hmaxipnm1","ip max n-1",200,0.,10.);
   hnemnm1 = new TH1F("hnemnm1","N emerging jets n-1",10,0.,10.);
   hipXYEJ = new TH1F("hipXYEJ","impact parameter  tracks of emerging jets",300,0.,1.);
   hipXYnEJ = new TH1F("hipXYnEJ","impact parameter  tracks of not emerging jets",300,0.,1.);
@@ -149,8 +155,14 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   htvwEJ= new TH1F("htvwEJ","track vertex weight Emerging Jets ",15,-5.,10.);
   hipXYSigEJ = new TH1F("hipXYSigEJ","ip sig emerging jets",100,0.,10.);
   hipXYSignEJ = new TH1F("hipXYSignEJ","ip sig not emerging jets",100,0.,10.);
-  hmeanipXYEJ = new TH1F("hmeanipXYEJ","mean ip emerging jets",200,0.,2.);
-  hmeanipXYnEJ = new TH1F("hmeanipXYnEJ","mean ip not emerging jets",200,0.,2.);
+  hmaxipXYEJ = new TH1F("hmaxipXYEJ","max ip emerging jets",1000,0.,10.);
+  hmaxipXYnEJ = new TH1F("hmaxipXYnEJ","max ip not emerging jets",1000,0.,10.);
+  hmeanipXYEJ = new TH1F("hmeanipXYEJ","mean ip emerging jets",1000,0.,2.);
+  hmeanipXYnEJ = new TH1F("hmeanipXYnEJ","mean ip not emerging jets",1000,0.,2.);
+
+
+  //1d
+  aMip = new TH2F("aMip"," somethign ",100,0.,1.,100,0.,10.);
   }
 
   //read all entries and fill the histograms
@@ -169,9 +181,12 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
     vector<float> jet_meanip((*jet_index).size());
+    vector<float> r0((*jet_index).size());
+    vector<float> r1((*jet_index).size());
     if(otfile) hnjet->Fill((*jet_index).size()+0.5);
     int NNNjet = (*jet_index).size();
     for(Int_t j=0; j<NNNjet; j++) {
+      //      std::cout<<"jet j = "<<j<<std::endl;
       if(otfile) hpt->Fill((*jet_pt)[j]);
       if(otfile) heta->Fill((*jet_eta)[j]);
       if(otfile) hjetchf->Fill((*jet_chf)[j]);
@@ -180,21 +195,30 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       //      calculate  number of tracks with pt > 1
       jet_ntrkpt1[j]=0;
       jet_meanip[j]=0.;
+      if(r0.size()>0) r0[j]=0.;
+      if(r1.size()>0) r1[j]=0.;
       vector<float> track_pts = track_pt->at(j);
       vector<int> track_sources = track_source->at(j);
       vector<float> track_vertex_weights = track_vertex_weight->at(j);
       vector<float> track_ipXYs = track_ipXY->at(j);
       vector<float> track_ipXYSigs = track_ipXYSig->at(j);
-
+      vector<float> sort_ip(track_pts.size());
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
+	  sort_ip[itrack]=track_ipXYs[itrack];
 	  if(otfile) htvw->Fill(track_vertex_weights[itrack]);
 	  //	  std::cout<<"track vertex weight is "<<track_vertex_weights[itrack]<<std::endl;
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
+	  //	  std::cout<<" track "<<itrack<<" ip "<<track_ipXYs[itrack]<<" mean ip "<<jet_meanip[j]<<std::endl;
 	  jet_meanip[j]=jet_meanip[j]+track_ipXYs[itrack];
 	}
       }
       if(track_pts.size()>0) jet_meanip[j]=jet_meanip[j]/track_pts.size();
+      std::sort(sort_ip.begin(), sort_ip.end());
+      std::reverse(sort_ip.begin(),sort_ip.end());
+      if(sort_ip.size()>0) r0[j]=sort_ip[0];
+      if(sort_ip.size()>1) r1[j]=sort_ip[1];
+      //      std::cout<<"mean max are "<<jet_meanip[j]<<" "<<r0[j]<<std::endl;
      }  // end of loop over jets
 
 
@@ -202,7 +226,11 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       //now look and see if any of the 4 lead jets are emerging
 
       bool emerging[4];
-      emerging[0]=false;emerging[1]=false;emerging[2]=false;emerging[3]=false;
+      bool almostemerging[4];
+      for( int i=0;i<4;i++) {
+	  emerging[i]=false;
+	  almostemerging[i]=false;
+	}
       int nemerging=0;
       int iijjkk = 4;
       if(NNNjet<4) iijjkk=NNNjet;
@@ -211,29 +239,38 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
         vector<float> track_ipXYSigs = track_ipXYSig->at(ij);
         vector<int> track_sources = track_source->at(ij);
         vector<float> track_vertex_weights = track_vertex_weight->at(ij);
-
 	if(otfile) hjetcut->Fill(0.5);
-	if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
-	if((*jet_alphaMax)[ij]<alphaMaxcut) { // alpha max
-	  if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
-	  if(otfile) hjetcut->Fill(1.5);
-	  if(otfile) hbcut_nef->Fill((*jet_nef)[ij]);
-	  if((*jet_nef)[ij]<NemfracCut) {  // neutral fraction
+
+	if(otfile) hbcut_nef->Fill((*jet_nef)[ij]);
+	if((*jet_nef)[ij]<NemfracCut) {  // neutral fraction
 	    if(otfile) hacut_nef->Fill((*jet_nef)[ij]);
-	    if(otfile) hjetcut->Fill(2.5);
+	    if(otfile) hjetcut->Fill(1.5);
+
 	    if(otfile) hbcut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
 	    if(jet_ntrkpt1[ij]>ntrk1cut) {  // tracks pt>1
 	      if(otfile) hacut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
-	      if(otfile) hjetcut->Fill(3.5);
+	      if(otfile) hjetcut->Fill(2.5);
+
 	      if(otfile) hbcut_cef->Fill((*jet_cef)[ij]);
 	      if((*jet_cef)[ij]<CemfracCut) {  //charged fraction
 	        if(otfile) hacut_cef->Fill((*jet_cef)[ij]);
-		if(jet_meanip[ij]>meanIPcut) { // mean IP cut
+	        if(otfile) hjetcut->Fill(3.5);
+		almostemerging[ij]=true;
+
+	        if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
+	        if((*jet_alphaMax)[ij]<alphaMaxcut) { // alpha max
+	          if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
+	          if(otfile) hjetcut->Fill(4.5);
+
+
+		if(r0[ij]>maxIPcut) { // max IP cut
 	        emerging[ij]=true;
 	        nemerging+=1.;
 		//		std::cout<<" an emerging jet"<<std::endl;
 		// look at tracks in the emerging jets
+		if(otfile) hmaxipXYEJ->Fill(r0[ij]);
 		if(otfile) hmeanipXYEJ->Fill(jet_meanip[ij]);
+		if(jet_meanip[ij]>r0[ij]) std::cout<<"DANGER DANGER"<<std::endl;
                 for (unsigned itrack=0; itrack<track_ipXYs.size(); itrack++) {
 	          if(track_sources[itrack]==0) {
 		    if(otfile) hipXYEJ->Fill(track_ipXYs[itrack]);
@@ -247,6 +284,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	  }
         }
 	if(!emerging[ij]) {
+	  if(otfile) hmaxipXYnEJ->Fill(r0[ij]);
 	  if(otfile) hmeanipXYnEJ->Fill(jet_meanip[ij]);
                 for (unsigned itrack=0; itrack<track_ipXYs.size(); itrack++) {
 	          if(track_sources[itrack]==0) {
@@ -299,7 +337,15 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cnem) hpt4nm1->Fill((*jet_pt)[3]);
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) hnemnm1->Fill(nemerging);
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) {
-      for(int i=0;i<3;i++) halphanm1->Fill((*jet_alphaMax)[i]);
+      for(int i=0;i<3;i++) {
+	if(almostemerging[i]) {
+	  halphanm1->Fill((*jet_alphaMax)[i]);
+	  aMip->Fill((*jet_alphaMax)[i],r0[i]);
+	  if(((*jet_alphaMax)[i]<0.06)) {
+	  hmaxipnm1->Fill(r0[i]);
+	  }
+	}
+      }
     }
     }
 
@@ -388,6 +434,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     hpt3nm1->Write();
     hpt4nm1->Write();
     halphanm1->Write();
+    hmaxipnm1->Write();
     hnemnm1->Write();
     hipXYEJ->Write();
     hipXYnEJ->Write();
@@ -395,8 +442,15 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     htvwEJ->Write();
     hipXYSigEJ->Write();
     hipXYSignEJ->Write();
+    hmaxipXYEJ->Write();
+    hmaxipXYnEJ->Write();
     hmeanipXYEJ->Write();
     hmeanipXYnEJ->Write();
+
+
+    //2d
+    aMip->Write();
+
     myfile.Close();
   }
 

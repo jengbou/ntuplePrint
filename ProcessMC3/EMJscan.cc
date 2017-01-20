@@ -9,6 +9,7 @@
 #include "vector"
 #include "vector"
 using std::vector;
+#include "algorithm"
 
 #include <TH2.h>
 #include <TStyle.h>
@@ -31,7 +32,7 @@ vector<int> EMJscan(const char* inputfilename,
                float pt4cutmin, int Npt4cut,float pt4cutSS,
 		    int NemergingCutmin, int NNemergingCut, int NNemergingCutSS,
 		    float jetacut,
-		    float alphaMaxcut, float meanIPcut,
+		    float alphaMaxcut, float maxIPcut,
 float NemfracCut,float CemfracCut,int ntrk1cut) {
 
  
@@ -110,22 +111,33 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
+    vector<float> r0((*jet_index).size());
+    vector<float> r1((*jet_index).size());    
     vector<float> jet_meanip((*jet_index).size());
+
     for(Int_t j=0; j<(*jet_index).size(); j++) {
       //      calculate  number of tracks with pt > 1
       jet_ntrkpt1[j]=0;
-
+      jet_meanip[j]=0.;
+      if(r0.size()>0) r0[j]=0.;
+      if(r1.size()>0) r1[j]=0.;
       vector<float> track_pts = track_pt->at(j);
       vector<int> track_sources = track_source->at(j);
       vector<float> track_ipXYs = track_ipXY->at(j);
       vector<float> track_ipXYSigs = track_ipXYSig->at(j);
+      vector<float> sort_ip(track_pts.size());
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
+	  sort_ip[itrack]=track_ipXYs[itrack];
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
 	  jet_meanip[j]=jet_meanip[j]+track_ipXYs[itrack];
 	}
       }
       if(track_pts.size()>0) jet_meanip[j]=jet_meanip[j]/track_pts.size();
+      std::sort(sort_ip.begin(), sort_ip.end());
+      std::reverse(sort_ip.begin(),sort_ip.end());
+      if(sort_ip.size()>0) r0[j]=sort_ip[0];
+      if(sort_ip.size()>1) r1[j]=sort_ip[1];
      }  // end of loop over jets
 
     // require at least 4 jets
@@ -146,7 +158,7 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 	  if((*jet_nef)[ij]<NemfracCut) {
 	    if(jet_ntrkpt1[ij]>ntrk1cut) {
 	      if((*jet_cef)[ij]<CemfracCut) {
-		if(jet_meanip[ij]>meanIPcut) {
+		if(r0[ij]>maxIPcut) {
 	          emerging[ij]=true;
 	          nemerging+=1.;
 		//		std::cout<<" an emerging jet"<<std::endl;

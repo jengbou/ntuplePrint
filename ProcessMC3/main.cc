@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     std::cout<<"doing modelA"<<std::endl;
   } else if(imode==2) {
     std::cout<<"doing modelB"<<std::endl;
-  } else if(imode==3) {
+  } else if(imode==4) {
     std::cout<<"doing debug sample"<<std::endl;
   } else {
     std::cout<<"invalid choice"<<std::endl;
@@ -55,6 +55,12 @@ const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb 
 int nfiles[nbin]={138,133,50,40,23};
 std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
+
+// quick background
+const int qnbin=1; // 500-700,700-1000,1000-1500,1500-2000,200toInf
+float qxsec[nbin]={1064000}; // fb 
+int qnfiles[nbin]={50};
+std::string qbinnames[nbin]={"QCD_HT1000to1500"};
 
 
 // for signal models A.  mediat mass is 1000
@@ -76,7 +82,7 @@ std::string bbinnames[nbin]={"modelB"};
 const int dnbin=1; 
 float dxsec[nbin]={18.45}; // fb 
  int dnfiles[nbin]={1}; 
- if(imode==3) aaname = "/home/eno/em5/EmergingJetAnalysis/";
+ if(imode==4) aaname = "/home/eno/em5/EmergingJetAnalysis/";
 std::string dbinnames[nbin]={"tmpStore"};
 
 
@@ -88,6 +94,8 @@ std::string dbinnames[nbin]={"tmpStore"};
  } else if (imode==2) {
    QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta);
  } else if (imode==3) {
+   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta);
+ } else if (imode==4) {
    QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0);
  }
 }
