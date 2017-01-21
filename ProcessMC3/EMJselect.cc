@@ -357,15 +357,15 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	    hmaxipnm1->Fill(r0[i]);
 
 	    
-            std::cout<<" almost emerging"<<std::endl;
+            //std::cout<<" almost emerging"<<std::endl;
 	    if(r0[i]<0.05) std::cout<<"DANGER DANGER"<<std::endl;
-            std::cout<<" jet pt is "<<(*jet_pt)[i]
-		     <<" ntrkpt1 is "<<jet_ntrkpt1[i]
-		     <<" meanip is "<<jet_meanip[i]
-		     <<" ip max is "<<r0[i]
-		     <<" second largest ip is "<<r1[i]
-		     <<" alpha max is "<<(*jet_alphaMax)[i]
-            <<std::endl;
+            //std::cout<<" jet pt is "<<(*jet_pt)[i]
+	    //	     <<" ntrkpt1 is "<<jet_ntrkpt1[i]
+	    //	     <<" meanip is "<<jet_meanip[i]
+	    //	     <<" ip max is "<<r0[i]
+	    //	     <<" second largest ip is "<<r1[i]
+	    //	     <<" alpha max is "<<(*jet_alphaMax)[i]
+            //<<std::endl;
             vector<float> track_pts = track_pt->at(i);
             vector<int> track_sources = track_source->at(i);
             vector<float> track_vertex_weights = track_vertex_weight->at(i);
@@ -378,15 +378,15 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
             vector<float> track_ipZs = track_ipZ->at(i);
             for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	      if(track_sources[itrack]==0) {
-		std::cout<<"    track pt is "<<track_pts[itrack]
-			 <<" ipxy is "<<track_ipXYs[itrack]
-			 <<" ipxysig is "<<track_ipXYSigs[itrack]
-			 <<" ipZ is "<<track_ipZs[itrack]
-			 <<" missinnerhits is "<<track_nMissInnerHitss[itrack]
-			 <<" missinnerpxllayers is "<<track_nMissInnerPxlLayerss[itrack]
-			 <<" pxllayers is "<<track_nPxlLayerss[itrack]
-			 <<" nHits is "<<track_nHitss[itrack]
-			 <<std::endl;
+		//	std::cout<<"    track pt is "<<track_pts[itrack]
+		//	 <<" ipxy is "<<track_ipXYs[itrack]
+		//	 <<" ipxysig is "<<track_ipXYSigs[itrack]
+		//	 <<" ipZ is "<<track_ipZs[itrack]
+		//	 <<" missinnerhits is "<<track_nMissInnerHitss[itrack]
+		//	 <<" missinnerpxllayers is "<<track_nMissInnerPxlLayerss[itrack]
+		//	 <<" pxllayers is "<<track_nPxlLayerss[itrack]
+		//	 <<" nHits is "<<track_nHitss[itrack]
+		//	 <<std::endl;
 		if(otfile) hnHitsnm1->Fill(track_nHitss[itrack]);
 	      }
             }
