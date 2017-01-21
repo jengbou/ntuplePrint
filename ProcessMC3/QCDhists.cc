@@ -74,12 +74,13 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   float Dpt2cut=200;
   float Dpt3cut=200;
   float Dpt4cut=100;
-  float Dalphacut=0.04;
+  float Dalphacut=0.06;
   float DmaxIPcut=-1;
   float Djetacut = 2.;
   int Dnemcut=2;
+  int Dntrk1=2;
   // for alpha max scan
-  const int ncutscan=5;
+  const int ncutscan=10;
   //const int ncutscan=1;
   
 
@@ -92,7 +93,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
-      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,0,Dnemcut);
+      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
     }
   }
 
@@ -138,8 +139,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   //do some cut optimization on alpha max
 
 
-  //const int ncutscan=2;
-  float acut=1.5;
+  float acut=0.5;
   //  int ipass[ncutscan][nbin];
   vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
   if(doopta==1) {
@@ -152,7 +152,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
       inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
-      int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,0,Dnemcut);
+      int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut);
 	ipass[k][i]+=iii;
 	std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
       }
@@ -174,7 +174,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   //make and  output summed and renormalized histograms
   std::cout<<"normalizing histograms"<<std::endl;
-  const int nhist=42;
+  const int nhist=43;
   std::vector<TH1F*> vv(nhist);
   std::string histnames[nhist]={
 "count","acount","hjetcut","hjetchf","h_nemg",
@@ -182,7 +182,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 "H_T","H_T2","hpt1","hpt2","hpt3",
 "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
 "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
-"hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1","hmaxipnm1",
+"hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1","hmaxipnm1","hnHitsnm1",
 "hnemnm1","hipXYEJ","hipXYnEJ","htvwEJ","htvw",
 "hipXYSigEJ","hipXYSignEJ","hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ",
 "hmeanipXYnEJ"

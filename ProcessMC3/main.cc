@@ -59,7 +59,7 @@ std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500
 // quick background
 const int qnbin=1; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float qxsec[nbin]={1064000}; // fb 
-int qnfiles[nbin]={50};
+int qnfiles[nbin]={25};
 std::string qbinnames[nbin]={"QCD_HT1000to1500"};
 
 

@@ -86,7 +86,7 @@ void SrootB()
   lgd->SetBorderSize(0); lgd->SetTextSize(0.04); lgd->SetTextFont(62); lgd->SetFillColor(0);
 
 
-  TFile *f1 = new TFile("SumHistsQCD_bigscan_12jan17.rot");
+  TFile *f1 = new TFile("SumHistsQCD.rot");
   TH1F *B_cnt = static_cast<TH1F*>(f1->Get("kcutscan")->Clone());
   int nbin = B_cnt->GetNbinsX();
   std::vector<double> BCK(nbin);
@@ -95,7 +95,7 @@ void SrootB()
 
 
 
-  TFile *f2 = new TFile("SumHistsModelB_bigscan_12jan17.rot");
+  TFile *f2 = new TFile("SumHistsModelB.rot");
   TH1F *S_cnt = static_cast<TH1F*>(f2->Get("kcutscan")->Clone());
   std::vector<double> SGL(nbin);
   for(int i=0;i<nbin;i++) SGL[i]=S_cnt->GetBinContent(i);

@@ -73,6 +73,13 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   vector<vector<float> > *track_ipZ =0;
   vector<vector<float> > *track_ipXY = 0;
   vector<vector<float> > *track_ipXYSig = 0;
+  vector<vector<int> > *track_nMissInnerHits = 0;
+  vector<vector<int> > *track_nMissInnerPxlLayers = 0;
+  vector<vector<int> > *track_nPxlLayers = 0;
+  vector<vector<int> > *track_nHits = 0;
+
+
+
 
   //get event count pre trigger
 
@@ -102,12 +109,16 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   tt->SetBranchAddress("track_algo",&track_algo);
   tt->SetBranchAddress("track_vertex_index",&track_vertex_index);
   tt->SetBranchAddress("track_vertex_weight",&track_vertex_weight);
-  tt->SetBranchAddress("track_ipZ",&track_ipZ);
   tt->SetBranchAddress("track_ipXY",&track_ipXY);
   tt->SetBranchAddress("track_ipXYSig",&track_ipXYSig);
+  tt->SetBranchAddress("track_nMissInnerHits",&track_nMissInnerHits);
+  tt->SetBranchAddress("track_nMissInnerPxlLayers",&track_nMissInnerPxlLayers);
+  tt->SetBranchAddress("track_nPxlLayers",&track_nPxlLayers);
+  tt->SetBranchAddress("track_nHits",&track_nHits);
+  tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
   TH2F *aMip;
@@ -133,8 +144,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   hpt2 = new TH1F("hpt2"," pT of second jet",200,0.,1000.);
   hpt3 = new TH1F("hpt3"," pT of third jet",200,0.,1000.);
   hpt4 = new TH1F("hpt4"," pT of fourth jet",200,0.,1000.);
-  hbcut_ntrkpt1 = new TH1F("hbcut_ntrkpt1","number tracks pt>1 before cut",10,0.,20.);
-  hacut_ntrkpt1 = new TH1F("hacut_ntrkpt1","number tracks pt>1 after cut",10,0.,20.);
+  hbcut_ntrkpt1 = new TH1F("hbcut_ntrkpt1","number tracks pt>1 before cut",20,0.,20.);
+  hacut_ntrkpt1 = new TH1F("hacut_ntrkpt1","number tracks pt>1 after cut",20,0.,20.);
   hbcut_nef = new TH1F("hbcut_nef","neutral em fraction before cut",10,0.,1.2);
   hacut_nef = new TH1F("hacut_nef","neutral em fraction after cut",10,0.,1.2);
   hbcut_cef = new TH1F("hbcut_cef","charged em fraction before cut",50,0.,1.2);
@@ -148,6 +159,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   hpt4nm1 = new TH1F("hpt4nm1","pt4 n-1",200,0.,1000.);
   halphanm1 = new TH1F("halphanm1","alpha max n-1",200,0.,1.5);
   hmaxipnm1 = new TH1F("hmaxipnm1","ip max n-1",200,0.,10.);
+  hnHitsnm1 = new TH1F("hnHitsnm1","number Hits n-1",40,0.,40.);
   hnemnm1 = new TH1F("hnemnm1","N emerging jets n-1",10,0.,10.);
   hipXYEJ = new TH1F("hipXYEJ","impact parameter  tracks of emerging jets",300,0.,1.);
   hipXYnEJ = new TH1F("hipXYnEJ","impact parameter  tracks of not emerging jets",300,0.,1.);
@@ -341,8 +353,46 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	if(almostemerging[i]) {
 	  halphanm1->Fill((*jet_alphaMax)[i]);
 	  aMip->Fill((*jet_alphaMax)[i],r0[i]);
-	  if(((*jet_alphaMax)[i]<0.06)) {
-	  hmaxipnm1->Fill(r0[i]);
+	  if(((*jet_alphaMax)[i]<alphaMaxcut)) {
+	    hmaxipnm1->Fill(r0[i]);
+
+	    
+            std::cout<<" almost emerging"<<std::endl;
+	    if(r0[i]<0.05) std::cout<<"DANGER DANGER"<<std::endl;
+            std::cout<<" jet pt is "<<(*jet_pt)[i]
+		     <<" ntrkpt1 is "<<jet_ntrkpt1[i]
+		     <<" meanip is "<<jet_meanip[i]
+		     <<" ip max is "<<r0[i]
+		     <<" second largest ip is "<<r1[i]
+		     <<" alpha max is "<<(*jet_alphaMax)[i]
+            <<std::endl;
+            vector<float> track_pts = track_pt->at(i);
+            vector<int> track_sources = track_source->at(i);
+            vector<float> track_vertex_weights = track_vertex_weight->at(i);
+            vector<float> track_ipXYs = track_ipXY->at(i);
+            vector<float> track_ipXYSigs = track_ipXYSig->at(i);
+            vector<int> track_nMissInnerHitss = track_nMissInnerHits->at(i);
+            vector<int> track_nMissInnerPxlLayerss = track_nMissInnerPxlLayers->at(i);
+            vector<int> track_nPxlLayerss = track_nPxlLayers->at(i);
+            vector<int> track_nHitss = track_nHits->at(i);
+            vector<float> track_ipZs = track_ipZ->at(i);
+            for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
+	      if(track_sources[itrack]==0) {
+		std::cout<<"    track pt is "<<track_pts[itrack]
+			 <<" ipxy is "<<track_ipXYs[itrack]
+			 <<" ipxysig is "<<track_ipXYSigs[itrack]
+			 <<" ipZ is "<<track_ipZs[itrack]
+			 <<" missinnerhits is "<<track_nMissInnerHitss[itrack]
+			 <<" missinnerpxllayers is "<<track_nMissInnerPxlLayerss[itrack]
+			 <<" pxllayers is "<<track_nPxlLayerss[itrack]
+			 <<" nHits is "<<track_nHitss[itrack]
+			 <<std::endl;
+		if(otfile) hnHitsnm1->Fill(track_nHitss[itrack]);
+	      }
+            }
+	    
+
+
 	  }
 	}
       }
@@ -435,6 +485,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     hpt4nm1->Write();
     halphanm1->Write();
     hmaxipnm1->Write();
+    hnHitsnm1->Write();
     hnemnm1->Write();
     hipXYEJ->Write();
     hipXYnEJ->Write();
