@@ -118,7 +118,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
   TH2F *aMip;
@@ -160,6 +160,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   halphanm1 = new TH1F("halphanm1","alpha max n-1",200,0.,1.5);
   hmaxipnm1 = new TH1F("hmaxipnm1","ip max n-1",200,0.,10.);
   hnHitsnm1 = new TH1F("hnHitsnm1","number Hits n-1",40,0.,40.);
+  hntrk1nm1 = new TH1F("hntrk1nm1","number tracks pt>1 n-1",50,0.,50.);
   hnemnm1 = new TH1F("hnemnm1","N emerging jets n-1",10,0.,10.);
   hipXYEJ = new TH1F("hipXYEJ","impact parameter  tracks of emerging jets",300,0.,1.);
   hipXYnEJ = new TH1F("hipXYnEJ","impact parameter  tracks of not emerging jets",300,0.,1.);
@@ -353,6 +354,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	if(almostemerging[i]) {
 	  halphanm1->Fill((*jet_alphaMax)[i]);
 	  aMip->Fill((*jet_alphaMax)[i],r0[i]);
+	  hntrk1nm1->Fill(jet_ntrkpt1[i]);
 	  if(((*jet_alphaMax)[i]<alphaMaxcut)) {
 	    hmaxipnm1->Fill(r0[i]);
 
@@ -486,6 +488,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     halphanm1->Write();
     hmaxipnm1->Write();
     hnHitsnm1->Write();
+    hntrk1nm1->Write();
     hnemnm1->Write();
     hipXYEJ->Write();
     hipXYnEJ->Write();
