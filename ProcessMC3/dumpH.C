@@ -40,11 +40,13 @@ void dumpH(const char* inputfilename, const char* hname) {
 
   int nbin = ahist->GetNbinsX();
   std::cout<<" this histogram has "<<nbin<<" bins"<<std::endl;
+  float asum=0.;
   for(int i=0;i<=nbin;i++) {
     float aa = ahist->GetBinContent(i);
     std::cout<<"bin "<<i<<" contains "<<aa<<std::endl;
+    asum=asum+aa;
   }
-
+  std::cout<<"integral is "<<asum<<std::endl;
 
   f->Close();
 
