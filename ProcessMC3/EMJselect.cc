@@ -118,7 +118,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
   TH2F *aMip;
@@ -140,6 +140,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   halpha   = new TH1F("halpha","jet alphaMax distribution",100,0.,1.5);
   H_T      = new TH1F("H_T"," HT distribution before cut", 100,0.,5000.);
   H_T2      = new TH1F("H_T2"," HT distribution after cut", 100,0.,5000.);
+  H_T3      = new TH1F("H_T3"," HT distribution at end", 100,0.,5000.);
+  H_T4      = new TH1F("H_T4"," HT distribution test", 100,0.,5000.);
   hpt1 = new TH1F("hpt1"," pT of leading jet",200,0.,1000.);
   hpt2 = new TH1F("hpt2"," pT of second jet",200,0.,1000.);
   hpt3 = new TH1F("hpt3"," pT of third jet",200,0.,1000.);
@@ -186,7 +188,9 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
   // loop over events
   for (Int_t i=0; i<nentries; i++) {
-    //    if(i%100 == 0) std::cout<<"event "<<i<<std::endl;
+    //    std::cout<<"***event "<<event<<std::endl;
+
+    
     if(otfile) count->Fill("All",1);  // count number of events
     if(otfile) acount->Fill(0.5);
     tt->GetEntry(i);
@@ -218,6 +222,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       vector<float> track_ipXYs = track_ipXY->at(j);
       vector<float> track_ipXYSigs = track_ipXYSig->at(j);
       vector<float> sort_ip(track_pts.size());
+      for(int it=0;it<track_pts.size();it++) sort_ip[it]=0;
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
 	  sort_ip[itrack]=fabs(track_ipXYs[itrack]);
@@ -239,7 +244,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
 
       //now look and see if any of the 4 lead jets are emerging
-
+    //    std::cout<<" in event "<<event<<" number of jets is "<<NNNjet<<std::endl;
       bool emerging[4];
       bool almostemerging[4];
       for( int i=0;i<4;i++) {
@@ -247,10 +252,13 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	  almostemerging[i]=false;
 	}
       int nemerging=0;
+      int nalmostemerging=0;
       int noldem=0;
       int iijjkk = 4;
       if(NNNjet<4) iijjkk=NNNjet;
+      //      std::cout<<"iijjkk is "<<iijjkk<<std::endl;
       for(int ij=0;ij<iijjkk;ij++) {
+	
         vector<float> track_ipXYs = track_ipXY->at(ij);
         vector<float> track_ipXYSigs = track_ipXYSig->at(ij);
         vector<int> track_sources = track_source->at(ij);
@@ -278,11 +286,16 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	          if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
 	          if(otfile) hjetcut->Fill(4.5);
 		  noldem=noldem+1;
-
+		  nalmostemerging=nalmostemerging+1;
 		if(r0[ij]>maxIPcut) { // max IP cut
+
 	        emerging[ij]=true;
 	        nemerging+=1.;
-		//		std::cout<<" an emerging jet"<<std::endl;
+		if(ij<4) {
+		  //		std::cout<<" an emerging jet "<<ij<<std::endl;
+		  //std::cout<<" with r0 of "<<r0[ij]<<std::endl;
+		  //std::cout<<" and pt of "<<(*jet_pt)[ij]<<std::endl;
+		}
 		// look at tracks in the emerging jets
 		if(otfile) hmaxipXYEJ->Fill(r0[ij]);
 		if(otfile) hmeanipXYEJ->Fill(jet_meanip[ij]);
@@ -310,13 +323,14 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
                 }
 
 	}
+	//	std::cout<<"event pt alphaM cef nef ntrkpt1 r0 emerging  almost "<<event<<" "<<(*jet_pt)[ij]<<" "<<(*jet_alphaMax)[ij]<<" "<<(*jet_cef)[ij]<<" "<<(*jet_nef)[ij]<<" "<<jet_ntrkpt1[ij]<<" "<<r0[ij]<<" "<<emerging[ij]<<" "<<almostemerging[ij]<<std::endl;
       }
       if(otfile) h_nemg->Fill(nemerging);
 
 
-      //*************************************************************
+      // *************************************************************
     // now start the event selections
-      //*************************************************************
+      // *************************************************************
 
     // require at least 4 jets
     bool C4jet=true;
@@ -342,6 +356,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     // number emerging jets
     bool Cnem = true;
     if(nemerging<NemergingCut) Cnem=false;
+    if(nalmostemerging>=4) Cnem=false;
 
 
     // do N-1 plots
@@ -404,7 +419,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     }
 
 
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&noldem==2) {
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&noldem>=2) {
+    if(otfile) H_T4->Fill(HT);
       for(int i=0;i<3;i++) {
 	if(almostemerging[i]) {
 	  if(((*jet_alphaMax)[i]<alphaMaxcut)) {
@@ -414,7 +430,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
       }
     }
 
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&noldem==1) {
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&noldem>=1) {
       for(int i=0;i<3;i++) {
 	if(almostemerging[i]) {
 	  if(((*jet_alphaMax)[i]<alphaMaxcut)) {
@@ -430,49 +446,55 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
     // apply cuts sequentially
 
-    if(!C4jet) continue;
+    //    std::cout<<"c4jet cht cpt1 cpt2 cpt3 cpt4 cnem "<<C4jet<<" "<<CHT<<" "<<Cpt1<<" "<<Cpt2<<" "<<Cpt3<<" "<<Cpt4<<" "<<Cnem<<std::endl;
+
+    if(C4jet) {
     if(otfile) count->Fill("4 jets",1);
     if(otfile) acount->Fill(1.5);
 
     // calculate HT and require it greater than some cut value
-    if(!CHT) continue;
+    if(CHT) {
     if(otfile) count->Fill("HT",1);
     if(otfile) acount->Fill(2.5);
     if(otfile) H_T2->Fill(HT);
 
     // do pT cuts on jets  
-    if(!Cpt1) continue;
+    if(Cpt1) {
     if(otfile) count->Fill("jet pt1",1);
     if(otfile) acount->Fill(3.5);
 
 
-    if(!Cpt2) continue;
+    if(Cpt2) {
     if(otfile) count->Fill("jet pt2",1);
     if(otfile) acount->Fill(4.5);
 
 
-    if(!Cpt3) continue;
+    if(Cpt3) {
     if(otfile) count->Fill("jet pt3",1);
     if(otfile) acount->Fill(5.5);
 
 
-    if(!Cpt4) continue;
+    if(Cpt4) {
     if(otfile) count->Fill("jet pt4",1);
     if(otfile) acount->Fill(6.5);
 
 
 
       // require at least N emerging jets
-      if(!Cnem) continue;
+    if(Cnem) {
 
 
 
     if(otfile) count->Fill("emerging",1);
     if(otfile) acount->Fill(7.5);
     npass+=1;
+    if(otfile) H_T3->Fill(HT);   
 
+    
 
+    //    std::cout<<"npass event is "<<npass<<" "<<event<<std::endl;
 
+    }}}}}}}
 
   }  // end of loop over events
 
@@ -493,6 +515,8 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     halpha->Write();
     H_T->Write();
     H_T2->Write();
+    H_T3->Write();
+    H_T4->Write();
     hpt1->Write();
     hpt2->Write();
     hpt3->Write();
