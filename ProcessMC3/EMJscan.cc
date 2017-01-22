@@ -153,11 +153,13 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
       bool emerging[4];
       emerging[0]=false;emerging[1]=false;emerging[2]=false;emerging[3]=false;
       int nemerging=0;
+      int nalmostemerging=0;
       for(int ij=0;ij<4;ij++) {
 	if((*jet_alphaMax)[ij]<alphaMaxcut) {
 	  if((*jet_nef)[ij]<NemfracCut) {
 	    if(jet_ntrkpt1[ij]>ntrk1cut) {
 	      if((*jet_cef)[ij]<CemfracCut) {
+		nalmostemerging=nalmostemerging+1;
 		if(r0[ij]>maxIPcut) {
 	          emerging[ij]=true;
 	          nemerging+=1.;
@@ -216,9 +218,10 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 	              if((*jet_pt)[1]>pt2cut&&(fabs((*jet_eta)[1])<jetacut)) {
 	                if((*jet_pt)[2]>pt3cut&&(fabs((*jet_eta)[2])<jetacut)) {
 	                  if((*jet_pt)[3]>pt4cut&&(fabs((*jet_eta)[3])<jetacut)) {
-	                    if((nemerging>=NemergingCut)&&nemerging<4) {
+			    if(nalmostemerging<4) {
+	                    if((nemerging>=NemergingCut)) {
                               npass[icut]+=1;
-	                    }
+	                    }}
 	                  }
 	                }
 	              }

@@ -75,12 +75,13 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   float Dpt3cut=200;
   float Dpt4cut=100;
   float Dalphacut=0.06;
-  float DmaxIPcut=-1;
+  float DmaxIPcut=0.4;
   float Djetacut = 2.;
+  // dont forget there is a hidden cut nalmostemergin<4!!!!!!!!!!!!!!!!!
   int Dnemcut=2;
   int Dntrk1=1;
   // for alpha max scan
-  const int ncutscan=3;
+  const int ncutscan=12;
   //const int ncutscan=1;
   
 
@@ -139,7 +140,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   //do some cut optimization on alpha max
 
 
-  float acut=0.6;
+  float acut=1.2;
   //  int ipass[ncutscan][nbin];
   vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
   if(doopta==1) {
@@ -238,7 +239,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   for(int i=0;i<ncutscan;i++) fpass[i]=0;
   for(int k=0;k<ncutscan;k++) {
     for(int i=0;i<nbin;i++) {
-      std::cout<<"k i "<<k<<" "<<i<<" "<<ipass[k][i]<<" "<<outnorm[i]<<std::endl;
+      //      std::cout<<"k i "<<k<<" "<<i<<" "<<ipass[k][i]<<" "<<outnorm[i]<<std::endl;
       fpass[k]+=ipass[k][i]*outnorm[i];
     }
     std::cout<<" output alphamax scan "<<k<<" "<<fpass[k]<<std::endl;
