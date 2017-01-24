@@ -22,9 +22,11 @@ int main(int argc, char *argv[])
   }
 
   if(doopta==0) {
-    std::cout<<"not doing alphamax optimization"<<std::endl;
+    std::cout<<"not doing optimization on an emerging jet variable"<<std::endl;
   } else if(doopta==1) {
     std::cout<<"doing alphamax optimization"<<std::endl;
+  } else if(doopta==2) {
+    std::cout<<"doing maxIP optimization"<<std::endl;
   } else {
     std::cout<<"invalid choice"<<std::endl;
   }

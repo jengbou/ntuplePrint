@@ -139,8 +139,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   //do some cut optimization on alpha max
 
-
-  float acut=1.2;
+  float acut = 1.0;
+    if(doopta==2) acut=1.2;
   //  int ipass[ncutscan][nbin];
   vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
   if(doopta==1) {
@@ -153,7 +153,12 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
       inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
-      int iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut);
+      int iii=0;
+      if(doopta==1) {
+      iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,acut2,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
+      } else {
+      iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut);
+      }
 	ipass[k][i]+=iii;
 	std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
       }
