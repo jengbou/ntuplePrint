@@ -1,12 +1,14 @@
-medmass = {400,600, 800, 1000, 1500, 2000}
-dpmass = {1, 2, 5, 10}
-dplt = {"0p001", "0p1", "1", "5", "150", "300"}
+# for some reason now you have to run it twice.  
+# it seems the .txt1 files are not quite there when the cat commands comes along
+medmass = [400, 600, 800, 1000, 1500, 2000]
+dpmass = [1, 2, 5, 10]
+dplt = ["0p001", "0p1", "1", "5", "150", "300"]
 
 import subprocess
 
 #medmass = [800]
 #dpmass = [1]
-#dplt = ["0p001","0p1"]
+#dplt = ["0p001"]
 
 
 exearea = "/data/users/eno/em6/CMSSW_7_6_3/src/EmergingJetAnalysis/"
@@ -34,9 +36,13 @@ for i in medmass:
 #      print "namev is "+namev
       command2 = "mkdir /data/users/eno/outputQCD/"+scname
       q = subprocess.Popen(command2,stdout=subprocess.PIPE, shell=True)
-      command3= "ls "+namev+"*.root > /data/users/eno/DARKJOBS/"+scname+".txt"
+      command3= "ls "+namev+"*.root > /data/users/eno/DARKJOBS/"+scname+".txt1"
 #      print command3
       q = subprocess.Popen(command3,stdout=subprocess.PIPE, shell=True)
+      command4="cat /data/users/eno/DARKJOBS/"+scname+".txt1"+" | sed -e s~/mnt~file:/mnt~ > /data/users/eno/DARKJOBS/"+scname+".txt"
+#      print command4
+      q = subprocess.Popen(command4,stdout=subprocess.PIPE, shell=True)
+
       name = scname
       hostarea = "/data/users/eno/outputQCD/"+name+"/"
       jdlfile = open("condor-jobs-"+name+".jdl","w")
