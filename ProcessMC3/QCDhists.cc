@@ -143,7 +143,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     if(doopta==2) acut=1.2;
   //  int ipass[ncutscan][nbin];
   vector < vector <int> > ipass(ncutscan, vector<int>(nbin,0));
-  if(doopta==1) {
+  if(doopta>0) {
   for(int k=0;k<ncutscan;k++) {
     float acut2=(acut/(ncutscan))*(k);
     std::cout<<" cut value is "<<acut2<<std::endl;
