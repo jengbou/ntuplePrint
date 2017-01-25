@@ -287,15 +287,24 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 	          if(otfile) hjetcut->Fill(4.5);
 		  noldem=noldem+1;
 		  nalmostemerging=nalmostemerging+1;
+		  /*
+		if(ij<4) {
+		  std::cout<<" an almost emerging jet "<<ij<<std::endl;
+		  std::cout<<" with r0 of "<<r0[ij]<<std::endl;
+		  std::cout<<" and pt of "<<(*jet_pt)[ij]<<std::endl;
+		}
+		  */
 		if(r0[ij]>maxIPcut) { // max IP cut
 
 	        emerging[ij]=true;
 	        nemerging+=1.;
+		/*
 		if(ij<4) {
-		  //		std::cout<<" an emerging jet "<<ij<<std::endl;
-		  //std::cout<<" with r0 of "<<r0[ij]<<std::endl;
-		  //std::cout<<" and pt of "<<(*jet_pt)[ij]<<std::endl;
+		  std::cout<<" an emerging jet "<<ij<<std::endl;
+		  std::cout<<" with r0 of "<<r0[ij]<<std::endl;
+		  std::cout<<" and pt of "<<(*jet_pt)[ij]<<std::endl;
 		}
+		*/
 		// look at tracks in the emerging jets
 		if(otfile) hmaxipXYEJ->Fill(r0[ij]);
 		if(otfile) hmeanipXYEJ->Fill(jet_meanip[ij]);
@@ -356,18 +365,20 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     // number emerging jets
     bool Cnem = true;
     if(nemerging<NemergingCut) Cnem=false;
-    if(nalmostemerging>=4) Cnem=false;
+    //    if(nalmostemerging>=4) Cnem=false;
+    bool Canem =true;
+    if(nalmostemerging>=4) Canem=false;
 
 
     // do N-1 plots
     if(otfile) {
-    if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem) hHTnm1->Fill(HT);
-    if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem) hpt1nm1->Fill((*jet_pt)[0]);
-    if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem) hpt2nm1->Fill((*jet_pt)[1]);
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt4&&Cnem) hpt3nm1->Fill((*jet_pt)[2]);
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cnem) hpt4nm1->Fill((*jet_pt)[3]);
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) hnemnm1->Fill(nemerging);
-    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) {
+    if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hHTnm1->Fill(HT);
+    if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hpt1nm1->Fill((*jet_pt)[0]);
+    if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem&&Canem) hpt2nm1->Fill((*jet_pt)[1]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt4&&Cnem&&Canem) hpt3nm1->Fill((*jet_pt)[2]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cnem&&Canem) hpt4nm1->Fill((*jet_pt)[3]);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Canem) hnemnm1->Fill(nemerging);
+    if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Canem) {
       for(int i=0;i<3;i++) {
 	if(almostemerging[i]) {
 	  halphanm1->Fill((*jet_alphaMax)[i]);
@@ -482,19 +493,30 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
       // require at least N emerging jets
     if(Cnem) {
+      std::cout<<"PASS without almost"<<std::endl;
+      std::cout<<"n emerging nealmost emergin is "<<nemerging<<" "<<nalmostemerging<<std::endl;
+      std::cout<<Canem<<std::endl;
 
 
 
-    if(otfile) count->Fill("emerging",1);
-    if(otfile) acount->Fill(7.5);
-    npass+=1;
-    if(otfile) H_T3->Fill(HT);   
+      if(otfile) count->Fill("emerging",1);
+      if(otfile) acount->Fill(7.5);
+      if(Canem) {
+	std::cout<<"PASS with almost"<<std::endl;
+
+        if(otfile) count->Fill("almostemerging",1);
+        if(otfile) acount->Fill(8.5);
+
+
+          npass+=1;
+          if(otfile) H_T3->Fill(HT);   
 
     
 
-    //    std::cout<<"npass event is "<<npass<<" "<<event<<std::endl;
+    std::cout<<"npass  event is "<<npass<<" "<<event<<std::endl;
+    std::cout<<"nemerging nalmostemerging "<<nemerging<<" "<<nalmostemerging<<std::endl;
 
-    }}}}}}}
+    }}}}}}}}
 
   }  // end of loop over events
 

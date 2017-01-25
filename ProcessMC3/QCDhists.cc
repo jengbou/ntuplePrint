@@ -67,7 +67,6 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   const int ncutscan=5;
   */
 
-    
   // opt
   float DHTcut=1000;
   float Dpt1cut=400;
@@ -83,6 +82,9 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   // for alpha max scan
   const int ncutscan=12;
   //const int ncutscan=1;
+
+
+
   
 
   // first make histograms for each file in each bin for the qcd sample
