@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
     std::cout<<"doing modelA"<<std::endl;
   } else if(imode==2) {
     std::cout<<"doing modelB"<<std::endl;
+  } else if(imode==3) {
+    std::cout<<"doing quick QCD"<<std::endl;
   } else if(imode==4) {
     std::cout<<"doing debug sample"<<std::endl;
   } else {
