@@ -175,7 +175,7 @@ float NemfracCut,float CemfracCut,int ntrk1cut) {
 
 
 
-    int icut=0;
+    int icut=-1;
     float HTcut,pt1cut,pt2cut,pt3cut,pt4cut;
     int NemergingCut;
     for(int iht=0;iht<NHTcut;iht++) {
