@@ -82,10 +82,10 @@ void Overlay()
 
 
   std::cout<<"getting first"<<std::endl;
-  TH1F *A_pt = static_cast<TH1F*>(f1->Get("hmaxipnm1")->Clone());
+  TH1F *A_pt = static_cast<TH1F*>(f1->Get("hn2maxipnm1")->Clone());
   double aaA = A_pt->Integral();
 std::cout<<" first entries is "<<aaA<<std::endl;
-//  A_pt->Scale(1./aaA);
+//A_pt->Scale(1./aaA);
 
   A_pt->GetYaxis()->SetTitle("number in 20 fb-1");  
   A_pt->GetYaxis()->SetTitleSize(0.05);  
@@ -112,6 +112,7 @@ std::cout<<" second entries is "<<aaB<<std::endl;
   
   B_pt->Draw("same");
 
+  /*
   std::cout<<"getting third"<<std::endl;
   TH1F *C_pt = static_cast<TH1F*>(f1->Get("hn2maxipnm1")->Clone());
   double aaC = C_pt->Integral();
@@ -124,13 +125,13 @@ std::cout<<" third entries is "<<aaC<<std::endl;
   C_pt->SetStats(0);
   
   C_pt->Draw("same");
-
+  */
 
 
  
- lgd->AddEntry(A_pt, "Kine", "l");
- lgd->AddEntry(B_pt, "Kine +1 ej", "l");
- lgd->AddEntry(C_pt, "Kine + 2 ej", "l");
+ lgd->AddEntry(A_pt, "Kine +1 emerging jets", "l");
+ lgd->AddEntry(B_pt, "Kine +2 emerging jets", "l");
+ // lgd->AddEntry(C_pt, "Kine + 2 ej", "l");
 
  lgd->Draw();
     // Writing the lumi information and the CMS "logo"

@@ -90,7 +90,7 @@ void SrootB()
   TH1F *B_cnt = static_cast<TH1F*>(f1->Get("kcutscan")->Clone());
   int nbin = B_cnt->GetNbinsX();
   std::vector<double> BCK(nbin);
-  for(int i=0;i<nbin;i++) BCK[i]=B_cnt->GetBinContent(i);
+  for(int i=1;i<nbin+1;i++) BCK[i-1]=B_cnt->GetBinContent(i);
   f1->Close();
 
 
@@ -98,7 +98,7 @@ void SrootB()
   TFile *f2 = new TFile("SumHistsModelB.rot");
   TH1F *S_cnt = static_cast<TH1F*>(f2->Get("kcutscan")->Clone());
   std::vector<double> SGL(nbin);
-  for(int i=0;i<nbin;i++) SGL[i]=S_cnt->GetBinContent(i);
+  for(int i=1;i<nbin+1;i++) SGL[i-1]=S_cnt->GetBinContent(i);
   f2->Close();
 
   std::vector<std::pair<int,double>> forSort(nbin);
