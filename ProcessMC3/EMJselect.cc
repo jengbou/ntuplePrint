@@ -389,7 +389,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Canem) hnemnm1->Fill(nemerging);
     if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Canem) {
       for(int i=0;i<3;i++) {
-	if(almostemerging[i]) {
+	if(basicjet[i]) {
 	  halphanm1->Fill((*jet_alphaMax)[i]);
 	  aMip->Fill((*jet_alphaMax)[i],r0[i]);
 	  hntrk1nm1->Fill(jet_ntrkpt1[i]);
