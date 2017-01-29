@@ -80,7 +80,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   int Dnemcut=2;
   int Dntrk1=1;
   // for alpha max scan
-  const int ncutscan=12;
+  const int ncutscan=3;
   //const int ncutscan=1;
 
 
@@ -103,7 +103,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   // do some cut optimization on cuts not related to choosing the emerging jets
   const int nkincut=6;
-  vector<int> nstep {10,10,10,10,10,3};
+  vector<int> nstep {4,4,4,4,4,3};
   //vector<int> nstep {2,2,2,2,2,2};
   // ht pt1 pt2 pt3 pt4 nemerging
   vector<float> cutmin {1000.,400.,200.,200.,100.,0};
@@ -182,7 +182,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   //make and  output summed and renormalized histograms
   std::cout<<"normalizing histograms"<<std::endl;
-  const int nhist=48;
+  const int nhist=54;
   std::vector<TH1F*> vv(nhist);
   std::string histnames[nhist]={
 "count","acount","hjetcut","hjetchf","h_nemg",
@@ -194,7 +194,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1","hipXYEJ",
 "hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
 "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-"hn2maxipnm1","H_T3","H_T4"
+"hn2maxipnm1","H_T3","H_T4","hjptfrb","hjptfra1",
+"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c"
 };
   vector<double> outnorm(nbin);
   for(int i=0;i<nhist;i++) {
