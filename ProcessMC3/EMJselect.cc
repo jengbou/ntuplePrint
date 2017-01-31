@@ -24,7 +24,7 @@ Int_t           fCurrent; //!current Tree number in a TChain
 
 
 
-int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
+int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename,
 	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
   // "ntuple.root", "histos.root"
   // suggest cuts 1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1
@@ -41,7 +41,12 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
   // get histogram of events before trigger
   TH1F *eventCountPreTrigger;
-  if(otfile) eventCountPreTrigger = static_cast<TH1F*>(f->Get("eventCountPreTrigger/eventCountPreTrigger")->Clone());
+
+  if(hasPre) {
+    if(otfile) eventCountPreTrigger = static_cast<TH1F*>(f->Get("eventCountPreTrigger/eventCountPreTrigger")->Clone());
+  } else {
+    if(otfile)  eventCountPreTrigger = new TH1F("eventCountPreTrigger","haha",2,0.,2.);
+  }
 
 
 
@@ -121,7 +126,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
-  TH2F *aMip;
+  TH2F *aMip,*haMvjpt,*haMvHT,*haMvnvtx;
 
   if(otfile) {
   acount = new TH1F("acount","counts",20,0.,20.);
@@ -184,7 +189,10 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
   hjptfra2c = new TH1F("hjptfra2c"," pT of basic jets passing kine, almost, and emerging selection",100,0.,1000.);
 
   //1d
-  aMip = new TH2F("aMip"," somethign ",100,0.,1.,100,0.,10.);
+  aMip = new TH2F("aMip"," alpha Max versus max IP n-1 plot",100,0.,1.,100,0.,10.);
+  haMvjpt = new TH2F("haMvjpt"," alpha Max versus jet pT ",100,0.,1.,100,0.,1000.);
+  haMvHT = new TH2F("haMvHT"," alpha Max versus HT ",100,0.,1.,100,0.,5000.);
+  haMvnvtx = new TH2F("haMvnvtx"," alpha Max versus nvtx ",100,0.,1.,100,0.,100.);
   }
 
   //read all entries and fill the histograms
@@ -193,8 +201,9 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
   // loop over events
   for (Int_t i=0; i<nentries; i++) {
-    //    std::cout<<"***event "<<event<<std::endl;
-
+    std::cout<<"***event "<<event<<std::endl;
+ 
+    if(!hasPre) eventCountPreTrigger->Fill(1.5); 
     
     if(otfile) count->Fill("All",1);  // count number of events
     if(otfile) acount->Fill(0.5);
@@ -248,7 +257,7 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
 
 
-      //now look and see if any of the 4 lead jets are emerging
+      //now see which jets are emerging
     //    std::cout<<" in event "<<event<<" number of jets is "<<NNNjet<<std::endl;
     vector<bool> emerging(NNNjet);
     vector<bool> almostemerging(NNNjet);
@@ -379,8 +388,18 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
     if(nalmostemerging>=4) Canem=false;
 
 
-    // do N-1 plots
+    // do N-1 plots and other plots
     if(otfile) {
+      for(int i=0;i<NNNjet;i++) {
+	if(basicjet[i]) {
+	  if((*jet_pt)[i]>50 ) {
+	  haMvjpt->Fill((*jet_alphaMax)[i],(*jet_pt)[i]);
+	  haMvHT->Fill((*jet_alphaMax)[i],HT);
+	  haMvnvtx->Fill((*jet_alphaMax)[i],nVtx);
+	  }}
+      }
+
+
     if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hHTnm1->Fill(HT);
     if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hpt1nm1->Fill((*jet_pt)[0]);
     if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem&&Canem) hpt2nm1->Fill((*jet_pt)[1]);
@@ -625,6 +644,9 @@ int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
 
     //2d
     aMip->Write();
+    haMvjpt->Write();
+    haMvHT->Write();
+    haMvnvtx->Write();
 
     myfile.Close();
   }

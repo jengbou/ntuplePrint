@@ -83,14 +83,14 @@ void Overlay()
 
 
   std::cout<<"getting first"<<std::endl;
-  TH1F *A_pt = static_cast<TH1F*>(f1->Get("hmaxipnm1")->Clone());
+  TH1F *A_pt = static_cast<TH1F*>(f1->Get("halphanm1")->Clone());
   double aaA = A_pt->Integral();
 std::cout<<" first entries is "<<aaA<<std::endl;
-//  A_pt->Scale(1./aaA);
+// A_pt->Scale(1./aaA);
 
   A_pt->GetYaxis()->SetTitle("number in 20 fb-1");  
   A_pt->GetYaxis()->SetTitleSize(0.05);  
-  A_pt->GetXaxis()->SetTitle("largest ipXY of tracks in jets tagged as emerging");  
+  A_pt->GetXaxis()->SetTitle("alphamax for jets tagged as emerging");  
   A_pt->GetXaxis()->SetTitleSize(0.05);  
 
 
@@ -101,10 +101,10 @@ std::cout<<" first entries is "<<aaA<<std::endl;
   A_pt->Draw("");
 
   std::cout<<"getting second"<<std::endl;
-  TH1F *B_pt = static_cast<TH1F*>(f2->Get("hmaxipnm1")->Clone());
+  TH1F *B_pt = static_cast<TH1F*>(f2->Get("halphanm1")->Clone());
   double aaB = B_pt->Integral();
 std::cout<<" second entries is "<<aaB<<std::endl;
-//  B_pt->Scale(1./aaB);
+B_pt->Scale(500.);
   
   B_pt->SetDirectory(0);
   B_pt->SetLineColor(2);
@@ -114,10 +114,10 @@ std::cout<<" second entries is "<<aaB<<std::endl;
   B_pt->Draw("same");
 
   std::cout<<"getting third"<<std::endl;
-  TH1F *C_pt = static_cast<TH1F*>(f3->Get("hmaxipnm1")->Clone());
+  TH1F *C_pt = static_cast<TH1F*>(f3->Get("halphanm1")->Clone());
   double aaC = C_pt->Integral();
 std::cout<<" third entries is "<<aaC<<std::endl;
-//  C_pt->Scale(1./aaC);
+C_pt->Scale(500.);
   
   C_pt->SetDirectory(0);
   C_pt->SetLineColor(4);
@@ -130,8 +130,8 @@ std::cout<<" third entries is "<<aaC<<std::endl;
 
  
  lgd->AddEntry(A_pt, "QCD", "l");
- lgd->AddEntry(B_pt, "ModelA", "l");
- lgd->AddEntry(C_pt, "ModelB", "l");
+ lgd->AddEntry(B_pt, "ModelAx500", "l");
+ lgd->AddEntry(C_pt, "ModelBx500", "l");
 
  lgd->Draw();
     // Writing the lumi information and the CMS "logo"

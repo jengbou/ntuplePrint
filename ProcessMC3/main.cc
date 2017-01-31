@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta) ;
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre) ;
 
 
 
@@ -12,6 +12,8 @@ int main(int argc, char *argv[])
   int dooptk =*(argv[1])-'0';
   int doopta =*(argv[2])-'0';
   int imode=*(argv[3])-'0';
+
+  bool hasPre=true;
 
   if(dooptk==0) {
     std::cout<<"not doing kinematic optimization"<<std::endl;
@@ -41,6 +43,9 @@ int main(int argc, char *argv[])
     std::cout<<"doing quick QCD"<<std::endl;
   } else if(imode==4) {
     std::cout<<"doing debug sample"<<std::endl;
+  } else if(imode==5) {
+    std::cout<<"doing Wjet sample"<<std::endl;
+    hasPre=false;
   } else {
     std::cout<<"invalid choice"<<std::endl;
   }
@@ -90,16 +95,25 @@ float dxsec[nbin]={18.45}; // fb
 std::string dbinnames[nbin]={"tmpStore"};
 
 
+// Wjets sample
+const int wnbin=1; 
+float wxsec[nbin]={11811000}; // fb 
+int wnfiles[nbin]={100};
+std::string wbinnames[nbin]={"WSkim"};
+
+
 
  if(imode==0) {
-   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta);
+   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta,hasPre);
  } else if (imode==1) {
-   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta);
+   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre);
  } else if (imode==2) {
-   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta);
+   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre);
  } else if (imode==3) {
-   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta);
+   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta,hasPre);
  } else if (imode==4) {
-   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0);
+   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre);
+ } else if (imode==5) {
+   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWjet.root",0,0,hasPre);
  }
 }

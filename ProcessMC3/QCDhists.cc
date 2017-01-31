@@ -28,7 +28,7 @@ vector<int> EMJscan(const char* inputfilename,
 		    float jetacut,
                     float alphaMaxcut, float maxIPcut,
                     float NemfracCut,float CemfracCut,int ntrk1cut);
-int EMJselect(bool otfile, const char* inputfilename,const char* outputfilename,
+int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename,
 	      float HTcut, float pt1cut, float pt2cut,float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,
 	       int ntrk1cut, int NemergingCut	\
 	       );
@@ -44,7 +44,7 @@ std::string bbname = "./";
 
 
 //void QCDhists() 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta) 
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre) 
 {
 
   std::string inputfile;
@@ -73,12 +73,12 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   float Dpt2cut=200;
   float Dpt3cut=200;
   float Dpt4cut=100;
-  float Dalphacut=0.04;
+  float Dalphacut=0.06;
   float DmaxIPcut=0.4;
   float Djetacut = 2.;
   // dont forget there is a hidden cut nalmostemergin<4!!!!!!!!!!!!!!!!!
   int Dnemcut=2;
-  int Dntrk1=1;
+  int Dntrk1=0;
   // for alpha max scan
   const int ncutscan=3;
   //const int ncutscan=1;
@@ -96,7 +96,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
-      int itmp = EMJselect(true,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
+      int itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
     }
   }
 
@@ -157,9 +157,9 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
       std::cout<<"input file is "<<inputfile<<std::endl;
       int iii=0;
       if(doopta==1) {
-      iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,acut2,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
+	iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,acut2,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut);
       } else {
-      iii = EMJselect(false,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut);
+	iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut);
       }
 	ipass[k][i]+=iii;
 	std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
@@ -203,10 +203,10 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames);
   }
 
-  const int nhist2=1;
+  const int nhist2=4;
   std::vector<TH2F*> vv2(nhist2);
   std::string histnames2[nhist2]={
-"aMip"
+    "aMip","haMvjpt","haMvHT","haMvnvtx"
 };
   vector<double> outnorm2(nbin);
   for(int i=0;i<nhist2;i++) {
