@@ -98,7 +98,7 @@ std::string dbinnames[nbin]={"tmpStore"};
 // Wjets sample
 const int wnbin=1; 
 float wxsec[nbin]={11811000}; // fb 
-int wnfiles[nbin]={100};
+int wnfiles[nbin]={349};
 std::string wbinnames[nbin]={"WSkim"};
 
 

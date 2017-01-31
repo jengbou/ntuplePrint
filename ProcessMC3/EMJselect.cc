@@ -190,9 +190,9 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
   //1d
   aMip = new TH2F("aMip"," alpha Max versus max IP n-1 plot",100,0.,1.,100,0.,10.);
-  haMvjpt = new TH2F("haMvjpt"," alpha Max versus jet pT ",100,0.,1.,100,0.,1000.);
-  haMvHT = new TH2F("haMvHT"," alpha Max versus HT ",100,0.,1.,100,0.,5000.);
-  haMvnvtx = new TH2F("haMvnvtx"," alpha Max versus nvtx ",100,0.,1.,100,0.,100.);
+  haMvjpt = new TH2F("haMvjpt"," alpha Max versus jet pT ",100,0.,1.,100,0.,700.);
+  haMvHT = new TH2F("haMvHT"," alpha Max versus HT ",100,0.,1.,100,0.,2500.);
+  haMvnvtx = new TH2F("haMvnvtx"," alpha Max versus nvtx ",40,0.,1.,100,0.,40.);
   }
 
   //read all entries and fill the histograms
@@ -201,7 +201,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
   // loop over events
   for (Int_t i=0; i<nentries; i++) {
-    std::cout<<"***event "<<event<<std::endl;
+    //    std::cout<<"***event "<<event<<std::endl;
  
     if(!hasPre) eventCountPreTrigger->Fill(1.5); 
     
