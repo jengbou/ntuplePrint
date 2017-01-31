@@ -98,7 +98,7 @@ std::string dbinnames[nbin]={"tmpStore"};
 // Wjets sample
 const int wnbin=1; 
 float wxsec[nbin]={11811000}; // fb 
-int wnfiles[nbin]={349};
+int wnfiles[nbin]={345};
 std::string wbinnames[nbin]={"WSkim"};
 
 
@@ -114,6 +114,6 @@ std::string wbinnames[nbin]={"WSkim"};
  } else if (imode==4) {
    QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre);
  } else if (imode==5) {
-   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWjet.root",0,0,hasPre);
+   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre);
  }
 }

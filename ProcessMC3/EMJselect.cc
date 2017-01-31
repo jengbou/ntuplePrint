@@ -123,7 +123,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
   TH2F *aMip,*haMvjpt,*haMvHT,*haMvnvtx;
@@ -181,6 +181,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   hmaxipXYnEJ = new TH1F("hmaxipXYnEJ","max ip not emerging jets",1000,0.,10.);
   hmeanipXYEJ = new TH1F("hmeanipXYEJ","mean ip emerging jets",1000,0.,2.);
   hmeanipXYnEJ = new TH1F("hmeanipXYnEJ","mean ip not emerging jets",1000,0.,2.);
+  hjptb = new TH1F("hjptb"," pT of basic jet",100,0.,1000.);
+  hjpta = new TH1F("hjpta"," pT of emergng jets",100,0.,1000.);
   hjptfrb = new TH1F("hjptfrb"," pT of basic jets passing kine selection and n<4",100,0.,1000.);
   hjptfra1 = new TH1F("hjptfra1"," pT of basic jets passing kine, almost selection and n<4",100,0.,1000.);
   hjptfra2 = new TH1F("hjptfra2"," pT of basic jets passing kine, almost, and emerging selection and n<4",100,0.,1000.);
@@ -304,7 +306,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 	          if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
 	          if(otfile) hjetcut->Fill(4.5);
 		  almostemerging[ij]=true;
-		  nalmostemerging=nalmostemerging+1;
+		  
+		  if(ij<4) nalmostemerging=nalmostemerging+1;
 		  /*
 		if(ij<4) {
 		  std::cout<<" an almost emerging jet "<<ij<<std::endl;
@@ -315,7 +318,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 		if(r0[ij]>maxIPcut) { // max IP cut
 
 	        emerging[ij]=true;
-	        nemerging+=1.;
+	        if(ij<4) nemerging+=1.;
 		/*
 		if(ij<4) {
 		  std::cout<<" an emerging jet "<<ij<<std::endl;
@@ -399,6 +402,10 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 	  haMvjpt->Fill((*jet_alphaMax)[i],(*jet_pt)[i]);
 	  haMvHT->Fill((*jet_alphaMax)[i],HT);
 	  haMvnvtx->Fill((*jet_alphaMax)[i],nVtx);
+	  hjptb->Fill((*jet_pt)[i]);
+	  if(emerging[i]) {
+	    hjpta->Fill((*jet_pt)[i]);
+	  }
 	  }}
       }
 
@@ -637,6 +644,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     hmaxipXYnEJ->Write();
     hmeanipXYEJ->Write();
     hmeanipXYnEJ->Write();
+    hjptb->Write();
+    hjpta->Write();
     hjptfrb->Write();
     hjptfra1->Write();
     hjptfra2->Write();

@@ -182,7 +182,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   //make and  output summed and renormalized histograms
   std::cout<<"normalizing histograms"<<std::endl;
-  const int nhist=54;
+  const int nhist=56;
   std::vector<TH1F*> vv(nhist);
   std::string histnames[nhist]={
 "count","acount","hjetcut","hjetchf","h_nemg",
@@ -195,7 +195,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 "hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
 "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
 "hn2maxipnm1","H_T3","H_T4","hjptfrb","hjptfra1",
-"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c"
+"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+"hjpta"
 };
   vector<double> outnorm(nbin);
   for(int i=0;i<nhist;i++) {
