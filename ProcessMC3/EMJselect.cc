@@ -237,17 +237,20 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
       vector<float> track_ipXYSigs = track_ipXYSig->at(j);
       vector<float> sort_ip(track_pts.size());
       for(int it=0;it<track_pts.size();it++) sort_ip[it]=0;
+      int ntrkass=0;
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
-	  sort_ip[itrack]=fabs(track_ipXYs[itrack]);
+	  sort_ip[ntrkass]=fabs(track_ipXYs[itrack]);
 	  if(otfile) htvw->Fill(track_vertex_weights[itrack]);
 	  //	  std::cout<<"track vertex weight is "<<track_vertex_weights[itrack]<<std::endl;
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
 	  //	  std::cout<<" track "<<itrack<<" ip "<<track_ipXYs[itrack]<<" mean ip "<<jet_meanip[j]<<std::endl;
 	  jet_meanip[j]=jet_meanip[j]+fabs(track_ipXYs[itrack]);
+	  ntrkass++;
 	}
       }
-      if(track_pts.size()>0) jet_meanip[j]=jet_meanip[j]/track_pts.size();
+      float atmp = ntrkass;
+      if(ntrkass>0) jet_meanip[j]=jet_meanip[j]/atmp;
       std::sort(sort_ip.begin(), sort_ip.end());
       std::reverse(sort_ip.begin(),sort_ip.end());
       if(sort_ip.size()>0) r0[j]=sort_ip[0];
