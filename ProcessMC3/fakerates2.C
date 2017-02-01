@@ -82,7 +82,7 @@ void fakerates2() {
     rhist->Draw();
     
     
-   TFile *f2 = new TFile("SumHistsWSkim.rot");
+   TFile *f2 = new TFile("SumHistsWSkim.root");
     TH1F* nhist2 = static_cast<TH1F*>(f2->Get("hjpta")->Clone());
     TH1F* dhist2 = static_cast<TH1F*>(f2->Get("hjptb")->Clone());
     TH1F* rhist2 = static_cast<TH1F*>(f2->Get("hjpta")->Clone());
@@ -100,7 +100,7 @@ void fakerates2() {
     rhist2->Draw("same");
 
    
-   TFile *f3 = new TFile("SumHistsWMCSkim.rot");
+   TFile *f3 = new TFile("SumHistsWMCtSkim.root");
     TH1F* nhist3 = static_cast<TH1F*>(f3->Get("hjpta")->Clone());
     TH1F* dhist3 = static_cast<TH1F*>(f3->Get("hjptb")->Clone());
     TH1F* rhist3 = static_cast<TH1F*>(f3->Get("hjpta")->Clone());

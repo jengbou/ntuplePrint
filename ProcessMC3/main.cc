@@ -44,7 +44,10 @@ int main(int argc, char *argv[])
   } else if(imode==4) {
     std::cout<<"doing debug sample"<<std::endl;
   } else if(imode==5) {
-    std::cout<<"doing Wjet sample"<<std::endl;
+    std::cout<<"doing Wjet data sample"<<std::endl;
+    hasPre=false;
+  } else if(imode==6) {
+    std::cout<<"doing Wjet MC sample"<<std::endl;
     hasPre=false;
   } else {
     std::cout<<"invalid choice"<<std::endl;
@@ -95,11 +98,21 @@ float dxsec[nbin]={18.45}; // fb
 std::string dbinnames[nbin]={"tmpStore"};
 
 
-// Wjets sample
+// Wjets data sample
 const int wnbin=1; 
 float wxsec[nbin]={11811000}; // fb 
-int wnfiles[nbin]={345};
+//int wnfiles[nbin]={345};
+int wnfiles[nbin]={150};
 std::string wbinnames[nbin]={"WSkim"};
+
+// Wjets MC sample
+const int wmcnbin=1; 
+float wmcxsec[nbin]={11811000}; // fb 
+int wmcnfiles[nbin]={898};
+std::string wmcbinnames[nbin]={"WMCSkim"};
+
+
+
 
 
 
@@ -115,5 +128,7 @@ std::string wbinnames[nbin]={"WSkim"};
    QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre);
  } else if (imode==5) {
    QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre);
+ } else if (imode==6) {
+   QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre);
  }
 }

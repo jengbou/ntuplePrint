@@ -17,7 +17,7 @@ using std::vector;
 TTree          *fChain;   //!pointer to the analyzed TTree or TChain               
 Int_t           fCurrent; //!current Tree number in a TChain                       
 
-void qplot(const char* inputfilename, const char* hname, int dolog, int nd) {
+void qplot(const char* inputfilename, const char* hname, int dolog, int nd,  int statp) {
 
   //nd is number of dimensions
 
@@ -28,7 +28,8 @@ void qplot(const char* inputfilename, const char* hname, int dolog, int nd) {
 
   TFile *f = new TFile(inputfilename);
 
-  gStyle->SetOptStat(111111);
+  gStyle->SetOptStat(statp);
+
 
   TString canvName = "Fig_";
   canvName += "haha";

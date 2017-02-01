@@ -52,7 +52,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
   TTree *tt = (TTree*)f->Get("emJetAnalyzer/emJetTree");
 
-  Int_t nVtx, event;
+  Int_t nVtx, event, nTrueInt, nTracks;
   Float_t met_pt, met_phi;
 
 
@@ -83,8 +83,11 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   vector<vector<int> > *track_nPxlLayers = 0;
   vector<vector<int> > *track_nHits = 0;
 
-
-
+  /*
+  vector<int> *vertex_index=new vector<int>;
+  vector<int> *vertex_source=new vector<int>;
+  vector<float> *vertex_z = new vector<float>;
+  */
 
   //get event count pre trigger
 
@@ -92,6 +95,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
   //for ntuple
   tt->SetBranchAddress("nVtx",&nVtx);
+  tt->SetBranchAddress("nTrueInt",&nTrueInt);
+  tt->SetBranchAddress("nTracks",&nTracks);
   tt->SetBranchAddress("event",&event);
   tt->SetBranchAddress("met_pt",&met_pt);
   tt->SetBranchAddress("met_phi",&met_phi);
@@ -122,8 +127,14 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   tt->SetBranchAddress("track_nHits",&track_nHits);
   tt->SetBranchAddress("track_ipZ",&track_ipZ);
 
+  /*
+  tt->SetBranchAddress("vertex_index",&vertex_index);
+  tt->SetBranchAddress("vertex_source",&vertex_source);
+  tt->SetBranchAddress("vertex_z",&vertex_z);
+  */
+
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,
     *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
 
   TH2F *aMip,*haMvjpt,*haMvHT,*haMvnvtx;
@@ -143,6 +154,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   heta   = new TH1F("heta","jet eta distribution",100,-4.,4.);
   heta2   = new TH1F("heta2","jet eta distribution first 4 jets",100,-4.,4.);
   halpha   = new TH1F("halpha","jet alphaMax distribution",100,0.,1.5);
+  haMgj   = new TH1F("haMgj","jet alphaMax distribution, good jets",100,0.,1.5);
   H_T      = new TH1F("H_T"," HT distribution before cut", 100,0.,5000.);
   H_T2      = new TH1F("H_T2"," HT distribution after cut", 100,0.,5000.);
   H_T3      = new TH1F("H_T3"," HT distribution at end", 100,0.,5000.);
@@ -213,11 +225,23 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     //    std::cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<std::endl;
 
     // make some basic plots on all events before any selections
+
+    /*
+    //pv;s
+    int NNNvertex = (*vertex_index).size();
+    std::cout<<"number of vertices is "<<NNNvertex<<std::endl;
+    for(Int_t j=0; j<NNNvertex; j++) {
+      std::cout<<"vertex source["<<j<<"] is "<<(*vertex_source)[j]<<std::endl;
+      std::cout<<"vertex z["<<j<<"] is "<<(*vertex_z)[j]<<std::endl;
+    }
+    */
+
     // jets
     vector<int> jet_ntrkpt1((*jet_index).size());
     vector<float> jet_meanip((*jet_index).size());
     vector<float> r0((*jet_index).size());
     vector<float> r1((*jet_index).size());
+    vector<int> jntrack((*jet_index).size());
     if(otfile) hnjet->Fill((*jet_index).size()+0.5);
     int NNNjet = (*jet_index).size();
     for(Int_t j=0; j<NNNjet; j++) {
@@ -239,20 +263,20 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
       vector<float> track_ipXYSigs = track_ipXYSig->at(j);
       vector<float> sort_ip(track_pts.size());
       for(int it=0;it<track_pts.size();it++) sort_ip[it]=0;
-      int ntrkass=0;
+      jntrack[j]=0;
       for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
 	if(track_sources[itrack]==0) {
-	  sort_ip[ntrkass]=fabs(track_ipXYs[itrack]);
+	  sort_ip[jntrack[j]]=fabs(track_ipXYs[itrack]);
 	  if(otfile) htvw->Fill(track_vertex_weights[itrack]);
 	  //	  std::cout<<"track vertex weight is "<<track_vertex_weights[itrack]<<std::endl;
 	  if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
 	  //	  std::cout<<" track "<<itrack<<" ip "<<track_ipXYs[itrack]<<" mean ip "<<jet_meanip[j]<<std::endl;
 	  jet_meanip[j]=jet_meanip[j]+fabs(track_ipXYs[itrack]);
-	  ntrkass++;
+	  jntrack[j]++;
 	}
       }
-      float atmp = ntrkass;
-      if(ntrkass>0) jet_meanip[j]=jet_meanip[j]/atmp;
+      float atmp = jntrack[j];
+      if(jntrack[j]>0) jet_meanip[j]=jet_meanip[j]/atmp;
       std::sort(sort_ip.begin(), sort_ip.end());
       std::reverse(sort_ip.begin(),sort_ip.end());
       if(sort_ip.size()>0) r0[j]=sort_ip[0];
@@ -285,26 +309,29 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         vector<float> track_vertex_weights = track_vertex_weight->at(ij);
 	if(otfile) hjetcut->Fill(0.5);
 
+	if(fabs((*jet_eta)[ij])<jetacut) { // jet eta cut
+	    if(otfile) hjetcut->Fill(1.5);
+
 	if(otfile) hbcut_nef->Fill((*jet_nef)[ij]);
 	if((*jet_nef)[ij]<NemfracCut) {  // neutral fraction
 	    if(otfile) hacut_nef->Fill((*jet_nef)[ij]);
-	    if(otfile) hjetcut->Fill(1.5);
+	    if(otfile) hjetcut->Fill(2.5);
 
 	    if(otfile) hbcut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
 	    if(jet_ntrkpt1[ij]>ntrk1cut) {  // tracks pt>1
 	      if(otfile) hacut_ntrkpt1->Fill(jet_ntrkpt1[ij]);
-	      if(otfile) hjetcut->Fill(2.5);
+	      if(otfile) hjetcut->Fill(3.5);
 
 	      if(otfile) hbcut_cef->Fill((*jet_cef)[ij]);
 	      if((*jet_cef)[ij]<CemfracCut) {  //charged fraction
 	        if(otfile) hacut_cef->Fill((*jet_cef)[ij]);
-	        if(otfile) hjetcut->Fill(3.5);
+	        if(otfile) hjetcut->Fill(4.5);
 		basicjet[ij]=true;
 
 	        if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
 	        if((*jet_alphaMax)[ij]<alphaMaxcut) { // alpha max
 	          if(otfile) hacut_alphamax->Fill((*jet_alphaMax)[ij]);
-	          if(otfile) hjetcut->Fill(4.5);
+	          if(otfile) hjetcut->Fill(5.5);
 		  almostemerging[ij]=true;
 		  
 		  if(ij<4) nalmostemerging=nalmostemerging+1;
@@ -341,7 +368,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 	      }
 	    }
 	  }
-        }
+        }}
 	if(!emerging[ij]) {
 	  if(otfile) hmaxipXYnEJ->Fill(r0[ij]);
 	  if(otfile) hmeanipXYnEJ->Fill(jet_meanip[ij]);
@@ -399,13 +426,27 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
       for(int i=0;i<NNNjet;i++) {
 	if(basicjet[i]) {
 	  if((*jet_pt)[i]>50 ) {
-	  haMvjpt->Fill((*jet_alphaMax)[i],(*jet_pt)[i]);
-	  haMvHT->Fill((*jet_alphaMax)[i],HT);
-	  haMvnvtx->Fill((*jet_alphaMax)[i],nVtx);
-	  hjptb->Fill((*jet_pt)[i]);
-	  if(emerging[i]) {
-	    hjpta->Fill((*jet_pt)[i]);
-	  }
+	    haMgj->Fill((*jet_alphaMax)[i]);
+	    /*
+	    if((*jet_alphaMax)[i]<0.015) {
+	      std::cout<<"CHECK"<<std::endl;
+	      std::cout<<"alpha max is "<<(*jet_alphaMax)[i]<<std::endl;
+	      std::cout<<"jet pt is "<<(*jet_pt)[i]<<std::endl;  
+	      std::cout<<"jet eta is "<<(*jet_eta)[i]<<std::endl;  
+	      std::cout<<"jet phi is "<<(*jet_phi)[i]<<std::endl;  
+	      std::cout<<" number tracks in jet is "<<jntrack[i]<<std::endl;
+	      std::cout<<" number true interactions is "<<nTrueInt<<std::endl;
+	      std::cout<<" total number tracks is "<<nTracks<<std::endl;
+	    }
+	    */
+
+	    haMvjpt->Fill((*jet_alphaMax)[i],(*jet_pt)[i]);
+	    haMvHT->Fill((*jet_alphaMax)[i],HT);
+	    haMvnvtx->Fill((*jet_alphaMax)[i],nVtx);
+	    hjptb->Fill((*jet_pt)[i]);
+	    if(emerging[i]) {
+	      hjpta->Fill((*jet_pt)[i]);
+	    }
 	  }}
       }
 
@@ -604,6 +645,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     heta->Write();
     heta2->Write();
     halpha->Write();
+    haMgj->Write();
     H_T->Write();
     H_T2->Write();
     H_T3->Write();
