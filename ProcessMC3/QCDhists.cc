@@ -52,7 +52,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
   //for kine scan
 
-  /*
+  /*  
   // YH default
   float DHTcut=1000;
   float Dpt1cut=400;
@@ -62,11 +62,13 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   float Dalphacut=0.2;
   float DmaxIPcut=-1.;
   int Dnemcut=1;
+  int Dntrk1=0;
   float Djetacut = 2.;
   // for alpha max scan
   const int ncutscan=5;
   */
 
+  
   // opt
   float DHTcut=1000;
   float Dpt1cut=400;
@@ -82,7 +84,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   // for alpha max scan
   const int ncutscan=3;
   //const int ncutscan=1;
-
+  
 
 
   
