@@ -25,7 +25,7 @@ Int_t           fCurrent; //!current Tree number in a TChain
 
 
 int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename,
-	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut) {
+	      float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut,bool blind) {
   // "ntuple.root", "histos.root"
   // suggest cuts 1000., 400.,200.,125.,50.,0.2,0.9,0.9,0,1
   // right now this code hard wires the jet pT cut and requires emerging jets to have at least
@@ -416,10 +416,17 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     // number emerging jets
     bool Cnem = true;
     if(nemerging<NemergingCut) Cnem=false;
+
     //    if(nalmostemerging>=4) Cnem=false;
     bool Canem =true;
     if(nalmostemerging>=4) Canem=false;
 
+
+    //blind
+    if(blind) {
+      Cnem=false;
+      Canem=false;
+    }
 
     // do N-1 plots and other plots
     if(otfile) {

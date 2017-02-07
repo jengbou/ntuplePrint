@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre) ;
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre,bool blind) ;
 
 
 
@@ -12,6 +12,10 @@ int main(int argc, char *argv[])
   int dooptk =*(argv[1])-'0';
   int doopta =*(argv[2])-'0';
   int imode=*(argv[3])-'0';
+  int iblind=*(argv[4])-'0';
+
+  bool blind=false;
+  if(iblind!=0) blind=true;
 
   bool hasPre=true;
 
@@ -117,18 +121,18 @@ std::string wmcbinnames[nbin]={"WMCSkim"};
 
 
  if(imode==0) {
-   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta,hasPre);
+   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta,hasPre,blind);
  } else if (imode==1) {
-   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre);
+   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre,blind);
  } else if (imode==2) {
-   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre);
+   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre,blind);
  } else if (imode==3) {
-   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta,hasPre);
+   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta,hasPre,blind);
  } else if (imode==4) {
-   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre);
+   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre,blind);
  } else if (imode==5) {
-   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre);
+   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre,blind);
  } else if (imode==6) {
-   QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre);
+   QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre,blind);
  }
 }
