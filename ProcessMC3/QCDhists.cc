@@ -33,9 +33,9 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 	      int ntrk1cut, int NemergingCut, bool blind
 	       );
 void  HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::string* binnames);
-TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& histnorm, vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames);
+TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& histnorm, vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm);
 
-TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& histnorm, vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames);
+TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& histnorm, vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm);
 
 
 std::string bbname = "./";
@@ -44,7 +44,7 @@ std::string bbname = "./";
 
 
 //void QCDhists() 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre,bool blind) 
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre,bool donorm, bool blind) 
 {
 
   std::string inputfile;
@@ -172,7 +172,11 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   // get normalization
   //  double norm[nbin];
   vector<double> norm(nbin);
-  HistNorm(norm,nbin,xsec,nfiles,binnames);
+  if(donorm) {
+    HistNorm(norm,nbin,xsec,nfiles,binnames);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
+  } else{
+    for(int i=0;i<nbin;i++) norm[i]=1.;
+  }
   for(int i=0;i<nbin;i++) {
     std::cout<<"total number events in bin "<<i<<" is "<<norm[i]<<std::endl;
   }
@@ -203,7 +207,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   vector<double> outnorm(nbin);
   for(int i=0;i<nhist;i++) {
     std::cout<<" enering Histman with i = "<<i<<std::endl;
-    vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames);
+    vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames,donorm);
   }
 
   const int nhist2=4;
@@ -214,7 +218,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   vector<double> outnorm2(nbin);
   for(int i=0;i<nhist2;i++) {
     std::cout<<" enering Histman2 with i = "<<i<<std::endl;
-    vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames);
+    vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames,donorm);
   }
 
   // output total event count
@@ -281,7 +285,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
 
 
-TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames) {
+TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm) {
 
   std::string inputfile;
 
@@ -303,6 +307,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
     }
   }
 
+  if(donorm) {
   // reweight to int lum
   std::cout<<" reweighting to inst lum of "<<goalintlum<<" for each bin"<<std::endl;
   for(int i=0;i<nbin;i++) {
@@ -315,7 +320,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
     std::cout<<" scaling by a factor of "<<outnorm[i]<<std::endl;
     sum[i].Scale(outnorm[i]);
   }
-
+  }
 
   //add the bins
   std::cout<<" adding bins"<<std::endl;
@@ -328,7 +333,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
   return SUM;
 }
 
-TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames) {
+TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm) {
 
   std::string inputfile;
 
@@ -350,6 +355,7 @@ TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector
     }
   }
 
+  if(donorm) {
   // reweight to int lum
   std::cout<<" reweighting to inst lum of "<<goalintlum<<" for each bin"<<std::endl;
   for(int i=0;i<nbin;i++) {
@@ -361,6 +367,7 @@ TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector
     outnorm[i] = goalintlum/fileLum;
     std::cout<<" scaling by a factor of "<<outnorm[i]<<std::endl;
     sum[i].Scale(outnorm[i]);
+  }
   }
 
 
