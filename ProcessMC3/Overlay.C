@@ -7,12 +7,13 @@
 int dolog=0;
 void Overlay() 
 { 
-  TFile *f1 = new TFile("SumHistsQQCD.root");
-  TFile *f2 = new TFile("SumHistsWMCtSkim.root");  
-  TFile *f3 = new TFile("SumHistsWSkim.root");  
-  //  TFile *f1 = new TFile("SumHistsQCD.root");
+  //  TFile *f1 = new TFile("SumHistsQQCD.root");
+  //TFile *f2 = new TFile("SumHistsWMCtSkim.root");  
+  //TFile *f3 = new TFile("SumHistsWSkim.root");  
+  TFile *f1 = new TFile("SumHistsQCD.root");
   //TFile *f2 = new TFile("SumHistsModelA.root");  
-  //TFile *f3 = new TFile("SumHistsModelB.root");  
+  //TFile *f2 = new TFile("SumHistsDATA.root");  
+  TFile *f2 = new TFile("SumHistsModelB.root");  
 
  
   gStyle->SetOptStat(0);
@@ -72,7 +73,7 @@ void Overlay()
   
   int n_ = 2;
   
-  float x1_l = 0.9;
+  float x1_l = 1.2;
   //  float x1_l = 0.75;
   float y1_l = 0.80;
   
@@ -86,14 +87,15 @@ void Overlay()
 
 
   std::cout<<"getting first"<<std::endl;
-  TH1F *A_pt = static_cast<TH1F*>(f1->Get("haMgj")->Clone());
+  TH1F *A_pt = static_cast<TH1F*>(f1->Get("hmass")->Clone());
+  A_pt->Rebin(25);
   double aaA = A_pt->Integral();
 std::cout<<" first entries is "<<aaA<<std::endl;
-A_pt->Scale(1./aaA);
+//A_pt->Scale(1./aaA);
 
-  A_pt->GetYaxis()->SetTitle("number in 20 fb-1");  
+  A_pt->GetYaxis()->SetTitle("number in 0.08 fb-1");  
   A_pt->GetYaxis()->SetTitleSize(0.05);  
-  A_pt->GetXaxis()->SetTitle("alphamax for all jets");  
+  A_pt->GetXaxis()->SetTitle("mass betweem emerging and non-emerging");  
   A_pt->GetXaxis()->SetTitleSize(0.05);  
 
 
@@ -104,18 +106,20 @@ A_pt->Scale(1./aaA);
   A_pt->Draw("");
 
   std::cout<<"getting second"<<std::endl;
-  TH1F *B_pt = static_cast<TH1F*>(f2->Get("haMgj")->Clone());
+  TH1F *B_pt = static_cast<TH1F*>(f2->Get("hmass")->Clone());
+  B_pt->Rebin(25);
   double aaB = B_pt->Integral();
 std::cout<<" second entries is "<<aaB<<std::endl;
-B_pt->Scale(1/aaB);
+//B_pt->Scale(1/aaB);
   
   B_pt->SetDirectory(0);
   B_pt->SetLineColor(2);
   B_pt->SetLineWidth(3);
   B_pt->SetStats(0);
   
+  //B_pt->Draw("esame");
   B_pt->Draw("same");
-  
+  /*  
   std::cout<<"getting third"<<std::endl;
   TH1F *C_pt = static_cast<TH1F*>(f3->Get("haMgj")->Clone());
   double aaC = C_pt->Integral();
@@ -128,17 +132,17 @@ C_pt->Scale(1/aaC);
   C_pt->SetStats(0);
   
   C_pt->Draw("same");
-  
+  */
 
 
  
- lgd->AddEntry(A_pt, "Monte Carlo QCD", "l");
- lgd->AddEntry(B_pt, "Monte Carlo W to mu", "l");
- lgd->AddEntry(C_pt, "data W to mu", "l");
+  //lgd->AddEntry(A_pt, "Monte Carlo QCD", "l");
+  //lgd->AddEntry(B_pt, "Monte Carlo W to mu", "l");
+ // lgd->AddEntry(C_pt, "data W to mu", "l");
 
 
-  // lgd->AddEntry(A_pt, "QCD", "l");
-  //lgd->AddEntry(B_pt, "ModelAx500", "l");
+  lgd->AddEntry(A_pt, "QCD MC", "l");
+  lgd->AddEntry(B_pt, "Model B", "l");
   //lgd->AddEntry(C_pt, "ModelBx500", "l");
 
  lgd->Draw();

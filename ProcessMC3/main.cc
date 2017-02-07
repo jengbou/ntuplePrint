@@ -79,10 +79,10 @@ int nfiles[nbin]={138,133,50,40,23};
 std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 
 // quick background
-const int qnbin=1; // 500-700,700-1000,1000-1500,1500-2000,200toInf
- float qxsec[nbin]={1064000}; // fb 
- int qnfiles[nbin]={10};
- std::string qbinnames[nbin]={"QCD_HT1000to1500"};
+const int qnbin=3; // 500-700,700-1000,1000-1500,1500-2000,200toInf
+ float qxsec[nbin]={1064000,121500,25420}; // fb 
+ int qnfiles[nbin]={3,3,3};
+ std::string qbinnames[nbin]={"QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 
 
 // for signal models A.  mediat mass is 1000
@@ -125,7 +125,7 @@ std::string wmcbinnames[nbin]={"WMCSkim"};
 // DATA
 const int datanbin=1; 
 float dataxsec[nbin]={11811000}; // fb 
-int datanfiles[nbin]={1};
+int datanfiles[nbin]={19};
 std::string databinnames[nbin]={"DATA"};
 
 

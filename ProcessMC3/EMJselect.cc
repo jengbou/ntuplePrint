@@ -134,8 +134,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   */
 
   // create a histograms
-  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,
-    *hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ;
+  TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,*hHTko,*hpt1ko,*hpt2ko,*hpt3ko,*hpt4ko,*hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ,*hmass;
 
   TH2F *aMip,*haMvjpt,*haMvHT,*haMvnvtx;
 
@@ -201,8 +200,15 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   hjptfrbc = new TH1F("hjptfrbc"," pT of basic jets passing kine selection",100,0.,1000.);
   hjptfra1c = new TH1F("hjptfra1c"," pT of basic jets passing kine, almost selection",100,0.,1000.);
   hjptfra2c = new TH1F("hjptfra2c"," pT of basic jets passing kine, almost, and emerging selection",100,0.,1000.);
+  hHTko      = new TH1F("hHTko"," HT distribution test kine cuts", 100,0.,5000.);
+  hpt1ko = new TH1F("hpt1ko"," pT of leading jet kine cuts",200,0.,1000.);
+  hpt2ko = new TH1F("hpt2ko"," pT of second jet kine cuts",200,0.,1000.);
+  hpt3ko = new TH1F("hpt3ko"," pT of third jet kine cuts",200,0.,1000.);
+  hpt4ko = new TH1F("hpt4ko"," pT of fourth jet kine cuts",200,0.,1000.);
+  hmass = new TH1F("hmass","mass emerging and non",500,0.,5000.);
 
-  //1d
+
+  //2d
   aMip = new TH2F("aMip"," alpha Max versus max IP n-1 plot",100,0.,1.,100,0.,10.);
   haMvjpt = new TH2F("haMvjpt"," alpha Max versus jet pT ",100,0.,1.,100,0.,700.);
   haMvHT = new TH2F("haMvHT"," alpha Max versus HT ",100,0.,1.,100,0.,2500.);
@@ -242,10 +248,21 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     vector<float> r0((*jet_index).size());
     vector<float> r1((*jet_index).size());
     vector<int> jntrack((*jet_index).size());
+    vector<float> jet_e((*jet_index).size());
+    vector<float> jet_theta((*jet_index).size());
+    vector<float> jet_px((*jet_index).size());
+    vector<float> jet_py((*jet_index).size());
+    vector<float> jet_pz((*jet_index).size());
     if(otfile) hnjet->Fill((*jet_index).size()+0.5);
     int NNNjet = (*jet_index).size();
     for(Int_t j=0; j<NNNjet; j++) {
       //      std::cout<<"jet j = "<<j<<std::endl;
+      jet_theta[j]=2.*atan(exp(-(*jet_eta)[j]));
+      jet_e[j]=(*jet_pt)[j]/sin(jet_theta[j]);
+      jet_px[j]=(*jet_pt)[j]*cos((*jet_phi)[j]);
+      jet_py[j]=(*jet_pt)[j]*sin((*jet_phi)[j]);
+      jet_pz[j]=(*jet_pt)[j]/tan(jet_theta[j]);
+				
       if(otfile) hpt->Fill((*jet_pt)[j]);
       if(otfile) heta->Fill((*jet_eta)[j]);
       if(otfile) hjetchf->Fill((*jet_chf)[j]);
@@ -428,8 +445,19 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
       Canem=false;
     }
 
-    // do N-1 plots and other plots
+    // do some plots
     if(otfile) {
+
+      // kine only plots
+      if(C4jet&&CHT&&Cpt1&&Cpt2&&Cpt3&&Cpt4) {
+	hHTko->Fill(HT);
+	hpt1ko->Fill((*jet_pt)[0]);
+	hpt2ko->Fill((*jet_pt)[1]);
+	hpt3ko->Fill((*jet_pt)[2]);
+	hpt4ko->Fill((*jet_pt)[3]);
+      }
+
+      // jet plots
       for(int i=0;i<NNNjet;i++) {
 	if(basicjet[i]) {
 	  if((*jet_pt)[i]>50 ) {
@@ -457,7 +485,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 	  }}
       }
 
-
+      //N-1 plots
     if(C4jet&&Cpt1&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hHTnm1->Fill(HT);
     if(C4jet&&CHT&&Cpt2&&Cpt3&&Cpt4&&Cnem&&Canem) hpt1nm1->Fill((*jet_pt)[0]);
     if(C4jet&&CHT&&Cpt1&&Cpt3&&Cpt4&&Cnem&&Canem) hpt2nm1->Fill((*jet_pt)[1]);
@@ -626,7 +654,24 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
 
           npass+=1;
-          if(otfile) H_T3->Fill(HT);   
+          if(otfile) {
+	    H_T3->Fill(HT);   
+	    float mass;
+	    for(int i5=0;i5<4;i5++) {
+	    for(int i6=i5+1;i6<4;i6++) {
+	      if((emerging[i5]&&!emerging[i6])||(!emerging[i5]&&emerging[i6])) {
+	      mass = sqrt(
+			  pow((jet_e[i5]+jet_e[i6]),2) -
+			  pow((jet_px[i5]+jet_px[i6]),2) -
+			  pow((jet_py[i5]+jet_py[i6]),2) -
+			  pow((jet_pz[i5]+jet_pz[i6]),2)
+
+                );
+	      hmass->Fill(mass);
+	    }}}
+
+	      
+	  }
 
     
 
@@ -701,7 +746,12 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     hjptfrbc->Write();
     hjptfra1c->Write();
     hjptfra2c->Write();
-
+    hHTko->Write();
+    hpt1ko->Write();
+    hpt2ko->Write();
+    hpt3ko->Write();
+    hpt4ko->Write();
+    hmass->Write();
 
     //2d
     aMip->Write();
