@@ -144,7 +144,7 @@ std::string databinnames[nbin]={"DATA"};
  } else if (imode==4) {
    QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre,true,blind);
  } else if (imode==5) {
-   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre,true,blind);
+   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre,false,blind);
  } else if (imode==6) {
    QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre,true,blind);
  } else if (imode==7) {
