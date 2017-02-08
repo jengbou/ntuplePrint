@@ -75,7 +75,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   float Dpt2cut=200;
   float Dpt3cut=200;
   float Dpt4cut=100;
-  float Dalphacut=0.06;
+  float Dalphacut=0.04;
   float DmaxIPcut=0.4;
   float Djetacut = 2.;
   // dont forget there is a hidden cut nalmostemergin<4!!!!!!!!!!!!!!!!!

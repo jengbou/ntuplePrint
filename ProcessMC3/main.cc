@@ -57,13 +57,15 @@ int main(int argc, char *argv[])
     std::cout<<"doing DATA"<<std::endl;
     hasPre=true;
     blind=true;
+  } else if(imode==8) {
+    std::cout<<"doing QCD74"<<std::endl;
   } else {
     std::cout<<"invalid choice"<<std::endl;
   }
 
 
-  //float goalintlum=20; // fb-1                                                                                        
-float goalintlum=0.07956; // fb-1                                                                                        
+  float goalintlum=20; // fb-1                                                                                        
+  //float goalintlum=0.07956; // fb-1                                                                                        
 
  std::string aaname = "/data/users/eno/outputQCD/";  // area containing subdirectors with YHS's ntuples
 
@@ -129,6 +131,12 @@ int datanfiles[nbin]={19};
 std::string databinnames[nbin]={"DATA"};
 
 
+//QCD74
+
+const int q74nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
+float q74xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb 
+int q74nfiles[nbin]={19,16,7,5,3};
+std::string q74binnames[nbin]={"QCD74_HT500to700","QCD74_HT700to1000","QCD74_HT1000to1500","QCD74_HT1500to2000","QCD74_HT2000toInf"};
 
 
 
@@ -149,5 +157,7 @@ std::string databinnames[nbin]={"DATA"};
    QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre,true,blind);
  } else if (imode==7) {
    QCDhists(goalintlum,datanbin,dataxsec,datanfiles,databinnames,aaname,"SumHistsDATA.root",0,0,hasPre,false,blind);
+ } else if (imode==8) {
+   QCDhists(goalintlum,q74nbin,q74xsec,q74nfiles,q74binnames,aaname,"SumHistsQCD74.root",dooptk,doopta,hasPre,true,blind);
  }
 }

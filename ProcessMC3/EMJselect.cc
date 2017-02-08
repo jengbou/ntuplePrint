@@ -52,7 +52,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
   TTree *tt = (TTree*)f->Get("emJetAnalyzer/emJetTree");
 
-  Int_t nVtx, event, nTrueInt, nTracks;
+  Int_t nVtx, event, lumi, run, nTrueInt, nTracks;
   Float_t met_pt, met_phi;
 
 
@@ -98,6 +98,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
   tt->SetBranchAddress("nTrueInt",&nTrueInt);
   tt->SetBranchAddress("nTracks",&nTracks);
   tt->SetBranchAddress("event",&event);
+  tt->SetBranchAddress("lumi",&lumi);
+  tt->SetBranchAddress("run",&run);
   tt->SetBranchAddress("met_pt",&met_pt);
   tt->SetBranchAddress("met_phi",&met_phi);
   tt->SetBranchAddress("jet_index",&jet_index);
@@ -654,6 +656,11 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
 
           npass+=1;
+	  std::cout<<"passing run lumi event filename is "<<run<<" "<<lumi<<" "<<event<<" "<<inputfilename<<std::endl;
+	  for(int i=0;i<4;i++) {
+	    std::cout<<"  for jet "<<i<<" pt eta nef cfe ntrkpt1 alphamax r0"<<std::endl;
+	    std::cout<<"     "<<(*jet_pt)[i]<<" "<<(*jet_eta)[i]<<" "<<(*jet_nef)[i]<<" "<<(*jet_cef)[i]<<" "<<jet_ntrkpt1[i]<<" "<<(*jet_alphaMax)[i]<<" "<<r0[i]<<" "<<std::endl;
+	  }
           if(otfile) {
 	    H_T3->Fill(HT);   
 	    float mass;
