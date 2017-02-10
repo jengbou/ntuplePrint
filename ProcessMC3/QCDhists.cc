@@ -18,6 +18,8 @@ using std::vector;
 
 vector<float> Decode(int cutindex, int ncut,vector<int> nstep, vector<float> stepsize);
 
+int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename);
+
 vector<int> EMJscan(const char* inputfilename,
 		    float HTcutmin,int NHTcut, float HTcutSS,
 		    float pt1cutmin, int Npt1cut, float pt1cutSS,
@@ -44,7 +46,7 @@ std::string bbname = "./";
 
 
 //void QCDhists() 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre,bool donorm, bool blind) 
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre,bool donorm, bool blind, bool b16003) 
 {
 
   std::string inputfile;
@@ -94,12 +96,17 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   std::cout<<"making histograms for each file in each bin"<<std::endl;
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-      //      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+           inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+	   //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
-      int itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+      int itmp;
+      if(!b16003) {
+        itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+      } else {
+	itmp = EMJ16003(true,hasPre,inputfile.c_str(),outputfile.c_str());
+      }
     }
   }
 
@@ -119,8 +126,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   if(dooptk==1) {
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-      //      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+      //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
 
 
@@ -157,8 +164,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     for(int i=0;i<nbin;i++) {  // for each bin
       for(int j=0;j<nfiles[i];j++) { //for each file for that bin
 	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
-	//      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+	inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+	//inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
       int iii=0;
       if(doopta==1) {
@@ -183,6 +190,11 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   for(int i=0;i<nbin;i++) {
     std::cout<<"total number events in bin "<<i<<" is "<<norm[i]<<std::endl;
   }
+  TH1F* countclone = new TH1F("countclone","unnormalized count",20,0,20);
+  for(int i=0;i<nbin;i++){
+    countclone->AddBinContent(i+1,norm[i]);
+  }
+  
   TH1F* normhst = new TH1F("normhst","counts pretrigger by bin",nbin,0.,nbin);
   for(int i=0;i<nbin;i++){
     normhst->AddBinContent(i+1,norm[i]);
@@ -276,6 +288,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   normhst->Write();
   cutscan->Write();
   kcutscan->Write();
+  countclone->Write();
   for(int i=0;i<nhist;i++) {
     vv[i]->Write();
   }

@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre,bool norm, bool blind) ;
+void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre,bool norm, bool blind, bool b16003) ;
 
 
 
@@ -13,6 +13,10 @@ int main(int argc, char *argv[])
   int doopta =*(argv[2])-'0';
   int imode=*(argv[3])-'0';
   int iblind=*(argv[4])-'0';
+  int i16003=*(argv[5])-'0';
+
+  bool b16003 = false;
+  if(i16003>0) b16003=true;
 
   bool blind=false;
   if(iblind!=0) blind=true;
@@ -81,10 +85,10 @@ int nfiles[nbin]={138,133,50,40,23};
 std::string binnames[nbin]={"QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
 
 // quick background
-const int qnbin=3; // 500-700,700-1000,1000-1500,1500-2000,200toInf
- float qxsec[nbin]={1064000,121500,25420}; // fb 
- int qnfiles[nbin]={3,3,3};
- std::string qbinnames[nbin]={"QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
+const int qnbin=1; // 500-700,700-1000,1000-1500,1500-2000,200toInf
+ float qxsec[nbin]={25420}; // fb 
+ int qnfiles[nbin]={10};
+ std::string qbinnames[nbin]={"QCD_HT2000toInf"};
 
 
 // for signal models A.  mediat mass is 1000
@@ -135,29 +139,29 @@ std::string databinnames[nbin]={"DATA"};
 
 const int q74nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
 float q74xsec[nbin]={29370000,6524000,1064000,121500,25420}; // fb 
-int q74nfiles[nbin]={19,16,7,5,3};
+ int q74nfiles[nbin]={183,153,65,44,26};
 std::string q74binnames[nbin]={"QCD74_HT500to700","QCD74_HT700to1000","QCD74_HT1000to1500","QCD74_HT1500to2000","QCD74_HT2000toInf"};
 
 
 
 
  if(imode==0) {
-   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta,hasPre,true,blind);
+   QCDhists(goalintlum,nbin,xsec,nfiles,binnames,aaname,"SumHistsQCD.root",dooptk,doopta,hasPre,true,blind,b16003);
  } else if (imode==1) {
-   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre,true,blind);
+   QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre,true,blind,b16003);
  } else if (imode==2) {
-   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre,true,blind);
+   QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre,true,blind,b16003);
  } else if (imode==3) {
-   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta,hasPre,true,blind);
+   QCDhists(goalintlum,qnbin,qxsec,qnfiles,qbinnames,aaname,"SumHistsQQCD.root",dooptk,doopta,hasPre,true,blind,b16003);
  } else if (imode==4) {
-   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre,true,blind);
+   QCDhists(goalintlum,dnbin,dxsec,dnfiles,dbinnames,aaname,"SumHistsDebug.root",0,0,hasPre,true,blind,b16003);
  } else if (imode==5) {
-   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre,false,blind);
+   QCDhists(goalintlum,wnbin,wxsec,wnfiles,wbinnames,aaname,"SumHistsWSkim.root",0,0,hasPre,false,blind,b16003);
  } else if (imode==6) {
-   QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre,true,blind);
+   QCDhists(goalintlum,wmcnbin,wmcxsec,wmcnfiles,wmcbinnames,aaname,"SumHistsWMCSkim.root",0,0,hasPre,true,blind,b16003);
  } else if (imode==7) {
-   QCDhists(goalintlum,datanbin,dataxsec,datanfiles,databinnames,aaname,"SumHistsDATA.root",0,0,hasPre,false,blind);
+   QCDhists(goalintlum,datanbin,dataxsec,datanfiles,databinnames,aaname,"SumHistsDATA.root",0,0,hasPre,false,blind,b16003);
  } else if (imode==8) {
-   QCDhists(goalintlum,q74nbin,q74xsec,q74nfiles,q74binnames,aaname,"SumHistsQCD74.root",dooptk,doopta,hasPre,true,blind);
+   QCDhists(goalintlum,q74nbin,q74xsec,q74nfiles,q74binnames,aaname,"SumHistsQCD74.root",dooptk,doopta,hasPre,true,blind,b16003);
  }
 }

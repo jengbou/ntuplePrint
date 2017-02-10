@@ -58,7 +58,7 @@ vector<int> EMJscan(const char* inputfilename,
   vector<float> *jet_nef = new vector<float>;
   vector<float> *jet_chf = new vector<float>;
   vector<float> *jet_nhf = new vector<float>;
-  vector<float> *jet_phf = new vector<float>;
+  //  vector<float> *jet_phf = new vector<float>;
   vector<vector<float> > *track_pt = 0;
   vector<vector<float> > *track_eta = 0;
   vector<vector<int> > *track_source = 0;
@@ -85,7 +85,7 @@ vector<int> EMJscan(const char* inputfilename,
   tt->SetBranchAddress("jet_nef",&jet_nef);
   tt->SetBranchAddress("jet_chf",&jet_chf);
   tt->SetBranchAddress("jet_nhf",&jet_nhf);
-  tt->SetBranchAddress("jet_phf",&jet_phf);
+  //  tt->SetBranchAddress("jet_phf",&jet_phf);
   tt->SetBranchAddress("jet_alphaMax",&jet_alphaMax);
   tt->SetBranchAddress("track_pt",&track_pt);
   tt->SetBranchAddress("track_eta",&track_eta);
@@ -249,7 +249,7 @@ vector<int> EMJscan(const char* inputfilename,
   delete jet_cef;
   delete jet_nef;
   delete jet_chf;
-  delete jet_phf;
+  //  delete jet_phf;
   delete track_pt;
   delete track_eta;
   delete track_source;
