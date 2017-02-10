@@ -213,6 +213,8 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
   //read all entries and fill the histograms
   Int_t nentries = (Int_t)tt->GetEntries();
 
+  std::cout<<"!!!!!!! entering EMJ16003"<<std::endl;
+
 
   // loop over events
   for (Int_t i=0; i<nentries; i++) {

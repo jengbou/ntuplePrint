@@ -96,8 +96,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   std::cout<<"making histograms for each file in each bin"<<std::endl;
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-           inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-	   //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+      //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+	   inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
       outputfile=bbname+"histos"+binnames[i]+"_"+std::to_string(j)+".root";
       std::cout<<"output file is "<<outputfile<<std::endl;
@@ -126,8 +126,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
   if(dooptk==1) {
   for(int i=0;i<nbin;i++) {  // for each bin
     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-      //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+      //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+      inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
 
 
@@ -164,8 +164,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     for(int i=0;i<nbin;i++) {  // for each bin
       for(int j=0;j<nfiles[i];j++) { //for each file for that bin
 	std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
-	inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-	//inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
+	//inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+	inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";
       std::cout<<"input file is "<<inputfile<<std::endl;
       int iii=0;
       if(doopta==1) {
