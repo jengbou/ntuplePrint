@@ -16,6 +16,8 @@ RUN_DIR=$3
 OPT_MODE1=$4
 OPT_MODE2=$5
 RUN_MODE=$6
+BLIND=$7
+EXO16003=$8
 
 echo ""
 echo "CMSSW on Condor"
@@ -39,7 +41,7 @@ FINAL_LOG=`echo $FINAL_PREFIX_NAME.log`
 #
 # run c
 #
-./main $OPT_MODE1 $OPT_MODE2 $RUN_MODE >> $FINAL_LOG 2>&1
+./main $OPT_MODE1 $OPT_MODE2 $RUN_MODE $BLIND $EXO16003 >> $FINAL_LOG 2>&1
 
 
 
