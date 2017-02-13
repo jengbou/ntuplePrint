@@ -223,7 +223,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     };
     vector<double> outnorm(nbin);
     for(int i=0;i<nhist;i++) {
-        std::cout<<" enering Histman with i = "<<i<<std::endl;
+        std::cout<<" enering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
         vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames,donorm);
     }
 
@@ -234,7 +234,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     };
     vector<double> outnorm2(nbin);
     for(int i=0;i<nhist2;i++) {
-        std::cout<<" enering Histman2 with i = "<<i<<std::endl;
+        std::cout<<" enering Histman2 with i = "<<i<<": "<<histnames[i]<<std::endl;
         vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames,donorm);
     }
 
@@ -309,13 +309,15 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
 
 
     // now add up all the files for one bin
-    std::cout<<" adding up histos within a bin"<<std::endl;
     vector<TH1F> sum(nbin);
     for(int i=0;i<nbin;i++) {  // for each bin
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
             inputfile="histos"+binnames[i]+"_"+std::to_string(j)+".root";
             TFile* in = new TFile(inputfile.c_str());
+            if (!in->GetListOfKeys()->Contains(thisHIST.c_str())) return (new TH1F(thisHIST.c_str(),"dummy empty hist",10,0.,10.));
+
             if(j==0) {
+                std::cout<<" adding up histos within a bin"<<std::endl;
                 sum[i] = *(static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone()));
             } else {
                 TH1F* tmp = static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone());
