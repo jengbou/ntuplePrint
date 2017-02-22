@@ -7,29 +7,29 @@
 #include <TFile.h>
 
 #include "vector"
-#include "vector"
 using std::vector;
 #include "algorithm"
 
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include "EMJscan.h"
 
 //TTree          *fChain;   //!pointer to the analyzed TTree or TChain               
 //Int_t           fCurrent; //!current Tree number in a TChain                       
 
 bool EMJscanFirst=true;
 
-vector<float> Decode(int cutindex, int ncut,vector<int> nstep, vector<float> stepsize);
+// vector<float> Decode(int cutindex, int ncut,vector<int> nstep, vector<float> stepsize);
 
 
 
 vector<int> EMJscan(const char* inputfilename,
-	     float HTcutmin,int NHTcut, float HTcutSS,
-	     float pt1cutmin, int Npt1cut, float pt1cutSS,
-               float pt2cutmin,  int Npt2cut,float pt2cutSS,
-               float pt3cutmin,  int Npt3cut,float pt3cutSS,
-               float pt4cutmin, int Npt4cut,float pt4cutSS,
+                    float HTcutmin,int NHTcut, float HTcutSS,
+                    float pt1cutmin, int Npt1cut, float pt1cutSS,
+                    float pt2cutmin,  int Npt2cut,float pt2cutSS,
+                    float pt3cutmin,  int Npt3cut,float pt3cutSS,
+                    float pt4cutmin, int Npt4cut,float pt4cutSS,
 		    int NemergingCutmin, int NNemergingCut, int NNemergingCutSS,
 		    float jetacut,
 		    float alphaMaxcut, float maxIPcut,
@@ -41,6 +41,10 @@ vector<int> EMJscan(const char* inputfilename,
   for(int i=0;i<iicut;i++) npass[i]=0;
 
   TFile *f = new TFile(inputfilename);
+  if(f->IsZombie()) {
+      std::cout << "File: " << inputfilename << " does not exist." << std::endl;
+      return npass;
+  }
 
   TTree *tt = (TTree*)f->Get("emJetAnalyzer/emJetTree");
 
