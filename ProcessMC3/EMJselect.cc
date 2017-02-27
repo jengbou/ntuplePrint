@@ -141,7 +141,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     */
 
     // create a histograms
-    TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T1,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,*hHTko,*hpt1ko,*hpt2ko,*hpt3ko,*hpt4ko,*hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ,*hmass,*hmedipXYEJ,*hmedipXYnEJ,*hmeanipXYSigEJ,*hmeanipXYSignEJ,*hmedipXYSigEJ,*hmedipXYSignEJ,*hlogmeanipXYSigEJ,*hlogmeanipXYSignEJ,*hlogmedipXYSigEJ,*hlogmedipXYSignEJ,*hTrig1d,*hTrig1n,*hTrig2d,*hTrig2n,*hTrig3d,*hTrig3n,*hmedtheta2DEJ,*hmedtheta2DnEJ,*hlogmedtheta2DEJ,*hlogmedtheta2DnEJ;
+    TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T0,*H_T1,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,*hHTko,*hpt1ko,*hpt2ko,*hpt3ko,*hpt4ko,*hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ,*hmass,*hmedipXYEJ,*hmedipXYnEJ,*hmeanipXYSigEJ,*hmeanipXYSignEJ,*hmedipXYSigEJ,*hmedipXYSignEJ,*hlogmeanipXYSigEJ,*hlogmeanipXYSignEJ,*hlogmedipXYSigEJ,*hlogmedipXYSignEJ,*hTrig1d,*hTrig1n,*hTrig2d,*hTrig2n,*hTrig3d,*hTrig3n,*hmedtheta2DEJ,*hmedtheta2DnEJ,*hlogmedtheta2DEJ,*hlogmedtheta2DnEJ;
 
     // discriminating variables after pre-selection (4jets)
     TH1F *halphaPS,*hmedtheta2DPS,*hlogmedtheta2DPS,*hmedipXYSigPS,*hlogmedipXYSigPS;
@@ -174,9 +174,10 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         halpha   = new TH1F("halpha","jet alphaMax distribution",100,0.,1.5);
         haMgj   = new TH1F("haMgj","jet alphaMax distribution, good jets",100,0.,1.5);
         H_T      = new TH1F("H_T"," HT distribution before cut", 100,0.,5000.);
-        H_T1      = new TH1F("H_T1"," HT distribution before triggers cut", 100,0.,5000.);
-        H_T2      = new TH1F("H_T2"," HT distribution after cut", 100,0.,5000.);
-        H_T3      = new TH1F("H_T3"," HT distribution at end", 100,0.,5000.);
+        H_T0      = new TH1F("H_T0"," HT distribution after HLT cut", 100,0.,5000.);
+        H_T1      = new TH1F("H_T1"," HT distribution after 4jets cut", 100,0.,5000.);
+        H_T2      = new TH1F("H_T2"," HT distribution after HT cut", 100,0.,5000.);
+        H_T3      = new TH1F("H_T3"," HT distribution at end (SR)", 100,0.,5000.);
         H_T4      = new TH1F("H_T4"," HT distribution test", 100,0.,5000.);
         hpt1 = new TH1F("hpt1"," pT of leading jet",200,0.,1000.);
         hpt2 = new TH1F("hpt2"," pT of second jet",200,0.,1000.);
@@ -254,12 +255,12 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         hlogmedtheta2DSR = new TH1F("hlogmedtheta2DSR","median log_{10} #hat{#Theta_{2D}} emerging jets (SR)",1000,-3.5,0.5);
 
         // HLT
-        hTrig1d = new TH1F("hTrig1d","HLT_HT400_DispDijet40_Incl",50,0.,1000.);
-        hTrig1n = new TH1F("hTrig1n","HLT_HT500_DispDijet40_Incl",50,0.,1000.);
-        hTrig2d = new TH1F("hTrig2d","HLT_HT250_DispDijet40_DispTrack",50,0.,1000.);
-        hTrig2n = new TH1F("hTrig2n","HLT_HT350_DispDijet40_DispTrack",50,0.,1000.);
-        hTrig3d = new TH1F("hTrig3d","HLT_PFHT600",50,0.,1000.);
-        hTrig3n = new TH1F("hTrig3n","HLT_PFHT900",50,0.,1000.);
+        hTrig1d = new TH1F("hTrig1d","HLT_HT400_DispDijet40_Incl",150,0.,1500.);
+        hTrig1n = new TH1F("hTrig1n","HLT_HT500_DispDijet40_Incl",150,0.,1500.);
+        hTrig2d = new TH1F("hTrig2d","HLT_HT250_DispDijet40_DispTrack",150,0.,1500.);
+        hTrig2n = new TH1F("hTrig2n","HLT_HT350_DispDijet40_DispTrack",150,0.,1500.);
+        hTrig3d = new TH1F("hTrig3d","HLT_PFHT600",200,0.,2000.);
+        hTrig3n = new TH1F("hTrig3n","HLT_PFHT900",200,0.,2000.);
 
         hTrig1n->Sumw2();
         hTrig1d->Sumw2();
@@ -356,8 +357,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
             jet_medtheta2D[j]=-1.;
             jet_logmedtheta2D[j]=-3.5;//xmin of hlogmedtheta2DEJ
 
-            if(r0.size()>0) r0[j]=0.;
-            if(r1.size()>0) r1[j]=0.;
+            if(r0.size()>0) {r0[j]=-1.;r0sig[j]=-1.;}
+            if(r1.size()>0) r1[j]=-1.;
             vector<float> track_pts = track_pt->at(j);
             vector<int> track_sources = track_source->at(j);
             vector<float> track_vertex_weights = track_vertex_weight->at(j);
@@ -398,7 +399,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                 jet_medipsig[j] = CalcMedian(jet_trkipsig);
                 jet_logmedipsig[j] = log10(jet_medipsig[j]);
                 jet_medtheta2D[j] = (*jet_theta2D)[j];
-                jet_logmedtheta2D[j] = (jet_medtheta2D[j]==-1 ? -999 : log10((*jet_theta2D)[j]));
+                jet_logmedtheta2D[j] = (jet_medtheta2D[j]==-1 ? -3.5 : log10((*jet_theta2D)[j]));
             }
 
             std::sort(sort_ip.begin(), sort_ip.end(), std::greater<float>());
@@ -559,6 +560,8 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
             if (hltTrig3n) hTrig3n->Fill(HT);
             if (hltTrig3d) hTrig3d->Fill(HT);
         }
+        bool HLT=false;
+        if (hltTrig3n) HLT=true;
         bool CHT=true;
         if(HT<HTcut) CHT=false;
         // jet pt
@@ -729,7 +732,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                         hmedipXYSigPS->Fill(jet_medipsig[j]);
                         hlogmedipXYSigPS->Fill(jet_logmedipsig[j]);
                         hmedtheta2DPS->Fill(jet_medtheta2D[j]);
-                        hlogmedtheta2DPS->Fill(jet_medtheta2D[j]);
+                        hlogmedtheta2DPS->Fill(jet_logmedtheta2D[j]);
 
                         halphavtheta2DPS->Fill((*jet_alphaMax)[j],jet_medtheta2D[j]);
                         halphavipXYSigPS->Fill((*jet_alphaMax)[j],jet_medipsig[j]);
@@ -751,38 +754,43 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         // apply cuts sequentially
 
         //    std::cout<<"c4jet cht cpt1 cpt2 cpt3 cpt4 cnem "<<C4jet<<" "<<CHT<<" "<<Cpt1<<" "<<Cpt2<<" "<<Cpt3<<" "<<Cpt4<<" "<<Cnem<<std::endl;
+        if (HLT && otfile) {
+            count->Fill("HLT",1);
+            acount->Fill(1);
+            H_T0->Fill(HT);
+        }
 
-        if(C4jet) {
+        if(HLT && C4jet) {
             if(otfile) count->Fill("4 jets",1);
-            if(otfile) acount->Fill(1);
+            if(otfile) acount->Fill(2);
             if(otfile) H_T1->Fill(HT);
 
             // calculate HT and require it greater than some cut value
             if(CHT) {
                 if(otfile) count->Fill("HT",1);
-                if(otfile) acount->Fill(2);
+                if(otfile) acount->Fill(3);
                 if(otfile) H_T2->Fill(HT);
 
                 // do pT cuts on jets  
                 if(Cpt1) {
                     if(otfile) count->Fill("jet pt1",1);
-                    if(otfile) acount->Fill(3);
+                    if(otfile) acount->Fill(4);
 
 
                     if(Cpt2) {
                         if(otfile) count->Fill("jet pt2",1);
-                        if(otfile) acount->Fill(4);
+                        if(otfile) acount->Fill(5);
 
 
                         if(Cpt3) {
                             if(otfile) count->Fill("jet pt3",1);
-                            if(otfile) acount->Fill(5);
+                            if(otfile) acount->Fill(6);
 
 
                             if(Cpt4) {
                                 if(otfile) {
                                     count->Fill("jet pt4",1);
-                                    acount->Fill(6);
+                                    acount->Fill(7);
                                 }
                                 // require at least N emerging jets
                                 if(Cnem) {
@@ -792,12 +800,12 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
 
                                     if(otfile) count->Fill("emerging",1);
-                                    if(otfile) acount->Fill(7);
+                                    if(otfile) acount->Fill(8);
                                     if(Canem) {
                                         std::cout<<"PASS with almost"<<std::endl;
 
                                         if(otfile) count->Fill("almostemerging",1);
-                                        if(otfile) acount->Fill(8);
+                                        if(otfile) acount->Fill(9);
 
 
                                         npass+=1;
@@ -814,7 +822,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                                                     hmedipXYSigSR->Fill(jet_medipsig[i5]);
                                                     hlogmedipXYSigSR->Fill(jet_logmedipsig[i5]);
                                                     hmedtheta2DSR->Fill(jet_medtheta2D[i5]);
-                                                    hlogmedtheta2DSR->Fill(jet_medtheta2D[i5]);
+                                                    hlogmedtheta2DSR->Fill(jet_logmedtheta2D[i5]);
                                                     htheta2DvipXYSigSR->Fill(jet_medtheta2D[i5],jet_medipsig[i5]);
                                                 }
                                                 for(int i6=i5+1;i6<4;i6++) {
@@ -858,6 +866,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         halpha->Write();
         haMgj->Write();
         H_T->Write();
+        H_T0->Write();
         H_T1->Write();
         H_T2->Write();
         H_T3->Write();

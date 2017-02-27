@@ -1,3 +1,4 @@
+#include <TList.h>
 #include "QCDhists.h"
 #include "EMJselect.h"
 #include "EMJscan.h"
@@ -14,25 +15,6 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     if (b16003) scanCuts = false;
     std::string inputfile;
     std::string outputfile;
-
-    //for kine scan
-
-    /*  
-    // YH default
-    float DHTcut=1000;
-    float Dpt1cut=400;
-    float Dpt2cut=200;
-    float Dpt3cut=125;
-    float Dpt4cut=50;
-    float Dalphacut=0.2;
-    float DmaxIPcut=-1.;
-    int Dnemcut=1;
-    int Dntrk1=0;
-    float Djetacut = 2.;
-    // for alpha max scan
-    const int ncutscan=5;
-    */
-
   
     // opt
     float DHTcut=1000;
@@ -151,7 +133,8 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
                         std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
                     }
                 }
-            }}
+            }
+        }
     }
     // get normalization
     //  double norm[nbin];
@@ -177,12 +160,13 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
     //make and  output summed and renormalized histograms
     std::cout<<"normalizing histograms"<<std::endl;
-    const int nhist=94;
+    const int nhist=97;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
-        "count","acount","hjetcut","hjetchf","h_nemg",
+        "count","acount",
+        "hjetcut","hjetchf","h_nemg",
         "hnjet","hpt","heta","heta2",
-        "H_T","H_T1","H_T2","H_T3","H_T4",
+        "H_T","H_T0","H_T1","H_T2","H_T3","H_T4",
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
@@ -200,10 +184,11 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         "hmedtheta2DEJ","hmedtheta2DnEJ","hlogmedtheta2DEJ","hlogmedtheta2DnEJ",
         "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
         "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
+        "hfr_ntrkpt1d","hfr_ntrkpt1n",
     };
     vector<double> outnorm(nbin);
     for(int i=0;i<nhist;i++) {
-        std::cout<<" enering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
+        std::cout<<" entering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
         vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames,donorm,bbname);
     }
 
@@ -217,7 +202,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     };
     vector<double> outnorm2(nbin);
     for(int i=0;i<nhist2;i++) {
-        std::cout<<" enering Histman2 with i = "<<i<<": "<<histnames2[i]<<std::endl;
+        std::cout<<" entering Histman2 with i = "<<i<<": "<<histnames2[i]<<std::endl;
         vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames,donorm,bbname);
     }
 
@@ -298,6 +283,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
     for(int i=0;i<nbin;i++) {  // for each bin
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
             inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            std::cout << inputfile << std::endl;
             TFile* in = new TFile(inputfile.c_str());
             if (in->IsZombie()) {in->Close(); continue;}
             if (!in->GetListOfKeys()->Contains(thisHIST.c_str())) return (new TH1F(thisHIST.c_str(),"dummy empty hist",10,0.,10.));
@@ -424,4 +410,59 @@ void  HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::stri
 
 
     return;
+}
+
+
+TH1F* HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm,std::string bbname) {
+
+    std::string inputfile;
+
+    // now add up all the files for one bin
+    vector<TH1F> sum(nbin);
+    TList *listO = new TList;
+    for(int i=0;i<nbin;i++) {  // for each bin
+        TList *listI = new TList;
+        int ij=0;
+        for(int j=0;j<nfiles[i];j++) { //for each file for that bin
+            inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            TFile* in = new TFile(inputfile.c_str());
+            if (in->IsZombie()) {in->Close(); continue;}
+            if (!in->GetListOfKeys()->Contains(thisHIST.c_str())) return (new TH1F(thisHIST.c_str(),"dummy empty hist",10,0.,10.));
+            if (ij==0) sum[i] = *(static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone("h")));
+            listI->Add(static_cast<TH1F*>(in->Get(thisHIST.c_str())->Clone()));
+            in->Close();
+            ij++;
+        }
+        sum[i].Reset();
+        std::cout << "HERE0" << std::endl;
+        sum[i].Merge(listI);
+        std::cout << "HERE1" << std::endl;
+    }
+
+    if(donorm) {
+        // reweight to int lum
+        std::cout<<" reweighting to inst lum of "<<goalintlum<<" for each bin"<<std::endl;
+        for(int i=0;i<nbin;i++) {
+            // get total number of events before filter
+            float ntotal = norm[i];
+            std::cout<<" for bin "<<i<<" number of pretrigger events is "<<ntotal<<std::endl;
+            float fileLum= ntotal/xsec[i];
+            std::cout<<" equ lum for bin is "<<fileLum<<" fb-1"<<std::endl;
+            outnorm[i] = goalintlum/fileLum;
+            std::cout<<" scaling by a factor of "<<outnorm[i]<<std::endl;
+            sum[i].Scale(outnorm[i]);
+        }
+    }
+
+    //add the bins
+    std::cout<<" adding bins"<<std::endl;
+
+    for(int i=1;i<nbin;i++) {
+        listO->Add(&sum[i]);
+    }
+    TH1F* SUM=static_cast<TH1F*>((sum[0]).Clone("SUM"));
+    SUM->Reset();
+    SUM->Merge(listO);
+
+    return SUM;
 }
