@@ -37,30 +37,30 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
 
     std::cout<<"normalizing histograms"<<std::endl;
     // merge 1D histograms
-    const int nhist=4;//97;
+    const int nhist=98;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
         "count","acount",
-//         "hjetcut","hjetchf","h_nemg",
-//         "hnjet","hpt","heta","heta2",
-//         "H_T","H_T0","H_T1","H_T2","H_T3","H_T4",
-//         "hpt1","hpt2","hpt3",
-//         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
-//         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
-//         "hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
-//         "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1","hipXYEJ",
-//         "hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
-//         "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-//         "hn2maxipnm1","hjptfrb","hjptfra1",
-//         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
-//         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
-//         "hpt3ko","hpt4ko","hmass","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
-//         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
-//         "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n","h_ntag",
-//         "halpha","halphaPS",
-//         "hmedtheta2DEJ","hmedtheta2DnEJ","hlogmedtheta2DEJ","hlogmedtheta2DnEJ",
-//         "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
-//         "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
+        "hjetcut","hjetchf","h_nemg","h_nalemg",
+        "hnjet","hpt","heta","heta2",
+        "H_T","H_T0","H_T1","H_T2","H_T3","H_T4",
+        "hpt1","hpt2","hpt3",
+        "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
+        "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
+        "hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
+        "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1","hipXYEJ",
+        "hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
+        "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
+        "hn2maxipnm1","hjptfrb","hjptfra1",
+        "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+        "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
+        "hpt3ko","hpt4ko","hmass","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
+        "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
+        "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n","h_ntag",
+        "halpha","halphaPS",
+        "hmedtheta2DEJ","hmedtheta2DnEJ","hlogmedtheta2DEJ","hlogmedtheta2DnEJ",
+        "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
+        "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
         "hfr_ntrkpt1d","hfr_ntrkpt1n",
     };
     vector<double> outnorm(nbin);

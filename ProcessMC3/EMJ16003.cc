@@ -149,7 +149,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
     */
 
     // create a histograms
-    TH1F *acount,*count,*hjetcut,*hjetchf,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T0,*H_T1,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,*hHTko,*hpt1ko,*hpt2ko,*hpt3ko,*hpt4ko,*hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ,*hmass,*hmedipXYEJ,*hmedipXYnEJ,*hmeanipXYSigEJ,*hmeanipXYSignEJ,*hmedipXYSigEJ,*hmedipXYSignEJ,*hlogmeanipXYSigEJ,*hlogmeanipXYSignEJ,*hlogmedipXYSigEJ,*hlogmedipXYSignEJ,*hTrig1d,*hTrig1n,*hTrig2d,*hTrig2n,*hTrig3d,*hTrig3n,*hmedtheta2DEJ,*hmedtheta2DnEJ,*hlogmedtheta2DEJ,*hlogmedtheta2DnEJ,*h_ntag,*hfr_ntrkpt1d,*hfr_ntrkpt1n;
+    TH1F *acount,*count,*hjetcut,*hjetchf,*h_nalemg,*h_nemg,*hnjet,*hpt,*heta,*heta2,*halpha,*H_T,*H_T0,*H_T1,*H_T2,*H_T3,*H_T4,*hbcut_ntrkpt1,*hacut_ntrkpt1,*hbcut_nef,*hacut_nef,*hbcut_cef,*hacut_cef,*hbcut_alphamax,*hacut_alphamax,*hHTnm1,*hnHitsnm1,*hntrk1nm1,*hmaxipnm1,*hpt1nm1,*hpt2nm1,*hpt3nm1,*hpt4nm1,*halphanm1,*hnemnm1,*hpt1,*hpt2,*hpt3,*hpt4,*hipXYEJ,*hipXYnEJ,*htvw,*htvwEJ,*hnmaxipnm1,*hn2maxipnm1,*hjptfrb,*hjptfra1,*hjptfra2,*hjptfrbc,*hjptfra1c,*hjptfra2c,*hjptb,*hjpta,*haMgj,*hHTko,*hpt1ko,*hpt2ko,*hpt3ko,*hpt4ko,*hipXYSigEJ,*hipXYSignEJ,*hmaxipXYEJ,*hmaxipXYnEJ,*hmeanipXYEJ,*hmeanipXYnEJ,*hmass,*hmedipXYEJ,*hmedipXYnEJ,*hmeanipXYSigEJ,*hmeanipXYSignEJ,*hmedipXYSigEJ,*hmedipXYSignEJ,*hlogmeanipXYSigEJ,*hlogmeanipXYSignEJ,*hlogmedipXYSigEJ,*hlogmedipXYSignEJ,*hTrig1d,*hTrig1n,*hTrig2d,*hTrig2n,*hTrig3d,*hTrig3n,*hmedtheta2DEJ,*hmedtheta2DnEJ,*hlogmedtheta2DEJ,*hlogmedtheta2DnEJ,*h_ntag,*hfr_ntrkpt1d,*hfr_ntrkpt1n;
 
     // discriminating variables after pre-selection (4jets)
     TH1F *halphaPS,*hmedtheta2DPS,*hlogmedtheta2DPS,*hmedipXYSigPS,*hlogmedipXYSigPS;
@@ -175,6 +175,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         // 1d
         hjetcut = new TH1F("hjetcut","jetcut counts",20,0.,20.);
         hjetchf = new TH1F("hjetchf","jet charged hadron fr",20,0.,1.2);
+        h_nalemg = new TH1F("h_nalemg","number of almost emerging jets",20,0.,20.);
         h_nemg = new TH1F("h_nemg","number of emerging jets",20,0.,20.);
         h_ntag = new TH1F("h_ntag","number of tagged displaced jets",20,0.,20.);
         hnjet = new TH1F("hnjet","number of jets",20,0.,20.);
@@ -309,7 +310,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
     for (Int_t i=0; i<nentries; i++) {
         //    std::cout<<"***event "<<event<<std::endl;
  
-        if(!hasPre) eventCountPreTrigger->Fill(1); 
+        if(!hasPre && otfile) eventCountPreTrigger->Fill(1); 
     
         if(otfile) count->Fill("All",1);  // count number of events
         if(otfile) acount->Fill(0);
@@ -574,6 +575,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
             }
             //std::cout<<"event pt alphaM cef nef ntrkpt1 r0 emerging  almost "<<event<<" "<<(*jet_pt)[ij]<<" "<<(*jet_alphaMax)[ij]<<" "<<(*jet_cef)[ij]<<" "<<(*jet_nef)[ij]<<" "<<jet_ntrkpt1[ij]<<" "<<r0[ij]<<" "<<emerging[ij]<<" "<<almostemerging[ij]<<std::endl;
         }
+        if(otfile) h_nalemg->Fill(nalmostemerging);
         if(otfile) h_nemg->Fill(nemerging);
         if(otfile) h_ntag->Fill(ntagged);
 
@@ -610,13 +612,25 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         bool Ckine = false;
         if(nkine>1) Ckine=true;
 
+        bool Cnalem1 = false;
+        if (nalmostemerging>0) Cnalem1=true;
+
+        bool Cnalem2 = false;
+        if (nalmostemerging>1) Cnalem2=true;
+
         // number emerging jets
-//         bool Cnem = false;
-//         if(nemerging>1) Cnem=true;
+        bool Cnem1 = false;
+        if(nemerging>0) Cnem1=true;
+
+        bool Cnem2 = false;
+        if(nemerging>1) Cnem2=true;
 
         // number tagged jets
-        bool Cntag = false;
-        if (ntagged>1) Cntag=true;
+        bool Cntag1 = false;
+        if (ntagged>0) Cntag1=true;
+
+        bool Cntag2 = false;
+        if (ntagged>1) Cntag2=true;
 
 
         // apply cuts sequentially
@@ -661,15 +675,23 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                             }
                         }
                     }
-                    // require at least 2 tagged jets
-                    if(Cntag) {
+
+                    if(Cnalem1) acount->Fill(5);
+                    if(Cnalem2) acount->Fill(6);
+                    if(Cnalem2 && Cnem1) acount->Fill(7);
+                    if(Cnalem2 && Cnem2) acount->Fill(8);
+                    if(Cnalem2 && Cnem2 && Cntag1) acount->Fill(9);
+                    if(Cnalem2 && Cnem2 && Cntag2) acount->Fill(10);//closure test; should be the same as Cntag2
+
+                    // SR: require at least 2 tagged jets
+                    if(Cntag2) {
                         if(otfile) count->Fill("Ntag",1);
                         if(otfile) {
-                            acount->Fill(5);
+                            acount->Fill(11);
                             H_T4->Fill(HT);
                             npass+=1;
-                            if(ntagged>2) acount->Fill(6);
-                            if(ntagged>3) acount->Fill(7);
+                            if(ntagged>2) acount->Fill(12);
+                            if(ntagged>3) acount->Fill(13);
                         }
 
                         std::cout<<"passing run lumi event filename is "<<run<<" "<<lumi<<" "<<event<<" "<<inputfilename<<std::endl;
@@ -736,6 +758,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         hpt2->Write();
         hpt3->Write();
         hpt4->Write();
+        h_nalemg->Write();
         h_nemg->Write();
         h_ntag->Write();
         hjetchf->Write();
