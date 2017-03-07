@@ -16,7 +16,7 @@ fTag = JobTime.strftime("%Y%m%d_%H%M%S")
 sTags = {}
 sTags["QCD76HT100to200"]=["11",3951,400]
 sTags["QCD76HT200to300"]=["12",1262,400]
-sTags["QCD76HT300to500"]=["13",1012,600]
+sTags["QCD76HT300to500"]=["13",1012,300]
 sTags["QCD76HT500to700"]=["14",1375,300]
 sTags["QCD76HT700to1000"]=["15",1325,300]
 
@@ -99,8 +99,8 @@ for k,v in jobTags.items():
             condorcmd = "condor_submit %s/condor_jobs_%s_MergeNoNorm_%ito%i.jdl"%(dirname,sTag_,fn,rUp)
             print 'condorcmd: ', condorcmd
             print 'Executing condorcmd'
-            #p=subprocess.Popen(condorcmd, shell=True)
-            #p.wait()
+            p=subprocess.Popen(condorcmd, shell=True)
+            p.wait()
 
             print "Histos output dir: %s/%s"%(OutDir,ProdTag)
             fidx+=1

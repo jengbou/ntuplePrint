@@ -6,7 +6,7 @@
 #include "QCDhists.h"
 #include "MergeHistsN.h"
 
-void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, std::string aaname, std::string ohname, bool donorm, std::string bbname)
+void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, std::string ohname, bool donorm, std::string bbname)
 {
 
     std::string inputfile;
@@ -140,7 +140,7 @@ TH1F* HistManN(float goalintlum,std::string thisHIST,double& norm,double& outnor
     // now add up all the files for one bin
     vector<TH1F> sum(1);
     for(int j=0;j<nfiles;j++) { //for each file for that bin
-        inputfile=bbname+binname+"/histos"+binname+"_"+std::to_string(j)+".root";
+        inputfile=bbname+binname+"/SumHistsNoNorm"+binname+"_"+std::to_string(j)+".root";
         std::cout << inputfile << std::endl;
         TFile* in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}

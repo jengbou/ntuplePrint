@@ -315,6 +315,9 @@ int main(int argc, char *argv[])
         } else if (imode==18) {// QCD76 HT2000toInf
             QCDhists(goalintlum,1,q76xsec5,q76nfiles5,q76binnames8,aaname,"SumHistsQCD76_HT200toInf.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
         }
+        else {
+            std::cout<<"invalid choice"<<std::endl;
+        }
     }
     else if (pmode==1) {
         std::cout << "No merging." << std::endl;
@@ -349,15 +352,66 @@ int main(int argc, char *argv[])
         } else if (imode==18) {// QCD76 HT2000toInf
             QCDhistsNoMerge(nrange,"QCD76_HT2000toInf",aaname,hasPre,blind,b16003,outdir,true);
         }
+        else {
+            std::cout<<"invalid choice"<<std::endl;
+        }
     }
     else if (pmode==8) {
         if (imode==11) {//QCD76 HT100to200
             MergeHistsNoNorm(fidx,nrange,"QCD76_HT100to200",aaname,outdir);
         }
+        else if (imode==12) {//QCD76 HT200to300
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT200to300",aaname,outdir);
+        }
+        else if (imode==13) {//QCD76 HT300to500
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT300to500",aaname,outdir);
+        }
+        else if (imode==14) {//QCD76 HT500to700
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT500to700",aaname,outdir);
+        }
+        else if (imode==15) {//QCD76 HT700to1000
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT700to1000",aaname,outdir);
+        }
+        else if (imode==16) {//QCD76 HT1000to1500
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT1000to1500",aaname,outdir);
+        }
+        else if (imode==17) {//QCD76 HT1500to2000
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT1500to2000",aaname,outdir);
+        }
+        else if (imode==18) {//QCD76 HT2000toInf
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT2000toInf",aaname,outdir);
+        }
+        else {
+            std::cout<<"invalid choice"<<std::endl;
+        }
     }
     else if (pmode==9) {
         if (imode==11) {//QCD76 HT100to200
-            MergeHistsN(goalintlum,27990000000,fidx,"QCD76_HT100to200",aaname,"SumHistsQCD76_HT100to200.root",true,outdir);
+            MergeHistsN(goalintlum,27990000000,fidx,"QCD76_HT100to200","SumHistsQCD76_HT100to200.root",true,outdir);
+        }
+        else if (imode==12) {//QCD76 HT200to300
+            MergeHistsN(goalintlum,1712000000,fidx,"QCD76_HT200to300","SumHistsQCD76_HT200to300.root",true,outdir);
+        }
+        else if (imode==13) {//QCD76 HT300to500
+            MergeHistsN(goalintlum,347700000,fidx,"QCD76_HT300to500","SumHistsQCD76_HT300to500.root",true,outdir);
+        }
+        else if (imode==14) {//QCD76 HT500to700
+            MergeHistsN(goalintlum,32100000,fidx,"QCD76_HT500to700","SumHistsQCD76_HT500to700.root",true,outdir);
+        }
+        else if (imode==15) {//QCD76 HT700to1000
+            MergeHistsN(goalintlum,6831000,fidx,"QCD76_HT700to1000","SumHistsQCD76_HT700to1000.root",true,outdir);
+        }
+        else if (imode==16) {//QCD76 HT1000to1500
+            MergeHistsN(goalintlum,1207000,fidx,"QCD76_HT1000to1500","SumHistsQCD76_HT1000to1500.root",true,outdir);
+        }
+        else if (imode==17) {//QCD76 HT1500to2000
+            MergeHistsN(goalintlum,119900,fidx,"QCD76_HT1500to2000","SumHistsQCD76_HT1500to2000.root",true,outdir);
+        }
+        else if (imode==18) {//QCD76 HT2000toInf
+            MergeHistsN(goalintlum,25240,fidx,"QCD76_HT2000toInf","SumHistsQCD76_HT2000toInf.root",true,outdir);
+        }
+        else {
+            std::cout<<"invalid choice"<<std::endl;
         }
     }
     else{//Merging only
@@ -375,8 +429,8 @@ int main(int argc, char *argv[])
             MergeHists(goalintlum,q74nbin4,q74xsec4,q74nfiles4,q74binnames4,aaname,"SumHistsQCD74_HT1500to2000.root",true,outdir);
         } else if (imode==7) {// QCD74 HT2000toInf
             MergeHists(goalintlum,q74nbin5,q74xsec5,q74nfiles5,q74binnames5,aaname,"SumHistsQCD74_HT2000toInf.root",true,outdir);
-//         } else if (imode==11) {//QCD76 HT100to200
-//             MergeHists(goalintlum,q76nbin1,q76xsec1,q76nfiles1,q76binnames1,aaname,"SumHistsQCD76_HT100to200.root",true,outdir);
+        } else if (imode==11) {//QCD76 HT100to200
+            MergeHists(goalintlum,q76nbin1,q76xsec1,q76nfiles1,q76binnames1,aaname,"SumHistsQCD76_HT100to200.root",true,outdir);
         } else if (imode==12) {// QCD76 HT200to300
             MergeHists(goalintlum,q76nbin2,q76xsec2,q76nfiles2,q76binnames2,aaname,"SumHistsQCD76_HT200to300.root",true,outdir);
         } else if (imode==13) {// QCD76 HT300to500
@@ -391,6 +445,9 @@ int main(int argc, char *argv[])
             MergeHists(goalintlum,q76nbin7,q76xsec7,q76nfiles7,q76binnames7,aaname,"SumHistsQCD76_HT1500to2000.root",true,outdir);
         } else if (imode==18) {// QCD76 HT2000toInf
             MergeHists(goalintlum,q76nbin8,q76xsec8,q76nfiles8,q76binnames8,aaname,"SumHistsQCD76_HT2000toInf.root",true,outdir);
+        }
+        else {
+            std::cout<<"invalid choice"<<std::endl;
         }
     }
 
