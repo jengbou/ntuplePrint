@@ -4,13 +4,14 @@
 #include "QCDhists.h"
 #include "QCDhistsNoMerge.h"
 #include "MergeHists.h"
-
+#include "MergeHistsNoNorm.h"
+#include "MergeHistsN.h"
 
 int main(int argc, char *argv[])
 {
     int dooptk =*(argv[1])-'0';
     int doopta =*(argv[2])-'0';
-    int imode=*(argv[3])-'0';
+    int imode=(int)atoi((argv[3]));
     int iblind=*(argv[4])-'0';
     int i16003=*(argv[5])-'0';
 
@@ -32,6 +33,10 @@ int main(int argc, char *argv[])
     if (argv[8]!=NULL && argv[9]!=NULL){
         nrange[0] = (int)atoi(argv[8]);
         nrange[1] = (int)atoi(argv[9]);
+    }
+    int fidx;
+    if (argv[10]!=NULL){
+        fidx = (int)atoi(argv[10]);
     }
 
     std::cout << "Results will be saved to: " << outdir << std::endl;
@@ -76,15 +81,33 @@ int main(int argc, char *argv[])
     } else if(imode==5) {
         std::cout<<"doing QCD74HT1000to1500"<<std::endl;
     } else if(imode==6) {
-        std::cout<<"doing QCD74HT1500toInf"<<std::endl;
+        std::cout<<"doing QCD74HT1500to2000"<<std::endl;
     } else if(imode==7) {
-        std::cout<<"doing DATA"<<std::endl;
-        hasPre=true;
-        blind=true;
+        std::cout<<"doing QCD74HT2000toInf"<<std::endl;
     } else if(imode==8) {
         std::cout<<"doing QCD74"<<std::endl;
     } else if(imode==9) {
         std::cout<<"doing RelVal"<<std::endl;
+    } else if(imode==10) {
+        std::cout<<"doing DATA"<<std::endl;
+        hasPre=true;
+        blind=true;
+    } else if(imode==11) {
+        std::cout<<"doing QCD76HT100to200"<<std::endl;
+    } else if(imode==12) {
+        std::cout<<"doing QCD76HT200to300"<<std::endl;
+    } else if(imode==13) {
+        std::cout<<"doing QCD76HT300to500"<<std::endl;
+    } else if(imode==14) {
+        std::cout<<"doing QCD76HT500to700"<<std::endl;
+    } else if(imode==15) {
+        std::cout<<"doing QCD76HT700to1000"<<std::endl;
+    } else if(imode==16) {
+        std::cout<<"doing QCD76HT1000to1500"<<std::endl;
+    } else if(imode==17) {
+        std::cout<<"doing QCD76HT1500to2000"<<std::endl;
+    } else if(imode==18) {
+        std::cout<<"doing QCD76HT2000toInf"<<std::endl;
     } else {
         std::cout<<"invalid choice"<<std::endl;
     }
@@ -95,8 +118,9 @@ int main(int argc, char *argv[])
 
     std::string aaname;
     if (imode==9) aaname = "/data/users/jengbou/EmJetMC/";  // RelVal samples
-    else if (imode<=7) aaname = "/data/users/jengbou/crab_output/ntuple_20170223_v0/";
-    else aaname = "/data/users/eno/outputQCD/";
+    //else if (imode<=7) aaname = "/data/users/jengbou/crab_output/ntuple_20170223_v0/";
+    else aaname = "/data/users/jengbou/crab_output/ntuple_20170301_v0/";//QCD76
+    //else aaname = "/data/users/eno/outputQCD/";
 
     std::cout << "Input directory = " << aaname << std::endl;
     const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
@@ -111,21 +135,7 @@ int main(int argc, char *argv[])
     std::string qbinnames[qnbin]={"QCD_HT2000toInf"};
 
 
-    // for signal models A.  mediat mass is 1000
-    const int anbin=1; 
-    float axsec[anbin]={18.45}; // fb 
-    //int anfiles[anbin]={716};//74Full
-    int anfiles[anbin]={71}; 
-    std::string abinnames[anbin]={"modelA"};
-
-    // for signal models B.  mediat mass is 1000
-    const int bnbin=1; 
-    float bxsec[bnbin]={18.45}; // fb 
-    //int bnfiles[bnbin]={498}; //74Full
-    int bnfiles[bnbin]={50};
-    std::string bbinnames[bnbin]={"modelB"};
-
-
+    // mode = 10
     // DATA
     const int datanbin=1; 
     float dataxsec[datanbin]={11811000}; // fb 
@@ -139,14 +149,32 @@ int main(int argc, char *argv[])
     int q74nfiles[q74nbin]={183,153,65,44,26};
     std::string q74binnames[q74nbin]={"QCD74_HT500to700","QCD74_HT700to1000","QCD74_HT1000to1500","QCD74_HT1500to2000","QCD74_HT2000toInf"};
 
-
+    // mode = 9
     // RelVal ModelA
     // for signal models A.  mediat mass is 1000
     const int vnbin=1; 
     float vxsec[vnbin]={18.45}; // fb
     int vnfiles[vnbin]={10};//76
-    //std::string vbinnames[anbin]={"Tests"};
-    std::string vbinnames[anbin]={"ModelA74X_20170215_v0"};
+    //std::string vbinnames[vnbin]={"Tests"};
+    std::string vbinnames[vnbin]={"ModelA74X_20170215_v0"};
+
+    // mode = 1
+    // for signal models A.  mediat mass is 1000
+    const int anbin=1; 
+    float axsec[anbin]={18.45}; // fb 
+    int anfiles[anbin]={716};//74Full
+    //int anfiles[anbin]={71}; 
+    int anfrng[anbin][2]={1,716};
+    std::string abinnames[anbin]={"modelA"};
+
+    // mode = 2
+    // for signal models B.  mediat mass is 1000
+    const int bnbin=1; 
+    float bxsec[bnbin]={18.45}; // fb 
+    int bnfiles[bnbin]={498}; //74Full
+    //int bnfiles[bnbin]={50};
+    int bnfrng[bnbin][2]={1,498};
+    std::string bbinnames[bnbin]={"modelB"};
 
     // mode = 3
     //QCD74
@@ -184,6 +212,69 @@ int main(int argc, char *argv[])
     int q74nfrng5[q74nbin5][2]={1,261};
     std::string q74binnames5[q74nbin5]={"QCD74_HT2000toInf"};
 
+    // mode = 11
+    //QCD76
+    const int q76nbin1=1; // 100-200
+    float q76xsec1[q76nbin1]={27990000000.0}; //fb
+    int q76nfiles1[q76nbin1]={3951};//1843
+    int q76nfrng1[q76nbin1][2]={1,3951};
+    std::string q76binnames1[q76nbin1]={"QCD76_HT100to200"};
+
+    // mode = 12
+    //QCD76
+    const int q76nbin2=1; // 200-300
+    float q76xsec2[q76nbin2]={1712000000}; //fb
+    int q76nfiles2[q76nbin2]={1262};//1843
+    int q76nfrng2[q76nbin2][2]={1,1262};
+    std::string q76binnames2[q76nbin2]={"QCD76_HT200to300"};
+
+    // mode = 13
+    //QCD76
+    const int q76nbin3=1; // 300-500
+    float q76xsec3[q76nbin3]={347700000}; //fb
+    int q76nfiles3[q76nbin3]={1012};//1843
+    int q76nfrng3[q76nbin3][2]={1,1012};
+    std::string q76binnames3[q76nbin3]={"QCD76_HT300to500"};
+
+    // mode = 14
+    //QCD76
+    const int q76nbin4=1; // 500-700
+    float q76xsec4[q76nbin4]={32100000}; //fb
+    int q76nfiles4[q76nbin4]={1375};//1843
+    int q76nfrng4[q76nbin4][2]={1,1375};
+    std::string q76binnames4[q76nbin4]={"QCD76_HT500to700"};
+
+    // mode = 15
+    //QCD76
+    const int q76nbin5=1; // 700-1000
+    float q76xsec5[q76nbin5]={6831000}; //fb
+    int q76nfiles5[q76nbin5]={1325};//1843
+    int q76nfrng5[q76nbin5][2]={1,1325};
+    std::string q76binnames5[q76nbin5]={"QCD76_HT700to1000"};
+
+    // mode = 16
+    //QCD76
+    const int q76nbin6=1; // 1000-1500
+    float q76xsec6[q76nbin6]={1207000}; //fb
+    int q76nfiles6[q76nbin6]={498};//1843
+    int q76nfrng6[q76nbin6][2]={1,498};
+    std::string q76binnames6[q76nbin6]={"QCD76_HT1000to1500"};
+
+    // mode = 17
+    //QCD76
+    const int q76nbin7=1; // 1500-2000
+    float q76xsec7[q76nbin7]={119900}; //fb
+    int q76nfiles7[q76nbin7]={397};//1843
+    int q76nfrng7[q76nbin7][2]={1,397};
+    std::string q76binnames7[q76nbin7]={"QCD76_HT1500to2000"};
+
+    // mode = 18
+    //QCD76
+    const int q76nbin8=1; // 2000-Inf
+    float q76xsec8[q76nbin8]={25240}; //fb
+    int q76nfiles8[q76nbin8]={223};//1843
+    int q76nfrng8[q76nbin8][2]={1,223};
+    std::string q76binnames8[q76nbin8]={"QCD76_HT2000toInf"};
 
     if (pmode==0) {
         std::cout << "All in one go." << std::endl;
@@ -193,38 +284,88 @@ int main(int argc, char *argv[])
             QCDhists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
         } else if (imode==2) {
             QCDhists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
-        } else if (imode==3) {//QCD74 HT500to700
-            QCDhists(goalintlum,1,q74xsec1,q74nfiles1,q74binnames1,aaname,"SumHistsQCD74_HT500to700.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
-        } else if (imode==4) {// QCD74 HT700to1000
-            QCDhists(goalintlum,1,q74xsec2,q74nfiles2,q74binnames2,aaname,"SumHistsQCD74_HT700to1000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
-        } else if (imode==5) {// QCD74 HT1000to1500
-            QCDhists(goalintlum,1,q74xsec3,q74nfiles3,q74binnames3,aaname,"SumHistsQCD74_HT1000to1500.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
-        } else if (imode==6) {// QCD74 HT1500to2000
-            QCDhists(goalintlum,1,q74xsec4,q74nfiles4,q74binnames4,aaname,"SumHistsQCD74_HT1500to2000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
-        } else if (imode==7) {// QCD74 HT2000toInf
-            QCDhists(goalintlum,1,q74xsec5,q74nfiles5,q74binnames5,aaname,"SumHistsQCD74_HT200toInf.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==3) {//QCD76 HT500to700
+            QCDhists(goalintlum,1,q74xsec1,q74nfiles1,q74binnames1,aaname,"SumHistsQCD76_HT500to700.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==4) {// QCD76 HT700to1000
+            QCDhists(goalintlum,1,q74xsec2,q74nfiles2,q74binnames2,aaname,"SumHistsQCD76_HT700to1000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==5) {// QCD76 HT1000to1500
+            QCDhists(goalintlum,1,q74xsec3,q74nfiles3,q74binnames3,aaname,"SumHistsQCD76_HT1000to1500.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==6) {// QCD76 HT1500to2000
+            QCDhists(goalintlum,1,q74xsec4,q74nfiles4,q74binnames4,aaname,"SumHistsQCD76_HT1500to2000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==7) {// QCD76 HT2000toInf
+            QCDhists(goalintlum,1,q74xsec5,q74nfiles5,q74binnames5,aaname,"SumHistsQCD76_HT200toInf.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
         } else if (imode==8) {
             QCDhists(goalintlum,datanbin,dataxsec,datanfiles,databinnames,aaname,"SumHistsDATA.root",0,0,hasPre,false,blind,b16003,outdir,true);
         } else if (imode==9) {
             QCDhists(goalintlum,vnbin,vxsec,vnfiles,vbinnames,aaname+"RelVal/","SumHistsModelARelValEXO16003.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==11) {//QCD76 HT100to200
+            QCDhists(goalintlum,1,q76xsec1,q76nfiles1,q76binnames1,aaname,"SumHistsQCD76_HT100to200.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==12) {// QCD76 HT200to300
+            QCDhists(goalintlum,1,q76xsec2,q76nfiles2,q76binnames2,aaname,"SumHistsQCD76_HT200to300.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==13) {// QCD76 HT300to500
+            QCDhists(goalintlum,1,q76xsec3,q76nfiles3,q76binnames3,aaname,"SumHistsQCD76_HT300to500.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==14) {//QCD76 HT500to700
+            QCDhists(goalintlum,1,q76xsec1,q76nfiles1,q76binnames4,aaname,"SumHistsQCD76_HT500to700.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==15) {// QCD76 HT700to1000
+            QCDhists(goalintlum,1,q76xsec2,q76nfiles2,q76binnames5,aaname,"SumHistsQCD76_HT700to1000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==16) {// QCD76 HT1000to1500
+            QCDhists(goalintlum,1,q76xsec3,q76nfiles3,q76binnames6,aaname,"SumHistsQCD76_HT1000to1500.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==17) {// QCD76 HT1500to2000
+            QCDhists(goalintlum,1,q76xsec4,q76nfiles4,q76binnames7,aaname,"SumHistsQCD76_HT1500to2000.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
+        } else if (imode==18) {// QCD76 HT2000toInf
+            QCDhists(goalintlum,1,q76xsec5,q76nfiles5,q76binnames8,aaname,"SumHistsQCD76_HT200toInf.root",dooptk,doopta,hasPre,true,blind,b16003,outdir,true);
         }
     }
     else if (pmode==1) {
         std::cout << "No merging." << std::endl;
-        if (imode==3) {//QCD74 HT500to700
-            QCDhistsNoMerge(nrange,"QCD74_HT500to700",aaname,"PartialSumHistsQCD74_HT500to700.root",hasPre,blind,b16003,outdir,true);
+        if (imode==1) {// modelA
+            QCDhistsNoMerge(nrange,"modelA",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==2) {// modelB 
+            QCDhistsNoMerge(nrange,"modelB",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==3) {//QCD74 HT500to700
+            QCDhistsNoMerge(nrange,"QCD74_HT500to700",aaname,hasPre,blind,b16003,outdir,true);
         } else if (imode==4) {// QCD74 HT700to1000
-            QCDhistsNoMerge(nrange,"QCD74_HT700to1000",aaname,"PartialSumHistsQCD74_HT700to1000.root",hasPre,blind,b16003,outdir,true);
+            QCDhistsNoMerge(nrange,"QCD74_HT700to1000",aaname,hasPre,blind,b16003,outdir,true);
         } else if (imode==5) {// QCD74 HT1000to1500
-            QCDhistsNoMerge(nrange,"QCD74_HT1000to1500",aaname,"PartialSumHistsQCD74_HT1000to1500.root",hasPre,blind,b16003,outdir,true);
+            QCDhistsNoMerge(nrange,"QCD74_HT1000to1500",aaname,hasPre,blind,b16003,outdir,true);
         } else if (imode==6) {// QCD74 HT1500to2000
-            QCDhistsNoMerge(nrange,"QCD74_HT1500to2000",aaname,"PartialSumHistsQCD74_HT1500to2000.root",hasPre,blind,b16003,outdir,true);
+            QCDhistsNoMerge(nrange,"QCD74_HT1500to2000",aaname,hasPre,blind,b16003,outdir,true);
         } else if (imode==7) {// QCD74 HT2000toInf
-            QCDhistsNoMerge(nrange,"QCD74_HT2000toInf",aaname,"PartialSumHistsQCD74_HT2000toInf.root",hasPre,blind,b16003,outdir,true);
+            QCDhistsNoMerge(nrange,"QCD74_HT2000toInf",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==11) {//QCD74 HT100to200
+            QCDhistsNoMerge(nrange,"QCD76_HT100to200",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==12) {// QCD76 HT200to300
+            QCDhistsNoMerge(nrange,"QCD76_HT200to300",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==13) {// QCD76 HT300to500
+            QCDhistsNoMerge(nrange,"QCD76_HT300to500",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==14) {//QCD76 HT500to700
+            QCDhistsNoMerge(nrange,"QCD76_HT500to700",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==15) {// QCD76 HT700to1000
+            QCDhistsNoMerge(nrange,"QCD76_HT700to1000",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==16) {// QCD76 HT1000to1500
+            QCDhistsNoMerge(nrange,"QCD76_HT1000to1500",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==17) {// QCD76 HT1500to2000
+            QCDhistsNoMerge(nrange,"QCD76_HT1500to2000",aaname,hasPre,blind,b16003,outdir,true);
+        } else if (imode==18) {// QCD76 HT2000toInf
+            QCDhistsNoMerge(nrange,"QCD76_HT2000toInf",aaname,hasPre,blind,b16003,outdir,true);
         }
     }
-    else{
-        if (imode==3) {//QCD74 HT500to700
+    else if (pmode==8) {
+        if (imode==11) {//QCD76 HT100to200
+            MergeHistsNoNorm(fidx,nrange,"QCD76_HT100to200",aaname,outdir);
+        }
+    }
+    else if (pmode==9) {
+        if (imode==11) {//QCD76 HT100to200
+            MergeHistsN(goalintlum,27990000000,fidx,"QCD76_HT100to200",aaname,"SumHistsQCD76_HT100to200.root",true,outdir);
+        }
+    }
+    else{//Merging only
+        if (imode==1) {// modelA
+            MergeHists(goalintlum,anbin,axsec,anfiles,abinnames,aaname,"SumHistsModelA.root",true,outdir);
+        } else if (imode==2) {// modelB 
+            MergeHists(goalintlum,bnbin,bxsec,bnfiles,bbinnames,aaname,"SumHistsModelB.root",true,outdir);
+        } else if (imode==3) {//QCD74 HT500to700
             MergeHists(goalintlum,q74nbin1,q74xsec1,q74nfiles1,q74binnames1,aaname,"SumHistsQCD74_HT500to700.root",true,outdir);
         } else if (imode==4) {// QCD74 HT700to1000
             MergeHists(goalintlum,q74nbin2,q74xsec2,q74nfiles2,q74binnames2,aaname,"SumHistsQCD74_HT700to1000.root",true,outdir);
@@ -234,6 +375,22 @@ int main(int argc, char *argv[])
             MergeHists(goalintlum,q74nbin4,q74xsec4,q74nfiles4,q74binnames4,aaname,"SumHistsQCD74_HT1500to2000.root",true,outdir);
         } else if (imode==7) {// QCD74 HT2000toInf
             MergeHists(goalintlum,q74nbin5,q74xsec5,q74nfiles5,q74binnames5,aaname,"SumHistsQCD74_HT2000toInf.root",true,outdir);
+//         } else if (imode==11) {//QCD76 HT100to200
+//             MergeHists(goalintlum,q76nbin1,q76xsec1,q76nfiles1,q76binnames1,aaname,"SumHistsQCD76_HT100to200.root",true,outdir);
+        } else if (imode==12) {// QCD76 HT200to300
+            MergeHists(goalintlum,q76nbin2,q76xsec2,q76nfiles2,q76binnames2,aaname,"SumHistsQCD76_HT200to300.root",true,outdir);
+        } else if (imode==13) {// QCD76 HT300to500
+            MergeHists(goalintlum,q76nbin3,q76xsec3,q76nfiles3,q76binnames3,aaname,"SumHistsQCD76_HT300to500.root",true,outdir);
+        } else if (imode==14) {//QCD76 HT500to700
+            MergeHists(goalintlum,q76nbin4,q76xsec4,q76nfiles4,q76binnames4,aaname,"SumHistsQCD76_HT500to700.root",true,outdir);
+        } else if (imode==15) {// QCD76 HT700to1000
+            MergeHists(goalintlum,q76nbin5,q76xsec5,q76nfiles5,q76binnames5,aaname,"SumHistsQCD76_HT700to1000.root",true,outdir);
+        } else if (imode==16) {// QCD76 HT1000to1500
+            MergeHists(goalintlum,q76nbin6,q76xsec6,q76nfiles6,q76binnames6,aaname,"SumHistsQCD76_HT1000to1500.root",true,outdir);
+        } else if (imode==17) {// QCD76 HT1500to2000
+            MergeHists(goalintlum,q76nbin7,q76xsec7,q76nfiles7,q76binnames7,aaname,"SumHistsQCD76_HT1500to2000.root",true,outdir);
+        } else if (imode==18) {// QCD76 HT2000toInf
+            MergeHists(goalintlum,q76nbin8,q76xsec8,q76nfiles8,q76binnames8,aaname,"SumHistsQCD76_HT2000toInf.root",true,outdir);
         }
     }
 

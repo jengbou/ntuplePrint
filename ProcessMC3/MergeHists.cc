@@ -37,7 +37,7 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
 
     std::cout<<"normalizing histograms"<<std::endl;
     // merge 1D histograms
-    const int nhist=98;
+    const int nhist=99;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
         "count","acount",
@@ -56,7 +56,9 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
         "hpt3ko","hpt4ko","hmass","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
-        "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n","h_ntag",
+        "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n",
+        "h_ntag",
+        "h_nloosetag",
         "halpha","halphaPS",
         "hmedtheta2DEJ","hmedtheta2DnEJ","hlogmedtheta2DEJ","hlogmedtheta2DnEJ",
         "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
