@@ -3,6 +3,7 @@
 #include "EMJselect.h"
 #include "EMJscan.h"
 #include "EMJ16003.h"
+#include "EMJbkg.h"
 
 
 void QCDhistsNoMerge(int nrange[2], std::string binname,std::string aaname, bool hasPre, bool blind, bool b16003, std::string bbname, bool crabformat)
@@ -12,16 +13,17 @@ void QCDhistsNoMerge(int nrange[2], std::string binname,std::string aaname, bool
   
     // opt
     float DHTcut=1000;
-    float Dpt1cut=400;
-    float Dpt2cut=200;
-    float Dpt3cut=200;
-    float Dpt4cut=100;
+    float Dpt1cut=400;//400
+    float Dpt2cut=200;//200
+    float Dpt3cut=200;//200
+    float Dpt4cut=100;//100
     float Dalphacut=0.04;
-    float DmaxIPcut=0.4;
-    float Djetacut = 2.;
+    float DmaxIPcut=-999.0;//max IP cut: 0.4
+    //float DmaxIPcut=0.09;//med IP cut
+    float Djetacut = 2.0;//2.0
     // dont forget there is a hidden cut nalmostemergin<4!!!!!!!!!!!!!!!!!
-    int Dnemcut=2;
-    int Dntrk1=0;
+    int Dnemcut=2;//2
+    int Dntrk1=0;//default 0: >=1
     // for alpha max scan
 
     // first make histograms for each file in each bin for the qcd sample
@@ -36,10 +38,12 @@ void QCDhistsNoMerge(int nrange[2], std::string binname,std::string aaname, bool
         std::cout<<"output file is "<<outputfile<<std::endl;
         int itmp;
         if(!b16003) {
-            itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+            //itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+            itmp = EMJbkg(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
         } else {
             itmp = EMJ16003(true,hasPre,inputfile.c_str(),outputfile.c_str());
         }
+        std::cout<<"total number of events passing cuts is "<< itmp <<std::endl;
     }
 
     return;

@@ -28,5 +28,21 @@ TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& histnorm, v
 
 void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta,bool hasPre,bool norm, bool blind, bool b16003,std::string,bool);
 
+double fakerate(double,double,int,int varType=1);//pt,eta,ntrk,type
+double ntrkrewgt(int nTrk);
+double nGJrewgt(int nGoodJet);
+double frWeight(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<vector<float> >*track_pt, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &track_pt, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut=-1, double jptcut=100.0, int varType=1);
+double frWeight4(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, double jptcut=100.0, int varType=1);
+
+double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_pvWeight);
+double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_iPXYSigs);
 
 #endif

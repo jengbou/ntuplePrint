@@ -37,13 +37,13 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
 
     std::cout<<"normalizing histograms"<<std::endl;
     // merge 1D histograms
-    const int nhist=99;
+    const int nhist=110;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
-        "count","acount",
+        "count","acount","hfrwgt",
         "hjetcut","hjetchf","h_nemg","h_nalemg",
         "hnjet","hpt","heta","heta2",
-        "H_T","H_T0","H_T1","H_T2","H_T3","H_T4",
+        "H_T","H_T0","H_T1","H_T2","H_T3","H_T4","H_TFR",
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
@@ -54,16 +54,18 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
         "hn2maxipnm1","hjptfrb","hjptfra1",
         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
-        "hpt3ko","hpt4ko","hmass","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
+        "hpt3ko","hpt4ko","hmass","hmassFR","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
         "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n",
         "h_ntag",
         "h_nloosetag",
         "halpha","halphaPS",
+        "halphaZero","halphaZeroPS",
         "hmedtheta2DEJ","hmedtheta2DnEJ","hlogmedtheta2DEJ","hlogmedtheta2DnEJ",
         "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
         "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
-        "hfr_ntrkpt1d","hfr_ntrkpt1n",
+        "hmedtheta2DFR","hlogmedtheta2DFR","hmedipXYSigFR","hlogmedipXYSigFR",
+        "hfr_ntrkpt1d","hfr_ntrkpt1n","hntrkSR","hntrkFR",
     };
     vector<double> outnorm(nbin);
     for(int i=0;i<nhist;i++) {
@@ -72,13 +74,14 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
     }
 
     // merge 2D histograms
-    const int nhist2=11;
+    const int nhist2=12;
     std::vector<TH2F*> vv2(nhist2);
     std::string histnames2[nhist2]={
         "aMip","haMvjpt","haMvHT","haMvnvtx",
         "halphavtheta2D","halphavipXYSig","htheta2DvipXYSig",
         "halphavtheta2DPS","halphavipXYSigPS","htheta2DvipXYSigPS",
         "htheta2DvipXYSigSR",
+        "htheta2DvipXYSigFR",
     };
     vector<double> outnorm2(nbin);
     for(int i=0;i<nhist2;i++) {
