@@ -475,7 +475,6 @@ TH1F* HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vecto
     return SUM;
 }
 
-
 double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
     double fakerate = 0.0;
 
@@ -713,7 +712,7 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
             else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00127844105009;
             else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00116159627214;
             else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00127593008801;
-            else if( jet_nTrack>=60 && jet_nTrack<70 ) fakerate = 0.000503823743202;
+            else if( jet_nTrack>=60 ) fakerate = 0.000503823743202;
         }
         else if( jet_pt>=700 ){
             if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.267393410206;
@@ -748,7 +747,7 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
             else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00148752564564;
             else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00148196378723;
             else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00130013783928;
-            else if( jet_nTrack>=60 && jet_nTrack<70 ) fakerate = 0.0013450642582;
+            else if( jet_nTrack>=60 ) fakerate = 0.0013450642582;
         }
     }
     else {//alpha2Dsig (tracksource=0, trackQuality HighPurity, track ipXYsig<3)
@@ -1252,7 +1251,7 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
                 else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.0040119541809;
                 else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00456259539351;
                 else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00465831626207;
-                else if( jet_nTrack>=60 && jet_nTrack<70 ) fakerate = 0.00161913910415;
+                else if( jet_nTrack>=60 ) fakerate = 0.00161913910415;
             }
             else if( jet_pt>=700 ){
                 if( jet_nTrack>0 && jet_nTrack<2 ) fakerate = 0.079474106431;
@@ -1287,7 +1286,7 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
                 else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00676980242133;
                 else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00640687486157;
                 else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00602737301961;
-                else if( jet_nTrack>=60 && jet_nTrack<70 ) fakerate = 0.00693205185235;
+                else if( jet_nTrack>=60 ) fakerate = 0.00693205185235;
             }
         }
         else if( fabs(jet_eta)>=1.0 && fabs(jet_eta)<1.5 ){
@@ -1835,6 +1834,438 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
 
 }
 
+double fakerateTP(double jet_pt, double jet_eta, int jet_nTrack, int varType){
+    double fakerate = 0.0;
+
+    if (varType == 1) {//alpha (tracksource = 0, trackquality highPurity, pvWeight>0)
+        if( jet_pt>=100 && jet_pt<150 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.411328136921;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.110956951976;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.040011562407;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0200386364013;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0114627024159;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.00724920025095;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00589098641649;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00409679533914;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00336773553863;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00276778638363;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00236453558318;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00189406401478;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00185049965512;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00158481043763;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00145675137173;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00138681638055;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00134717230685;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00123968662228;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00144343671855;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00160576647613;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00139793439303;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00170455907937;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00135290774051;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0013701407006;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00147025857586;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00149507762399;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00060332933208;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.002577773761;
+            else if( jet_nTrack>=38 ) fakerate = 0.00587211269885;
+        }
+        else if( jet_pt>=150 && jet_pt<200 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.45132869482;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.101133942604;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0410790778697;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0210691113025;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.012582000345;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.00855491217226;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00611928943545;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00495016062632;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00387488841079;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0029952081386;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00244221882895;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00210818881169;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00169900327455;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0016031388659;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0016477368772;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00125536310952;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00129489053506;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00118776073214;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00122364691924;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00110992544796;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0010274410015;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00095766002778;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00128242862411;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00115970673505;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00111562979873;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00131704146042;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00149643281475;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.002198030008;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.00244665308855;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00127782102209;
+            else if( jet_nTrack>=46 ) fakerate = 0.00909058563411;
+        }
+        else if( jet_pt>=200 && jet_pt<250 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.404711425304;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.0976014062762;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0454151332378;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0210127774626;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0136418100446;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.00967902503908;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00740078045055;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00637179519981;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00436860881746;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00387860834599;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00280092400499;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0026380897034;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00235352898017;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00188532669563;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0015695883194;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00157465902157;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00150334683713;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00157660653349;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00127295986749;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00111181696411;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00129996147007;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00121080689132;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0013805431081;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00109967123717;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.000975408998784;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.000885513203684;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.000963868689723;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.00105696090031;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.0019351686351;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.000475604232633;
+            else if( jet_nTrack>=46 ) fakerate = 0.00167973421048;
+        }
+        else if( jet_pt>=250 && jet_pt<300 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.400169342756;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.0994481369853;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0399819202721;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0219794176519;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0142903169617;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0102302450687;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00747192790732;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00598222529516;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00522055942565;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00407708110288;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00329083902761;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00272695790045;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00235966220498;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00184452848043;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00185582612175;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00167160248384;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00154473213479;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00164583197329;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00151590362657;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00133423495572;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.000874941179063;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00113894836977;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0013736380497;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00099275528919;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00128106120974;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00117876229342;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.000909059250262;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.000724673038349;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.000521186098922;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00221360684372;
+            else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00117480754852;
+            else if( jet_nTrack>=50 ) fakerate = 0.00163900339976;
+        }
+        else if( jet_pt>=300 && jet_pt<400 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.387598574162;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.103158503771;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0389530956745;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.025333231315;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0141781233251;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.00992115493864;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00793446693569;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00655185151845;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00532865710557;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00469963299111;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00419264798984;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00319076376036;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00282761850394;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00240248208866;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00224672211334;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00189148029312;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00193505862262;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00167585350573;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00168165867217;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00135798368137;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00169014523271;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00139151338954;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00116392422933;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00122381700203;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00147913338151;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00128917978145;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00141418108251;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.00109150633216;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.00108981470112;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00106288318057;
+            else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.0019850989338;
+            else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.000513938721269;
+            else if( jet_nTrack>=60 ) fakerate = 0.0102659985423;
+        }
+        else if( jet_pt>=400 && jet_pt<500 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.216925904155;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.0888387784362;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0363200306892;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0218701343983;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0138519853354;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0104828095064;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00837497971952;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00713236350566;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00606932863593;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00481897918507;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00486017158255;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00402672030032;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00332744116895;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00308391521685;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00271835410967;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00240200012922;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00232656858861;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00221279705875;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00208962056786;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0016031927662;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00154155795462;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00144156778697;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00147982721683;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00151919363998;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00151698605623;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00136860064231;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00134961248841;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.00143579591531;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.000827852229122;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00134823273402;
+            else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00107333355118;
+            else if( jet_nTrack>=50 ) fakerate = 0.00203973311;
+        }
+        else if( jet_pt>=500 && jet_pt<700 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.376151800156;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.0868468135595;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.035598449409;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0229212380946;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0142381386831;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0109982527792;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00950829312205;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00778950750828;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0068740863353;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00605094013736;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00545303616673;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00465875724331;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00427696295083;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0036800140515;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00331812747754;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00304454704747;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00283369026147;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00236481241882;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00217493646778;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00192248390522;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00197803368792;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00191504415125;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00184300413821;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00169333920348;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00151543680113;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00154388754163;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00144024461042;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.00128579442389;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.00135043927003;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00127844105009;
+            else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00116159627214;
+            else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00127593008801;
+            else if( jet_nTrack>=60 ) fakerate = 0.000503823743202;
+        }
+        else if( jet_pt>=700 ){
+            if( jet_nTrack>=0 && jet_nTrack<2 ) fakerate = 0.267393410206;
+            else if( jet_nTrack>=2 && jet_nTrack<4 ) fakerate = 0.0866660252213;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0433187969029;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0251880865544;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0164148863405;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.013462588191;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0108908601105;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00977971404791;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00873505417258;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00782956369221;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00703095179051;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00587085355073;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00545358890668;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00522325839847;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00449662003666;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00438663177192;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00392517028376;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00353423459455;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00334319029935;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00275669223629;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00288099888712;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00265783490613;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00237119430676;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00235787499696;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0022879501339;
+            else if( jet_nTrack>=30 && jet_nTrack<32 ) fakerate = 0.00201869383454;
+            else if( jet_nTrack>=32 && jet_nTrack<35 ) fakerate = 0.00186536891852;
+            else if( jet_nTrack>=35 && jet_nTrack<38 ) fakerate = 0.00173735222779;
+            else if( jet_nTrack>=38 && jet_nTrack<42 ) fakerate = 0.00171718758065;
+            else if( jet_nTrack>=42 && jet_nTrack<46 ) fakerate = 0.00148752564564;
+            else if( jet_nTrack>=46 && jet_nTrack<50 ) fakerate = 0.00148196378723;
+            else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00130013783928;
+            else if( jet_nTrack>=60 ) fakerate = 0.0013450642582;
+        }
+    }
+    else {//alpha2Dsig (tracksource=0, trackQuality HighPurity, track ipXYsig<3)
+        if( jet_pt>=100 && jet_pt<200 ){
+            if( jet_nTrack>=0 && jet_nTrack<4 ) fakerate = 0.146489977837;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.124317288399;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.103396132588;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0840845927596;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0670311823487;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0543308518827;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0459702052176;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0382093004882;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0299763418734;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0242423731834;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0204917676747;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0173804014921;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0152069283649;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0141417263076;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0124218799174;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0114593682811;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0124008366838;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0116524109617;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00932095758617;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00963907688856;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0120211420581;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0112675875425;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00953529030085;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0134123973548;
+            else if( jet_nTrack>=30 && jet_nTrack<35 ) fakerate = 0.010936117731;
+            else if( jet_nTrack>=35 && jet_nTrack<42 ) fakerate = 0.0220378506929;
+            else if( jet_nTrack>=42 ) fakerate = 0.0937880277634;
+        }
+        else if( jet_pt>=200 && jet_pt<300 ){
+            if( jet_nTrack>=0 && jet_nTrack<4 ) fakerate = 0.130365163088;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.132416114211;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.114442609251;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0946234315634;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0883239805698;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0799155980349;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0667744278908;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0589411668479;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0517020821571;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0400869362056;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0329704545438;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0291685108095;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0287834238261;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.022603482008;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0186357628554;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0181780718267;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0145326927304;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.010152939707;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.013935171999;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0098467124626;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0108909485862;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0119141079485;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0104302698746;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0100729605183;
+            else if( jet_nTrack>=30 && jet_nTrack<35 ) fakerate = 0.00885492935777;
+            else if( jet_nTrack>=35 && jet_nTrack<42 ) fakerate = 0.0122162709013;
+            else if( jet_nTrack>=42 && jet_nTrack<50 ) fakerate = 0.0432729423046;
+            else if( jet_nTrack>=50 ) fakerate = 0.0196891464293;
+        }
+        else if( jet_pt>=300 && jet_pt<400 ){
+            if( jet_nTrack>=0 && jet_nTrack<4 ) fakerate = 0.123541176319;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.121213160455;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.114801801741;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.09071765095;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0896960049868;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.082162424922;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0651457458735;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0622268691659;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0543217472732;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0465599000454;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.040523018688;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.03957490623;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0329116247594;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0251397248358;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0245438702404;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0211482346058;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0184361729771;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.018400894478;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0138794146478;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.015748500824;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.013408601284;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0113888029009;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0096627715975;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0133152222261;
+            else if( jet_nTrack>=30 && jet_nTrack<35 ) fakerate = 0.0119673470035;
+            else if( jet_nTrack>=35 && jet_nTrack<42 ) fakerate = 0.010244095698;
+            else if( jet_nTrack>=42 && jet_nTrack<50 ) fakerate = 0.00985997635871;
+            else if( jet_nTrack>=50 ) fakerate = 0.0117689948529;
+        }
+        else if( jet_pt>=400 && jet_pt<500 ){
+            if( jet_nTrack>=0 && jet_nTrack<4 ) fakerate = 0.113848514855;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0781108811498;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.092665605247;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.07217040658;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0651525780559;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0624618008733;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0606939457357;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0517875105143;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0477401874959;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0435847081244;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0359434783459;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0345578230917;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0319542661309;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0298171639442;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0249006766826;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0221967771649;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0177872478962;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0185889396816;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0133231794462;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0154745690525;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0120643116534;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0126705411822;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0145116290078;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0110222976655;
+            else if( jet_nTrack>=30 && jet_nTrack<35 ) fakerate = 0.00861669424921;
+            else if( jet_nTrack>=35 && jet_nTrack<42 ) fakerate = 0.00974339526147;
+            else if( jet_nTrack>=42 && jet_nTrack<50 ) fakerate = 0.00983470957726;
+            else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.00937225110829;
+            else if( jet_nTrack>=60 ) fakerate = 0.0143514527008;
+        }
+        else if( jet_pt>=500 ){
+            if( jet_nTrack>=0 && jet_nTrack<4 ) fakerate = 0.127319455147;
+            else if( jet_nTrack>=4 && jet_nTrack<6 ) fakerate = 0.0954762846231;
+            else if( jet_nTrack>=6 && jet_nTrack<8 ) fakerate = 0.0602521598339;
+            else if( jet_nTrack>=8 && jet_nTrack<10 ) fakerate = 0.0661811977625;
+            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0658358260989;
+            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0596187226474;
+            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0538003332913;
+            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0530491471291;
+            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0521784685552;
+            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0447088964283;
+            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0415754318237;
+            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0405207909644;
+            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0344916060567;
+            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0315645970404;
+            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0302998442203;
+            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0261623077095;
+            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0266867168248;
+            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0240785628557;
+            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0200217217207;
+            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0212977267802;
+            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0177422259003;
+            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0185490883887;
+            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0163516066968;
+            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0139737566933;
+            else if( jet_nTrack>=30 && jet_nTrack<35 ) fakerate = 0.0123072881252;
+            else if( jet_nTrack>=35 && jet_nTrack<42 ) fakerate = 0.0116289332509;
+            else if( jet_nTrack>=42 && jet_nTrack<50 ) fakerate = 0.0109352841973;
+            else if( jet_nTrack>=50 && jet_nTrack<60 ) fakerate = 0.0107339816168;
+            else if( jet_nTrack>=60 ) fakerate = 0.0145338568836;
+        }
+    }
+    return fakerate;
+
+}
+
 double ntrkrewgt(int nTrk){
     double wgt = 1.0;
 //     if (nTrk<5) wgt = 0.02550;
@@ -2061,6 +2492,44 @@ double frWeightT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
     return p2;
 }
 
+//Ntag==2; tag-and-probe
+double frWeightT21(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+    double p2 = 0.;
+    int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
+    if (verbose) {
+        std::cout << "[frWeightT21] varType = " << varType << std::endl;
+        std::cout << "[frWeightT21] njets = " << njets << std::endl;
+        std::cout << "[frWeightT21] jet pt cut = " << jptcut << std::endl;
+    }
+    for(Int_t j=0; j<njets; j++) {
+        int jdx = goodjetIdx[j];
+        int ntrks1 = ntrack[jdx];
+        double p11=fakerate(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType);
+        for(Int_t k=0; k<njets; k++) {
+            if (k==j) continue;
+            double p12 = p11;
+            for(Int_t j1=0; j1<njets; j1++) {
+                if (j1==j || j1==k) continue;
+                int jdx1 = goodjetIdx[j1];
+                int ntrks11 = ntrack[jdx1];
+                p12 *= (1.0-fakerate(jetpt->at(jdx1),jeteta->at(jdx1),ntrks11,varType));
+            }
+
+            int kdx = goodjetIdx[k];
+            int ntrks2 = ntrack[kdx];
+            double p22 = p12*fakerateTP(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType);
+            for(Int_t l=0; l<njets; l++) {
+                if (l==j || l==k) continue;
+                int ldx = goodjetIdx[l];
+                int ntrks3 = ntrack[ldx];
+                p22 *= (1.0-fakerateTP(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType));
+            }
+            p2 += p22/2.0;
+        }
+    }
+    return p2;
+}
+
 double frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p3 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
@@ -2076,15 +2545,16 @@ double frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
         for(Int_t k=j+1; k<njets; k++) {
             int kdx = goodjetIdx[k];
             int ntrks2 = ntrack[kdx];
-            double p32 = p31 * fakerate(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType);
+            double p32 = p31 * fakerateTP(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType);
             for(Int_t l=k+1; l<njets; l++) {
                 int ldx = goodjetIdx[l];
                 int ntrks3 = ntrack[ldx];
-                double p33 = p32 * fakerate(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType);
+                double p33 = p32 * fakerateTP(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType);
                 for(Int_t m=0; m<njets; m++) {
                     if (m==j || m==k || m ==l) continue;
                     int mdx = goodjetIdx[m];
                     int ntrks4 = ntrack[mdx];
+                    p33 *= (1.0-fakerateTP(jetpt->at(mdx),jeteta->at(mdx),ntrks4,varType));
                     p33 *= (1.0-fakerate(jetpt->at(mdx),jeteta->at(mdx),ntrks4,varType));
                 }
                 p3 += p33;
@@ -2147,12 +2617,46 @@ double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> 
     return alpha;
 }
 
+double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
+                vector<float> &track_pvWeight, vector<float> &track_ref_zs, float pv_z, float pilecut)
+{
+    double ptsum_total=0, ptsum=0;
+    for (unsigned itk=0; itk < track_pt.size(); itk++) {
+        if ( track_source.at(itk) != 0 ) continue; // Only process tracks with source=0
+        if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
+        if (fabs(pv_z-track_ref_zs.at(itk))>pilecut) continue;// remove tracks with exceedingly large z
+        ptsum_total += track_pt.at(itk);
+        if ( track_pvWeight.at(itk) > 0 ) ptsum += track_pt.at(itk);
+    }
+
+    double alpha = (ptsum_total > 0 ? ptsum/ptsum_total : 0.);
+    if (verbose) std::cout << std::fixed << std::setprecision(6) << "[GetAlpha] alpha = " << alpha << std::endl;
+    return alpha;
+}
+
 double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_ipXYSigs)
 {
     double ptsum_total=0, ptsum=0;
     for (unsigned itk=0; itk < track_pt.size(); itk++) {
         if ( track_source.at(itk) != 0 ) continue; // Only process tracks with source=0
         if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
+        ptsum_total += track_pt.at(itk);
+        if ( track_ipXYSigs.at(itk) < 3.0 ) ptsum += track_pt.at(itk);
+    }
+
+    double alpha = (ptsum_total > 0 ? ptsum/ptsum_total : 0.);
+    if (verbose) std::cout << std::fixed << std::setprecision(6) << "[GetAlpha2Dsig] alpha = " << alpha << std::endl;
+    return alpha;
+}
+
+double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
+                     vector<float> &track_ipXYSigs, vector<float> &track_ref_zs, float pv_z, float pilecut)
+{
+    double ptsum_total=0, ptsum=0;
+    for (unsigned itk=0; itk < track_pt.size(); itk++) {
+        if ( track_source.at(itk) != 0 ) continue; // Only process tracks with source=0
+        if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
+        if (fabs(pv_z-track_ref_zs.at(itk))>pilecut) continue;// remove tracks with exceedingly large z
         ptsum_total += track_pt.at(itk);
         if ( track_ipXYSigs.at(itk) < 3.0 ) ptsum += track_pt.at(itk);
     }
