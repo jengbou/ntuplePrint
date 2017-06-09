@@ -20,6 +20,18 @@ using std::vector;
 
 float pilecut=5000.;
 float pilecut2=1.5;
+float ipXYsigcut=2.0;
+
+float DeltaR(float eta1, float phi1, float eta2, float phi2) {
+
+    float dR=0.;
+    float deta = std::fabs(eta1-eta2);
+    float dphi = std::fabs(phi1-phi2);
+    if(dphi>3.14159) dphi = 2.*3.14159-dphi;
+    dR=std::sqrt(deta*deta+dphi*dphi);
+
+    return dR;
+}
 
 int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename,
            float HTcut, float pt1cut, float pt2cut, float pt3cut, float pt4cut, float jetacut,float alphaMaxcut, float maxIPcut, float NemfracCut,float CemfracCut,int ntrk1cut, int NemergingCut,bool blind) {
@@ -83,7 +95,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
     vector<vector<float> > *track_ipZ =0;
     vector<vector<float> > *track_ipXY = 0;
     vector<vector<float> > *track_ipXYSig = 0;
-    //vector<vector<float> > *track_ref_z =0;//analysis_20170523_v0
+    vector<vector<float> > *track_ref_z =0;//analysis_20170523_v0
     vector<vector<int> > *track_nMissInnerHits = 0;
     vector<vector<int> > *track_nMissInnerPxlLayers = 0;
     vector<vector<int> > *track_nPxlLayers = 0;
@@ -95,9 +107,31 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
       vector<float> *vertex_z =0;
     */
 
+    // gen particles
+    vector<int> *gp_index = new vector<int>;
+    vector<int> *gp_pdgId = new vector<int>;
+    vector<float> *gp_pt = new vector<float>;
+    vector<float> *gp_eta = new vector<float>;
+    vector<float> *gp_phi = new vector<float>;
+    vector<int> *gp_charge = new vector<int>;
+    vector<int> *gp_status = new vector<int>;
+    vector<float> *gp_vx = new vector<float>;
+    vector<float> *gp_vy = new vector<float>;
+    vector<float> *gp_vz = new vector<float>;
     //get event count pre trigger
 
 
+    // gen particles
+    tt->SetBranchAddress("gp_index",&gp_index);
+    tt->SetBranchAddress("gp_pdgId",&gp_pdgId);
+    tt->SetBranchAddress("gp_pt",&gp_pt);
+    tt->SetBranchAddress("gp_eta",&gp_eta);
+    tt->SetBranchAddress("gp_phi",&gp_phi);
+    tt->SetBranchAddress("gp_charge",&gp_charge);
+    tt->SetBranchAddress("gp_status",&gp_status);
+    tt->SetBranchAddress("gp_vx",&gp_vx);
+    tt->SetBranchAddress("gp_vy",&gp_vy);
+    tt->SetBranchAddress("gp_vz",&gp_vz);
 
     //for ntuple
     tt->SetBranchAddress("pv_indexInColl",&pv_indexInColl);
@@ -136,7 +170,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
     tt->SetBranchAddress("track_pvWeight",&track_pvWeight);
     tt->SetBranchAddress("track_ipXY",&track_ipXY);
     tt->SetBranchAddress("track_ipXYSig",&track_ipXYSig);
-    //tt->SetBranchAddress("track_ref_z",&track_ref_z);//analysis_20170523_v0
+    tt->SetBranchAddress("track_ref_z",&track_ref_z);//analysis_20170523_v0
     tt->SetBranchAddress("track_nMissInnerHits",&track_nMissInnerHits);
     tt->SetBranchAddress("track_nMissInnerPxlLayers",&track_nMissInnerPxlLayers);
     tt->SetBranchAddress("track_nPxlLayers",&track_nPxlLayers);
@@ -347,7 +381,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
     double np3 = 0;
     double minJetPt = 100.0;
     const int varType = 2;
-    const int ntagType = 21; //0:>=1 tag; 1: ==1 tag; 2: == 2 tag; 21: == 2 tag (T&P); 3: == 3 tag; else: >= NemergingCut tag
+    const int ntagType = 2; //0:>=1 tag; 1: ==1 tag; 2: == 2 tag (flav dep); 21: == 2 tag (T&P); 3: == 3 tag; else: >= NemergingCut tag
     // loop over events
     for (Int_t i=0; i<nentries; i++) {
         //std::cout<<"***event "<<event<<std::endl;
@@ -364,7 +398,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
         if (pv_indexInColl != 0) continue;
         //if (pv_index != 0) continue;
         // PVZ cut
-//         if(fabs(pv_z)>15) continue;//analysis_20170523_v0
+        if(fabs(pv_z)>15) continue;//analysis_20170523_v0
 
         /*
         //pv;s
@@ -378,8 +412,9 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
 
         const int NNNjet = jet_index->size();
         // jets
-        //vector<double> jet_fnonPU(NNNjet);//analysis_20170523_v0
-        //vector<double> jet_fmaxtrkpt(NNNjet);//analysis_20170523_v0
+        vector<double> jet_fnonPU(NNNjet);//analysis_20170523_v0
+        vector<double> jet_fmaxtrkpt(NNNjet);//analysis_20170523_v0
+        vector<double> jet_fsmallIPsig(NNNjet);//analysis_20170523_v0
         vector<int> jet_ntrkpt1(NNNjet);
         vector<float> jet_alpha(NNNjet);
         vector<float> jet_meanip(NNNjet);
@@ -399,6 +434,10 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
         vector<float> jet_px(NNNjet);
         vector<float> jet_py(NNNjet);
         vector<float> jet_pz(NNNjet);
+
+        vector<int> jet_pid_maxEt(NNNjet);
+        vector<float> jet_maxET_part(NNNjet);
+
         if(otfile) hnjet->Fill(NNNjet);
 
         for(Int_t j=0; j<NNNjet; j++) {
@@ -424,8 +463,9 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
             jet_medtheta2D[j]=-1.;
             jet_logmedtheta2D[j]=-3.5;//xmin of hlogmedtheta2DEJ
             jet_alpha[j]=-1.;
-            //jet_fnonPU[j]=0.;//analysis_20170523_v0
-            //jet_fmaxtrkpt[j]=0.;//analysis_20170523_v0
+            jet_fnonPU[j]=0.;//analysis_20170523_v0
+            jet_fmaxtrkpt[j]=0.;//analysis_20170523_v0
+            jet_fsmallIPsig[j]=0.;//analysis_20170523_v0
 
             if(r0.size()>0) {r0[j]=-1.;r0sig[j]=-1.;}
             if(r1.size()>0) r1[j]=-1.;
@@ -442,21 +482,22 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
             for(uint it=0;it<track_pts.size();it++) sort_ipsig[it]=0;
             vector<float> jet_trkip;
             vector<float> jet_trkipsig;
-            //vector<float> track_ref_zs = track_ref_z->at(j);//analysis_20170523_v0
+            vector<float> track_ref_zs = track_ref_z->at(j);//analysis_20170523_v0
 
             // jet_alpha
             //jet_alpha[j] = GetAlpha(track_pts,track_sources,track_qualitys,track_vertex_weights);//old
-            if (varType==1) jet_alpha[j] = GetAlpha(track_pts,track_sources,track_qualitys,track_pvWeights);
-            else {
-                alphaMaxcut = 0.3;
-                jet_alpha[j] = GetAlpha2Dsig(track_pts,track_sources,track_qualitys,track_ipXYSigs);
-            }
-            //analysis_20170523_v0
-//             if (varType==1) jet_alpha[j] = GetAlpha(track_pts,track_sources,track_qualitys,track_pvWeights,track_ref_zs,pv_z,pilecut);
+            //analysis_20170517_v0
+//             if (varType==1) jet_alpha[j] = GetAlpha(track_pts,track_sources,track_qualitys,track_pvWeights);
 //             else {
 //                 alphaMaxcut = 0.3;
-//                 jet_alpha[j] = GetAlpha2Dsig(track_pts,track_sources,track_qualitys,track_ipXYSigs,track_ref_zs,pv_z,pilecut);
+//                 jet_alpha[j] = GetAlpha2Dsig(track_pts,track_sources,track_qualitys,track_ipXYSigs);
 //             }
+            //analysis_20170523_v0
+            if (varType==1) jet_alpha[j] = GetAlpha(track_pts,track_sources,track_qualitys,track_pvWeights,track_ref_zs,pv_z,pilecut2);
+            else {
+                alphaMaxcut = 0.3;
+                jet_alpha[j] = GetAlpha2Dsig(track_pts,track_sources,track_qualitys,track_ipXYSigs,track_ref_zs,pv_z,pilecut2);
+            }
             //std::cout << "alphaMax = " << jet_alphaMax->at(j) << "; alpha new = " << jet_alpha[j] << " [here]" << std::endl;
 //             if(otfile) {//all jets
 //                 halpha->Fill(jet_alpha[j]);
@@ -466,14 +507,16 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
             jntrack[j]=0;
             double sumptallnz=0.;
             double sumnonPU=0.;
+            double sumsmallIPsig=0.;
             float ptmaxtrk=0.;
 
             for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
                 if(track_sources[itrack]==0 && ((track_qualitys[itrack] & 4) > 0)) {
                     sumptallnz+=track_pts[itrack];
 
-//                     if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;// remove tracks with exceedingly large z //analysis_20170523_v0
-//                     if (fabs(pv_z-track_ref_zs[itrack])<pilecut2) sumnonPU+=track_pts[itrack];//analysis_20170523_v0
+                    if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;// remove tracks with exceedingly large z //analysis_20170523_v0
+                    if (fabs(pv_z-track_ref_zs[itrack])<pilecut2) sumnonPU+=track_pts[itrack];//analysis_20170523_v0
+                    if (fabs(track_ipXYSigs[itrack])<ipXYsigcut) sumsmallIPsig+=track_pts[itrack];//analysis_20170523_v0
 
                     if(track_pts[itrack]>ptmaxtrk) {
                         ptmaxtrk=track_pts[itrack];
@@ -506,8 +549,9 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                 jet_medtheta2D[j] = jet_theta2D->at(j);
                 jet_logmedtheta2D[j] = (jet_medtheta2D[j]==-1 ? -3.5 : log10(jet_theta2D->at(j)));
             }
-//             if(sumptallnz>0) jet_fnonPU[j]=sumnonPU/sumptallnz;//analysis_20170523_v0
-//             jet_fmaxtrkpt[j]=ptmaxtrk/jet_pt->at(j);//max trk pt/jet pt//analysis_20170523_v0
+            if(sumptallnz>0) jet_fnonPU[j]=sumnonPU/sumptallnz;//analysis_20170523_v0
+            if(sumnonPU>0) jet_fsmallIPsig[j]=sumsmallIPsig/sumnonPU;//analysis_20170523_v0
+            jet_fmaxtrkpt[j]=ptmaxtrk/jet_pt->at(j);//max trk pt/jet pt//analysis_20170523_v0
 
             std::sort(sort_ip.begin(), sort_ip.end(), std::greater<float>());
             if(sort_ip.size()>0) r0[j]=sort_ip[0];
@@ -520,6 +564,59 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                 halphavipXYSig->Fill(jet_alpha[j],jet_medipsig[j]);
                 htheta2DvipXYSig->Fill(jet_medtheta2D[j],jet_medipsig[j]);
             }
+
+
+            // calculate some gen particle information for jet
+            int NNNgp = gp_index->size();
+            int igenmax=-1;
+            float etgenmax=0.;
+            for(Int_t igen=1; igen<NNNgp; igen++) {
+                if((abs(gp_pdgId->at(igen))<6)||(abs(gp_pdgId->at(igen))==21)) {  // quark or gluon
+                    if(DeltaR(jet_eta->at(j),jet_phi->at(j),gp_eta->at(igen),gp_phi->at(igen))<0.4) {
+                        if(gp_pt->at(igen)>etgenmax) {
+                            igenmax=igen;
+                            etgenmax=gp_pt->at(igen);
+                        }
+                    }
+                }
+            }
+            // fix glue to bbbar
+            float igenmax2=-1;
+            float etgenmax2=0.;
+            if(igenmax>0) {
+                if(abs(gp_pdgId->at(igenmax))==21) {
+                    for(Int_t igen=1; igen<NNNgp; igen++) {
+                        if((abs(gp_pdgId->at(igen))==5)&&(gp_pt->at(igen)>10.)) {  // b
+                            if(DeltaR(jet_eta->at(j),jet_phi->at(j),gp_eta->at(igen),gp_phi->at(igen))<0.4) {
+                                if(gp_pt->at(igen)>etgenmax2) {
+                                    igenmax2=1;
+                                    etgenmax2=gp_pt->at(igen);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            jet_pid_maxEt[j]=0;
+            jet_maxET_part[j]=0;
+            if(igenmax>-1) {
+                int ipid = gp_pdgId->at(igenmax);
+                if(abs(ipid)<6) {
+                    jet_pid_maxEt[j]=gp_pdgId->at(igenmax);
+                    jet_maxET_part[j] = etgenmax;
+                } else {
+                    if(igenmax2==-1) {
+                        jet_pid_maxEt[j]=7;
+                        jet_maxET_part[j] = etgenmax;
+                    } else {//g->bb
+                        jet_pid_maxEt[j]=8;
+                        jet_maxET_part[j] = etgenmax;
+
+                    }
+                }
+            } // end calculate some gen particle information for jet
+
         }  // end of first loop over jets
 
 
@@ -544,7 +641,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
             vector<int> track_sources = track_source->at(ij);
             //vector<float> track_vertex_weights = track_vertex_weight->at(ij);
             vector<float> track_pvWeights = track_pvWeight->at(ij);
-//             vector<float> track_ref_zs = track_ref_z->at(ij);//analysis_20170523_v0
+            vector<float> track_ref_zs = track_ref_z->at(ij);//analysis_20170523_v0
             if(otfile) hjetcut->Fill(0);
 
             if(fabs(jet_eta->at(ij))<jetacut) { // jet eta cut
@@ -564,16 +661,19 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                         if(jet_cef->at(ij)<CemfracCut) {  //charged fraction
                             if(otfile) hacut_cef->Fill(jet_cef->at(ij));
                             if(otfile) hjetcut->Fill(4);
-//                             if(jet_fmaxtrkpt[ij]>1.0) continue;//analysis_20170523_v0
+                            if(jet_fmaxtrkpt[ij]>0.6) continue;//analysis_20170523_v0
                             if(otfile) hjetcut->Fill(5);
-//                             if(jet_fnonPU[ij]<0.2) continue;// analysis_20170523_v0
+                            if(jet_fnonPU[ij]<0.4) continue;// analysis_20170523_v0
                             if(otfile) hjetcut->Fill(6);
+//                             if(jet_fsmallIPsig[ij]<0.3) continue;// analysis_20170523_v0
+//                             if(otfile) hjetcut->Fill(7);
+
                             basicjet[ij]=true;
 
                             if(otfile) hbcut_alphamax->Fill(jet_alpha[ij]);
                             if(jet_alpha[ij]<alphaMaxcut && jet_alpha[ij]>-1) { // alpha max
                                 if(otfile) hacut_alphamax->Fill(jet_alpha[ij]);
-                                if(otfile) hjetcut->Fill(7);
+                                if(otfile) hjetcut->Fill(8);
                                 almostemerging[ij]=true;
 
                                 // uncomment if count only leading jets for event selection later
@@ -615,7 +715,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                     if(jet_meanip[ij]>r0[ij]) std::cout<<"DANGER DANGER"<<std::endl;
                                     for (unsigned itrack=0; itrack<track_ipXYs.size(); itrack++) {
                                         if(track_sources[itrack]==0 && ((track_qualitys[itrack] & 4) > 0)) {
-//                                             if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
+                                            if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
                                             if(otfile) hipXYEJ->Fill(track_ipXYs[itrack]);
                                             if(otfile) hipXYSigEJ->Fill(track_ipXYSigs[itrack]);
                                             //if(otfile) htvwEJ->Fill(track_vertex_weights[itrack]);
@@ -642,7 +742,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                 }
                 for (unsigned itrack=0; itrack<track_ipXYs.size(); itrack++) {
                     if(track_sources[itrack]==0 && ((track_qualitys[itrack] & 4) > 0)) {
-//                         if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
+                        if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
                         if(otfile) hipXYnEJ->Fill(track_ipXYs[itrack]);
                         if(otfile) hipXYSignEJ->Fill(track_ipXYSigs[itrack]);
                     }
@@ -822,10 +922,10 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                             vector<int> track_nPxlLayerss = track_nPxlLayers->at(i);
                             vector<int> track_nHitss = track_nHits->at(i);
                             vector<float> track_ipZs = track_ipZ->at(i);
-//                             vector<float> track_ref_zs = track_ref_z->at(i);//analysis_20170523_v0
+                            vector<float> track_ref_zs = track_ref_z->at(i);//analysis_20170523_v0
                             for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
                                 if(track_sources[itrack]==0 && ((track_qualitys[itrack] & 4) > 0)) {
-//                                     if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
+                                    if (fabs(pv_z-track_ref_zs[itrack])>pilecut) continue;//analysis_20170523_v0
                                     if(otfile) hnHitsnm1->Fill(track_nHitss[itrack]);
                                 }
                             }
@@ -966,11 +1066,14 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                         //double nGJwgt = nGJrewgt(goodjetIdx.size());
                                         double nGJwgt = 1.0;
 
-                                        double frwgt0 = frWeightT0(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
-                                        double frwgt1 = frWeightT1(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
-                                        double frwgt2 = frWeightT2(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
+                                        // Default:
+                                        double frwgt0 = frWeightFT0(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType);
+                                        double frwgt1 = frWeightFT1(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType);
+                                        double frwgt2 = frWeightFT2(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType);
+                                        double frwgt3 = frWeightFT3(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType);
+
+                                        // Alternatives:
                                         double frwgt21 = frWeightT21(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
-                                        double frwgt3 = frWeightT3(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
                                         double frwgtge2 = frWeight1(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType);
 
                                         // Choose event-wise weight
@@ -979,8 +1082,8 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                         case 0: frwgt = nGJwgt*(1.0 - frwgt0); break;//>=1 tag
                                         case 1: frwgt = nGJwgt*frwgt1; break;//==1 tag
                                         case 2: frwgt = nGJwgt*frwgt2; break;//==2 tag
-                                        case 21: frwgt = nGJwgt*frwgt21; break;//==2 tag; tag-and-probe
                                         case 3: frwgt = nGJwgt*frwgt3; break;//==3 tag (not implemented yet)
+                                        case 21: frwgt = nGJwgt*frwgt21; break;//==2 tag; tag-and-probe
                                         default: frwgt = nGJwgt*frwgtge2; break;//>=2tag (need to check calculation)
                                         }
 
@@ -992,25 +1095,33 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                         H_TFR->Fill(HT,frwgt);
                                         np0 += frwgt0;
                                         np1 += frwgt1;
-                                        if (ntagType==21) np2 += frwgt21;
-                                        else np2 += frwgt2;
+
+                                        if (ntagType==2) np2 += frwgt2;
+                                        else np2 += frwgt21;
+
                                         np3 += frwgt3;
 
-                                        h_nemgFR->Fill(0.0,frWeightT0(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
-                                        h_nemgFR->Fill(1.0,frWeightT1(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
-                                        if (ntagType==21) h_nemgFR->Fill(2.0,frWeightT21(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
-                                        else h_nemgFR->Fill(2.0,frWeightT2(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
-                                        h_nemgFR->Fill(3.0,frWeightT3(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
+                                        h_nemgFR->Fill(0.0,frWeightFT0(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType));
+                                        h_nemgFR->Fill(1.0,frWeightFT1(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType));
+
+                                        if (ntagType==2)
+                                            h_nemgFR->Fill(2.0,frWeightFT2(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType));
+                                        else
+                                            h_nemgFR->Fill(2.0,frWeightT21(jet_pt,jet_eta,goodjetIdx,jntrack,njetsFR,minJetPt,varType));
+
+                                        h_nemgFR->Fill(3.0,frWeightFT3(jet_pt,jet_eta,goodjetIdx,jntrack,jet_pid_maxEt,njetsFR,minJetPt,varType));
                                         //h_nemgFR->Fill(4.0,1-frwgt0-frwgt1-frwgt2);//x-check w.r.t. 3.0 ==> verified
                                         switch (ntagType) {
                                         case 1: {
                                             // For Ntag==1
                                             for(int i3=0;i3<njetsFR;i3++) {
                                                 int idx3 = goodjetIdx[i3];
-                                                double jfr = fakerate(jet_pt->at(idx3),jet_eta->at(idx3),jntrack[idx3],varType);
+                                                double jfr = fakerateF(jet_pt->at(idx3),jet_eta->at(idx3),jntrack[idx3],
+                                                                       varType,jet_pid_maxEt[idx3]);
                                                 for(int i31=0;i31<njetsFR;i31++) {
                                                     int idx31 = goodjetIdx[i31];
-                                                    if (i31 != i3) jfr *= (1.0-fakerate(jet_pt->at(idx31),jet_eta->at(idx31),jntrack[idx31],varType));
+                                                    if (i31 != i3) jfr *= (1.0-fakerateF(jet_pt->at(idx31),jet_eta->at(idx31),
+                                                                                         jntrack[idx31],varType,jet_pid_maxEt[idx31]));
                                                 }
                                                 if (!basicjet[idx3] || jet_pt->at(idx3)<minJetPt) continue;
                                                 hjptaFR->Fill(jet_pt->at(idx3),jfr);
@@ -1038,28 +1149,32 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                             break;
                                         }//end case 1 (Ntag==1)
                                         case 2: {
-                                            // For Ntag==2
+                                            // For Ntag==2; flav dep
                                             frwgt*=0.5;// combinatorics
                                             double frwgttmp=0.;
                                             for(int i1=0;i1<njetsFR;i1++) {
                                                 int idx1 = goodjetIdx[i1];
                                                 if (!basicjet[idx1] || jet_pt->at(idx1)<minJetPt) continue;
-                                                double jfr = fakerate(jet_pt->at(idx1),jet_eta->at(idx1),jntrack[idx1],varType);
+                                                double jfr = fakerateF(jet_pt->at(idx1),jet_eta->at(idx1),jntrack[idx1],
+                                                                       varType,jet_pid_maxEt[idx1]);
                                                 for(int i2=0;i2<njetsFR;i2++) {
                                                     int idx2 = goodjetIdx[i2];
                                                     if (!basicjet[idx2] || jet_pt->at(idx2)<minJetPt) continue;
                                                     if (i2==i1) continue;
-                                                    double kfr = jfr*(1.0-fakerate(jet_pt->at(idx2),jet_eta->at(idx2),jntrack[idx2],varType));
+                                                    double kfr = jfr*(1.0-fakerateF(jet_pt->at(idx2),jet_eta->at(idx2),jntrack[idx2],
+                                                                                    varType,jet_pid_maxEt[idx2]));
                                                     for(int i3=0;i3<njetsFR;i3++) {
                                                         if (i3==i1 || i3==i2) continue;
                                                         int idx3 = goodjetIdx[i3];
                                                         if (!basicjet[idx3] || jet_pt->at(idx3)<minJetPt) continue;
-                                                        double lfr = kfr*fakerate(jet_pt->at(idx3),jet_eta->at(idx3),jntrack[idx3],varType);
+                                                        double lfr = kfr*fakerateF(jet_pt->at(idx3),jet_eta->at(idx3),jntrack[idx3],
+                                                                                   varType,jet_pid_maxEt[idx3]);
                                                         for(int i4=0;i4<njetsFR;i4++) {
                                                             if (i4==i1 || i4==i2 || i4==i3) continue;
                                                             int idx4 = goodjetIdx[i4];
                                                             if (!basicjet[idx4] || jet_pt->at(idx4)<minJetPt) continue;
-                                                            lfr *= (1.0-fakerate(jet_pt->at(idx4),jet_eta->at(idx4),jntrack[idx4],varType));
+                                                            lfr *= (1.0-fakerateF(jet_pt->at(idx4),jet_eta->at(idx4),jntrack[idx4],
+                                                                                  varType,jet_pid_maxEt[idx4]));
                                                         }
                                                         //take care of combinatorics: e.g., var(1) double counted by (1_tag,2)(3_tag,4) and (1_tag,4)(3_tag,2)
                                                         double varWgt = lfr/2;
@@ -1089,7 +1204,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                                           << frwgt*4 << " != frwgttmp = " << frwgttmp << "!!!!" << std::endl;
                                             }
                                             break;
-                                        }//end case 2 (Ntag==2)
+                                        }//end case 2 (Ntag==2; flav dep)
                                         case 21: {
                                             // For Ntag==2; tag-and-probe
                                             frwgt*=0.5;// combinatorics
@@ -1103,7 +1218,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                                     if (!basicjet[idx2] || jet_pt->at(idx2)<minJetPt) continue;
                                                     if (i2==i1) continue;
                                                     double kfr = jfr*(1.0-fakerateTP(jet_pt->at(idx2),jet_eta->at(idx2),jntrack[idx2],varType));
-                                                    kfr *= (1.0-fakerate(jet_pt->at(idx2),jet_eta->at(idx2),jntrack[idx2],varType));
+                                                    //kfr *= (1.0-fakerate(jet_pt->at(idx2),jet_eta->at(idx2),jntrack[idx2],varType));
                                                     for(int i3=0;i3<njetsFR;i3++) {
                                                         if (i3==i1 || i3==i2) continue;
                                                         int idx3 = goodjetIdx[i3];
@@ -1114,7 +1229,7 @@ int EMJbkg(bool otfile, bool hasPre, const char* inputfilename,const char* outpu
                                                             int idx4 = goodjetIdx[i4];
                                                             if (!basicjet[idx4] || jet_pt->at(idx4)<minJetPt) continue;
                                                             lfr *= (1.0-fakerateTP(jet_pt->at(idx4),jet_eta->at(idx4),jntrack[idx4],varType));
-                                                            lfr *= (1.0-fakerate(jet_pt->at(idx4),jet_eta->at(idx4),jntrack[idx4],varType));
+                                                            //lfr *= (1.0-fakerate(jet_pt->at(idx4),jet_eta->at(idx4),jntrack[idx4],varType));
                                                         }
                                                         //take care of combinatorics: e.g., var(1) double counted by (1_tag,2)(3_tag,4) and (1_tag,4)(3_tag,2)
                                                         double varWgt = lfr/2;

@@ -10,10 +10,8 @@ import numpy
 
 sys.path.append(os.path.abspath(os.path.curdir))
 
-from Plotter import parseLYAnaInputArgs
-options = parseLYAnaInputArgs()
-
-from Plotter.CommonTools import CalcD, AlphaSourceFitter, CalcNPE, HistToTGRaphErrorsUniform
+from Plotter import parseInputArgs
+options = parseInputArgs()
 
 gROOT.SetBatch()
 gROOT.LoadMacro("Plotter/AtlasStyle.C")
@@ -51,8 +49,10 @@ if __name__ == '__main__':
 ##        "hpt3ko","hpt4ko",
         "hmass","halpha","halphaPS",
         "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n",
+        #"h_ntag",
         "hmedtheta2DPS","hlogmedtheta2DPS","hmedipXYSigPS","hlogmedipXYSigPS",
         "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
+##        "h_nloosetag",
         ]
 
     print "# of plots = ",len(plots_)
@@ -75,10 +75,9 @@ if __name__ == '__main__':
 
     ## Plots to be shown in log scale
     ## match plot with pattern
-    logYplots = ["alpha","hipXY","hmeanipXY","hmedipXY","hmeanipXYSig","hmedipXYSig","hmaxipXY","hipXYSig","hmedtheta2D"]
+    logYplots = ["alpha","hipXY","hmeanipXY","hmedipXY","hmeanipXYSig","hmedipXYSig","hmaxipXY","hipXYSig","hmedtheta2D","h_ntag","h_nloosetag"]
     ## match plot with exact name:
-    logYplotsE = []
-    ##logYplotsE = ["H_T1","H_T2","H_T3","H_T4"]
+    logYplotsE = ["H_T1","H_T2","H_T3","H_T4"]
 
     labels = {}
     for iplot in plots_:
@@ -94,9 +93,17 @@ if __name__ == '__main__':
         labels["hTrig%id"%i] = "H_{T} [GeV]"
         labels["hTrig%in"%i] = "H_{T} [GeV]"
 
-    labels["halpha"] = "Jet #alpha_{max}"
-    labels["hacut_alphamax"] = "Jet #alpha_{max}"
-    labels["hbcut_alphamax"] = "Jet #alpha_{max}"
+    labels["hntrk"] = "N_{trk} of jets"
+    labels["h_nemg"] = "N_{tagged}"
+    labels["hnjet"] = "N_{good jet}"
+    labels["hetaa"] = "#eta"
+
+##    labels["halpha"] = "Jet #alpha_{max}"
+##    labels["hacut_alphamax"] = "Jet #alpha_{max}"
+##    labels["hbcut_alphamax"] = "Jet #alpha_{max}"
+    labels["halpha"] = "Jet #alpha"
+    labels["hacut_alphamax"] = "Jet #alpha"
+    labels["hbcut_alphamax"] = "Jet #alpha"
 
     labels["hipXY"] = "IP^{2D} [cm]"
     labels["hmaxipXY"] = "IP^{2D}_{max} [cm]"
@@ -113,9 +120,10 @@ if __name__ == '__main__':
     labels["hlogmeanipXYSig"] = "log_{10}(#bar{IP}^{2D}_{sig})"
     labels["hlogmedtheta2D"] = "log_{10}(#hat{#Theta}_{2D})"
 
-    myfile["ModelA"] = TFile("histos/analysis_20170223_v0_UMD/SumHistsModelA.root")
-    myfile["ModelB"] = TFile("histos/analysis_20170223_v0_UMD/SumHistsModelB.root")
-    myfile["QCD"] = TFile("histos/analysis_20170223_v0_UMD/SumHistsQCD74.root")
+    fTag = "analysis_20170517_v0_p20170531_UMD_test1p3"
+    myfile["ModelA"] = TFile("histos/%s/SumHistsModelA.root"%fTag)
+    myfile["ModelB"] = TFile("histos/%s/SumHistsModelB.root"%fTag)
+    myfile["QCD"] = TFile("histos/%s/SumHistsQCD80_HT1000toInf.root"%fTag)
 
     colors_={}
     colors_["QCD"] = 1
@@ -123,8 +131,6 @@ if __name__ == '__main__':
     colors_["ModelB"] = 4
 
     #fTag = datetime.now().strftime("%Y%m%d_%H%M%S")
-    fTag = "analysis20170223_v0_UMD" #"analysis20170215_v0_p20170222_UMD"
-    #fTag = "20170216_203317_v0p1"
     outDir = "/data/users/jengbou/workspace/Data/EMJPlots/%s_%s"%(options.outtag,fTag)
 
     try:
@@ -143,21 +149,24 @@ if __name__ == '__main__':
         updateYrange = False
         logY_ = False
         if hNameTmp in [
-            "H_T","H_T1","H_T2",
-            "hmeanipXYSig","hmedipXYSig","halpha","hmedtheta2D",
-            "hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n"
+            "H_T","H_T1","H_T2","H_T3","H_T4",
+            "hmeanipXYSig","hmedtheta2D","hmedipXYSig","hmedipXYSig",
+            #"hTrig1d","hTrig1n","hTrig2d","hTrig2n","hTrig3d","hTrig3n",
+            "h_nemg",
+            #"h_ntag",
             ]:
             rebin_ = 1
-        elif hNameTmp in ["hipXYSig","hipXY","H_T3"]:
+        elif hNameTmp in ["hipXYSig","hipXY"]:
             rebin_ = 2
-        elif hNameTmp in ["H_T4"]:
-            rebin_ = 4
         else:
             rebin_ = 10
 
         ## change only SR
+        if iplot in ["hmedipXYSigSR","hmedipXYSigSR"]:
+            rebin_ = 5
+
         if iplot in ["hmedipXYSigSR"]:
-            rebin_ = 10
+            rebin_=10
 
         if hNameTmp in logYplots+logYplotsE: logY_ = True
 
@@ -188,22 +197,28 @@ if __name__ == '__main__':
         if myhist["ModelA_%s"%iplot].Integral()!=0 and iplot.find("count")==-1:
             myhist["ModelA_%s"%iplot].Scale(1./myhist["ModelA_%s"%iplot].Integral())
         myhist["ModelA_%s"%iplot].SetLineColor(2)
+        myhist["ModelA_%s"%iplot].SetMarkerColor(2)
+        myhist["ModelA_%s"%iplot].SetMarkerSize(0)
         myhist["ModelA_%s"%iplot].GetXaxis().SetTitle(labels[hNameTmp])
         myhist["ModelA_%s"%iplot].GetYaxis().SetTitle("A.U.")
         myhist["ModelA_%s"%iplot].GetXaxis().SetLabelOffset(0.02)
-        myhist["ModelA_%s"%iplot].Draw()
+        myhist["ModelA_%s"%iplot].Draw("hist")
 
         ## Model B
         if myhist["ModelB_%s"%iplot].Integral()!=0 and iplot.find("count")==-1:
             myhist["ModelB_%s"%iplot].Scale(1./myhist["ModelB_%s"%iplot].Integral())
         myhist["ModelB_%s"%iplot].SetLineColor(4)
-        myhist["ModelB_%s"%iplot].Draw("sames")
+        myhist["ModelB_%s"%iplot].SetMarkerColor(4)
+        myhist["ModelB_%s"%iplot].SetMarkerSize(0)
+        myhist["ModelB_%s"%iplot].Draw("hist sames")
 
         ## QCD
         if myhist["QCD_%s"%iplot].Integral()!=0 and iplot.find("count")==-1:
             myhist["QCD_%s"%iplot].Scale(1./myhist["QCD_%s"%iplot].Integral())
         myhist["QCD_%s"%iplot].GetXaxis().SetLabelOffset(0.02)
-        myhist["QCD_%s"%iplot].Draw("sames")
+        myhist["QCD_%s"%iplot].SetMarkerColor(1)
+        myhist["QCD_%s"%iplot].SetMarkerSize(0)
+        myhist["QCD_%s"%iplot].Draw("hist sames")
 
 
         leg = TLegend(0.72,0.7,0.94,0.91)
@@ -295,13 +310,15 @@ if __name__ == '__main__':
         # Add cut line for jet tagger plots
         ###############################################################
         if iplot.find("alpha")!=-1:
+            valYmin = 1.e-5
+            valYmax = 1.
             myhist["QCD_%s"%iplot].GetXaxis().SetRangeUser(0.,1.)
             myhist["ModelA_%s"%iplot].GetXaxis().SetRangeUser(0.,1.)
             myhist["ModelB_%s"%iplot].GetXaxis().SetRangeUser(0.,1.)
 
-            myhist["QCD_%s"%iplot].GetYaxis().SetRangeUser(1.e-3,5.)
-            myhist["ModelA_%s"%iplot].GetYaxis().SetRangeUser(1.e-3,5.)
-            myhist["ModelB_%s"%iplot].GetYaxis().SetRangeUser(1.e-3,5.)
+            myhist["QCD_%s"%iplot].GetYaxis().SetRangeUser(valYmin,valYmax)
+            myhist["ModelA_%s"%iplot].GetYaxis().SetRangeUser(valYmin,valYmax)
+            myhist["ModelB_%s"%iplot].GetYaxis().SetRangeUser(valYmin,valYmax)
 
             gPad.Update()
 
@@ -309,14 +326,17 @@ if __name__ == '__main__':
             reflcut.SetLineStyle(2)
             reflcut.SetLineWidth(2)
             reflcut.SetLineColor(9)
-            reflcut.DrawLine(0.05,valYmin,0.05,1.5*valYmax)
+            #reflcut.DrawLine(0.04,1.e-4,0.04,2.)
+            reflcut.DrawLine(0.3,1.e-4,0.3,2.) ## alpha 2Dsig
 
-            refacut = TArrow(0.05,1.15*valYmax,0.015,1.15*valYmax,0.005)
+            #refacut = TArrow(0.05,1.15*valYmax,0.015,1.15*valYmax,0.005)
+            #refacut = TArrow(0.04,1.,0.015,1.,0.005)
+            refacut = TArrow(0.3,1.,0.27,1.,0.01)
             refacut.SetLineWidth(2)
             refacut.SetLineColor(9)
             refacut.Draw()
 
-            if valYmin < 1.e-3: valYmin = 1.e-3
+            if valYmin < 1.e-4: valYmin = 1.e-4
             if 1.5*valYmax < 5.0: valYmax = 5.0
             updateYrange = True
             logY_ = True
@@ -350,22 +370,33 @@ if __name__ == '__main__':
         # This is special case
         ############################
         if iplot.find("count")!=-1:
-            myhist["QCD_%s"%iplot].Draw("hist text0")
-            myhist["ModelA_%s"%iplot].Draw("sames hist text0")
-            myhist["ModelB_%s"%iplot].Draw("sames hist text0")
+            myhist["QCD_%s"%iplot].Draw("hist text30")
+            myhist["ModelA_%s"%iplot].Draw("sames hist text30")
+            myhist["ModelB_%s"%iplot].Draw("sames hist text30")
             leg.Draw()
-            myhist["QCD_%s"%iplot].GetXaxis().SetRangeUser(0.,10.)
-            myhist["ModelA_%s"%iplot].GetXaxis().SetRangeUser(0.,10.)
-            myhist["ModelB_%s"%iplot].GetXaxis().SetRangeUser(0.,10.)
+##            myhist["QCD_%s"%iplot].GetXaxis().SetRangeUser(0.,15.)
+##            myhist["ModelA_%s"%iplot].GetXaxis().SetRangeUser(0.,15.)
+##            myhist["ModelB_%s"%iplot].GetXaxis().SetRangeUser(0.,15.)
+##            gPad.Update()
 
-            gPad.Update()
+            if iplot.find("acount")!=-1:
+                reflPS = TLine()
+                reflPS.SetLineStyle(2)
+                reflPS.SetLineWidth(2)
+                reflPS.SetLineColor(4)
+                reflPS.DrawLine(4,valYmin,4,1.5*valYmax)
 
-##            if valYmin < 1.e-3 :valYmin = 1.e-3
-            valYmin = 1.0
+                reflSR = TLine()
+                reflSR.SetLineStyle(2)
+                reflSR.SetLineWidth(2)
+                reflSR.SetLineColor(2)
+                reflSR.DrawLine(11,valYmin,11,1.5*valYmax)
+
+            if valYmin < 1.e-4 :valYmin = 1.e-4
 ##            if iplot=="acount":
-            myhist["QCD_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 100.*valYmax)
-            myhist["ModelA_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 100.*valYmax)
-            myhist["ModelB_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 100.*valYmax)
+            myhist["QCD_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 300.*valYmax)
+            myhist["ModelA_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 300.*valYmax)
+            myhist["ModelB_%s"%iplot].GetYaxis().SetRangeUser(valYmin, 300.*valYmax)
             #print "Ymin,Ymax = %f,%f"%(valYmin,1.5*valYmax)
             gPad.SetLogy()
 ##            else:
@@ -464,19 +495,26 @@ if __name__ == '__main__':
             myhComb["QCD_%s"%(hNameTmp)].GetXaxis().SetTitle(labels[hNameTmp])
             myhComb["QCD_%s"%(hNameTmp)].GetYaxis().SetTitle("A.U.")
             myhComb["QCD_%s"%(hNameTmp)].GetXaxis().SetLabelOffset(0.02)
-            myhComb["QCD_%s"%(hNameTmp)].Draw()
+            myhComb["QCD_%s"%(hNameTmp)].SetMarkerColor(1)
+            myhComb["QCD_%s"%(hNameTmp)].SetMarkerSize(0)
+            myhComb["QCD_%s"%(hNameTmp)].Draw("hist")
 
         if myhComb["ModelA_%s"%(hNameTmp)].Integral()!=0 and hNameTmp.find("count")==-1:
             myhComb["ModelA_%s"%(hNameTmp)].Scale(1./myhComb["ModelA_%s"%(hNameTmp)].Integral())
         myhComb["ModelA_%s"%(hNameTmp)].SetLineColor(2)
+        myhComb["ModelA_%s"%(hNameTmp)].SetMarkerColor(2)
+        myhComb["ModelA_%s"%(hNameTmp)].SetMarkerSize(0)
+
 ##        myhComb["ModelA_%s"%(hNameTmp)].GetYaxis().SetTitle("A.U.")
 ##        myhComb["ModelA_%s"%(hNameTmp)].GetXaxis().SetLabelOffset(0.02)
-        myhComb["ModelA_%s"%(hNameTmp)].Draw("sames")
+        myhComb["ModelA_%s"%(hNameTmp)].Draw("hist sames")
 
         if myhComb["ModelB_%s"%(hNameTmp)].Integral()!=0 and hNameTmp.find("count")==-1:
             myhComb["ModelB_%s"%(hNameTmp)].Scale(1./myhComb["ModelB_%s"%(hNameTmp)].Integral())
         myhComb["ModelB_%s"%(hNameTmp)].SetLineColor(4)
-        myhComb["ModelB_%s"%(hNameTmp)].Draw("sames")
+        myhComb["ModelB_%s"%(hNameTmp)].SetMarkerColor(4)
+        myhComb["ModelB_%s"%(hNameTmp)].SetMarkerSize(0)
+        myhComb["ModelB_%s"%(hNameTmp)].Draw("hist sames")
 
         ## Change plot range for specified plots
         xMin_,xMax_ = myhComb["ModelB_%s"%(hNameTmp)].GetXaxis().GetXmin(),myhComb["ModelB_%s"%(hNameTmp)].GetXaxis().GetXmax()

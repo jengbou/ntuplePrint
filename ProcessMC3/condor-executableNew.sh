@@ -39,7 +39,7 @@ eval `scramv1 runtime -sh`
 
 FINAL_PREFIX_NAME=`echo ${OUT_DIR}/${UNIQUE_ID}/logs/${CONDOR_PROCESS}`
 FINAL_ROOT_OUTDIR=`echo ${OUT_DIR}/${UNIQUE_ID}/`
-FINAL_LOG=`echo $FINAL_PREFIX_NAME.log`
+FINAL_LOG=`echo ${FINAL_PREFIX_NAME}.log`
 
 #
 # run c

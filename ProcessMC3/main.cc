@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
     std::string aaname;
     if (imode==9) aaname = "/data/users/jengbou/EmJetMC/";  // RelVal samples
-    else aaname = "/data/users/jengbou/crab_output/ntuple_20170517_v0/";//QCD80 HT1000+
+    else aaname = "/data/users/jengbou/crab_output/ntuple_20170523_v0/";//QCD80 HT1000+
 
     std::cout << "Input directory = " << aaname << std::endl;
     const int nbin=5; // 500-700,700-1000,1000-1500,1500-2000,200toInf
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     // for signal models A.  mediat mass is 1000
     const int anbin=1; 
     float axsec[anbin]={18.45}; // fb 
-    int anfiles[anbin]={30};//74Full 716
+    int anfiles[anbin]={31};//74Full 716
     //int anfiles[anbin]={71}; 
     int anfrng[anbin][2]={1,30};//716
     std::string abinnames[anbin]={"modelA"};
