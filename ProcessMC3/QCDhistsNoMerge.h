@@ -19,6 +19,6 @@ using std::vector;
 #include "QCDhists.h"
 
 
-void QCDhistsNoMerge(int nrange[2], std::string binnames, std::string aaname, bool hasPre, bool blind, bool b16003, std::string bbname, bool crabformat);
+void QCDhistsNoMerge(int nrange[2], std::string binnames, std::string aaname, bool hasPre, bool blind, bool b16003, std::string bbname, bool crabformat,bool isData);
 
 #endif

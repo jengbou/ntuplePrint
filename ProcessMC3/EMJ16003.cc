@@ -19,7 +19,7 @@ float CalcMedian(std::vector<float> vec) {
     else {
         std::sort(vec.begin(), vec.end());
         if(vec.size() % 2 == 0)
-            return (vec[vec.size()/2-1] + vec[vec.size()/2])/2;
+            return (vec[vec.size()/2-1] + vec[vec.size()/2])/2.0;
         else
             return vec[vec.size()/2];
     }
@@ -57,7 +57,8 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
 
     bool hltTrig1n, hltTrig1d, hltTrig2n, hltTrig2d, hltTrig3n, hltTrig3d;
 
-
+    vector<int> *pv_index=0;//analysis_20170609_v0
+    vector<float> *pv_zv=0;//analysis_20170609_v0
     vector<int> *jet_index=new vector<int>;
     vector<int> *jet_source=new vector<int>;
     vector<float> *jet_pt = new vector<float>;
@@ -78,6 +79,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
     vector<vector<int> > *track_vertex_index = 0;
     vector<vector<int> > *track_algo = 0;
     vector<vector<float> > *track_vertex_weight =0;
+    vector<vector<float> > *track_pvWeight = 0;
     vector<vector<float> > *track_ipZ =0;
     vector<vector<float> > *track_ipXY = 0;
     vector<vector<float> > *track_ipXYSig = 0;
@@ -124,6 +126,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
     tt->SetBranchAddress("track_algo",&track_algo);
     tt->SetBranchAddress("track_vertex_index",&track_vertex_index);
     tt->SetBranchAddress("track_vertex_weight",&track_vertex_weight);
+    tt->SetBranchAddress("track_pvWeight",&track_pvWeight);
     tt->SetBranchAddress("track_ipXY",&track_ipXY);
     tt->SetBranchAddress("track_ipXYSig",&track_ipXYSig);
     tt->SetBranchAddress("track_nMissInnerHits",&track_nMissInnerHits);
@@ -131,16 +134,14 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
     tt->SetBranchAddress("track_nPxlLayers",&track_nPxlLayers);
     tt->SetBranchAddress("track_nHits",&track_nHits);
     tt->SetBranchAddress("track_ipZ",&track_ipZ);
-    tt->SetBranchAddress("HLT_HT400",&hltTrig1d);
-    tt->SetBranchAddress("HLT_HT500",&hltTrig1n);
-    tt->SetBranchAddress("HLT_HT250",&hltTrig2d);
-    tt->SetBranchAddress("HLT_HT350",&hltTrig2n);
+    tt->SetBranchAddress("HLT_HT400",&hltTrig1d);//HLT_HT400_DisplacedDijet40_Inclusive
+    tt->SetBranchAddress("HLT_HT500",&hltTrig1n);//HLT_HT500_DisplacedDijet40_Inclusive
+    tt->SetBranchAddress("HLT_HT250",&hltTrig2d);//HLT_HT250_DisplacedDijet40_DisplacedTrack
+    tt->SetBranchAddress("HLT_HT350",&hltTrig2n);//HLT_HT350_DisplacedDijet40_DisplacedTrack
     tt->SetBranchAddress("HLT_PFHT600",&hltTrig3d);
     tt->SetBranchAddress("HLT_PFHT900",&hltTrig3n);
-//     tt->SetBranchAddress("HLT_HT400_DisplacedDijet40_Inclusive",&hltTrig1d);
-//     tt->SetBranchAddress("HLT_HT500_DisplacedDijet40_Inclusive",&hltTrig1n);
-//     tt->SetBranchAddress("HLT_HT250_DisplacedDijet40_DisplacedTrack",&hltTrig2d);
-//     tt->SetBranchAddress("HLT_HT350_DisplacedDijet40_DisplacedTrack",&hltTrig2n);
+    tt->SetBranchAddress("pv_index",&pv_index);//analysis_20170609_v0
+    tt->SetBranchAddress("pv_z",&pv_zv);//analysis_20170609_v0
 
     /*
       tt->SetBranchAddress("vertex_index",&vertex_index);
@@ -171,6 +172,13 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         count = new TH1F("count","counts",3,0,3);
         count->SetStats(0);
         count->SetCanExtend(TH1::kAllAxes);
+        count->Fill("All",0);
+        count->Fill("HLT",0);
+        count->Fill("TrigJetTrk",0);
+        count->Fill("HT",0);
+        count->Fill("Kinematic",0);
+        count->Fill("Ntag(noTheta2D)>1",0);
+        count->Fill("Ntag>1",0);
 
         // 1d
         hjetcut = new TH1F("hjetcut","jetcut counts",20,0.,20.);
@@ -318,6 +326,11 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         tt->GetEntry(i);
         //    std::cout<<"event number is "<<event<<" number of vertex is "<<nVtx<<std::endl;
 
+//         if (pv_index->at(0) != 0) continue;//analysis_20170609_v0;
+//         // PVZ cut
+//         float pv_z = pv_zv->at(0);
+//         if(fabs(pv_z)>15) continue;//analysis_20170523_v0 onward
+
 
         // calculate some variables about jets
         vector<int> jet_ntrkpt1((*jet_index).size());
@@ -333,7 +346,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         vector<float> r0sig((*jet_index).size());
         vector<float> r1((*jet_index).size());
         vector<int> jntrack((*jet_index).size());
-        vector<int> jntrkip1mm((*jet_index).size());
+        vector<int> jntrkprompt((*jet_index).size());
         vector<float> jet_e((*jet_index).size());
         vector<float> jet_theta((*jet_index).size());
         vector<float> jet_px((*jet_index).size());
@@ -376,7 +389,8 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
             r0sig[j]=-1.;
             vector<float> track_pts = track_pt->at(j);
             vector<int> track_sources = track_source->at(j);
-            vector<float> track_vertex_weights = track_vertex_weight->at(j);
+            //vector<float> track_vertex_weights = track_vertex_weight->at(j);
+            vector<float> track_pvWeights = track_pvWeight->at(j);
             vector<float> track_ipXYs = track_ipXY->at(j);
             vector<float> track_ipXYSigs = track_ipXYSig->at(j);
             vector<float> sort_ip(track_pts.size());
@@ -389,15 +403,16 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
             jntrack[j]=0;
             for (unsigned itrack=0; itrack<track_pts.size(); itrack++) {
                 if((track_sources[itrack]==0)&&(track_pts[itrack]>1)) {
-                    if(fabs(track_ipXYs[itrack]<1)) {
-                        jntrkip1mm[j]=jntrkip1mm[j]+1;
+                    if(fabs(track_ipXYs[itrack])<0.5) {//0.5mm
+                        jntrkprompt[j]=jntrkprompt[j]+1;
                     }
                     sort_ip[jntrack[j]]=fabs(track_ipXYs[itrack]);
                     sort_ipsig[jntrack[j]]=fabs(track_ipXYSigs[itrack]);
-                    if(otfile) htvw->Fill(track_vertex_weights[itrack]);
-                    //std::cout<<"track vertex weight is "<<track_vertex_weights[itrack]<<std::endl;
+                    //if(otfile) htvw->Fill(track_vertex_weights[itrack]);
+                    if(otfile) htvw->Fill(track_pvWeights[itrack]);
+                    //  std::cout<<"track vertex weight is "<<track_vertex_weights[itrack]<<std::endl;
                     if(track_pts[itrack]>1) jet_ntrkpt1[j]+=1;
-                    //std::cout<<" track "<<itrack<<" ip "<<track_ipXYs[itrack]<<" mean ip "<<jet_meanip[j]<<std::endl;
+                    //  std::cout<<" track "<<itrack<<" ip "<<track_ipXYs[itrack]<<" mean ip "<<jet_meanip[j]<<std::endl;
                     jet_meanip[j]=jet_meanip[j]+fabs(track_ipXYs[itrack]);
                     jet_meanipsig[j]=jet_meanipsig[j]+fabs(track_ipXYSigs[itrack]);
                     jet_logmeanipsig[j]=jet_logmeanipsig[j]+fabs(track_ipXYSigs[itrack]);
@@ -416,9 +431,9 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                 // median
                 jet_medip[j] = CalcMedian(jet_trkip);
                 jet_medipsig[j] = CalcMedian(jet_trkipsig);
-                jet_logmedipsig[j]=log10(jet_medipsig[j]);
-                jet_medtheta2D[j] = (*jet_theta2D)[j];
-                jet_logmedtheta2D[j] = (jet_medtheta2D[j]==-1 ? -3.5 : log10((*jet_theta2D)[j]));
+                jet_logmedipsig[j] = log10(jet_medipsig[j]);
+                jet_medtheta2D[j] = jet_theta2D->at(j);
+                jet_logmedtheta2D[j] = (jet_medtheta2D[j]==-1 ? -3.5 : log10(jet_theta2D->at(j)));
             }
 
             if (otfile) {
@@ -506,7 +521,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
 
                 // check for trigger jets
                 if((*jet_pt)[ij]>40) {
-                    if(jntrkip1mm[ij]<3) {
+                    if(jntrkprompt[ij]<3) {
                         trigjet[ij]=true;
                         ntrigjet=ntrigjet+1;
                         if(r0sig[ij]>5) {
@@ -515,8 +530,8 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                         }
                     }
                 }
-
-                if( (*jet_pt)[ij]>60 ) {  // jet pt kinematic cut
+                if( (*jet_pt)[ij]>60 && jet_ntrkpt1[ij]>1 && (fabs((*jet_eta)[ij])<2.0)) {  // jet kinematic cut
+                    //if( (*jet_pt)[ij]>60 ) {  // jet pt kinematic cut
                     nkine+=1;
                     if(otfile) hjetcut->Fill(5);
                     if(otfile) hbcut_alphamax->Fill((*jet_alphaMax)[ij]);
@@ -540,8 +555,9 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                         ntag1+=1;
 
                         if(jet_logmedipsig[ij]>1.5) { // log median ipsig
+                            //if(jet_logmedipsig[ij]>0.8) { // log median ipsig
                             emerging[ij]=true;
-                            ntag2+=1.;
+                            ntag2+=1;
 
                             if (jet_logmedtheta2D[ij]>-1.6) {// log median theta2D
                                 tagged[ij]=true;
@@ -571,7 +587,8 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                     }
                 }
             }
-            if(!emerging[ij]) {
+//             if(!emerging[ij]) {
+            if(!tagged[ij]) {
                 if(otfile) hmaxipXYnEJ->Fill(r0[ij]);
                 if(otfile) hmeanipXYnEJ->Fill(jet_meanip[ij]);
                 if(otfile) hmedipXYnEJ->Fill(jet_medip[ij]);
@@ -602,7 +619,7 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
         // *************************************************************
         bool HLT = (hltTrig1n || hltTrig2n);
 
-        // trig1 requires at least 2 jets (pt>40GeV; jntrkip1mm<3)
+        // trig1 requires at least 2 jets (pt>40GeV; jntrkprompt<3)
         bool Ctrig1=false;
         if(hltTrig1n&&(ntrigjet>1)) {
             Ctrig1=true;
@@ -715,24 +732,60 @@ int EMJ16003(bool otfile, bool hasPre, const char* inputfilename,const char* out
                         }
                     }
                     // loose
-                    if(Cnltag1ge1) acount->Fill(5);
-                    if(Cnltag1ge2) acount->Fill(6);
-                    if(Cnltag1ge2 && Cnltag2ge1) acount->Fill(7);
-                    if(Cnltag1ge2 && Cnltag2ge2) acount->Fill(8);
-                    if(Cnltag1ge2 && Cnltag2ge2 && Cnltag3ge1) acount->Fill(9);
-                    if(Cnltag1ge2 && Cnltag2ge2 && Cnltag3ge2) acount->Fill(10);//closure test; should be the same as Cnltag3ge2
+//                     if(Cnltag1ge1) acount->Fill(5);
+//                     if(Cnltag1ge2) acount->Fill(6);
+//                     if(Cnltag1ge2 && Cnltag2ge1) acount->Fill(7);
+//                     if(Cnltag1ge2 && Cnltag2ge2) acount->Fill(8);
+//                     if(Cnltag1ge2 && Cnltag2ge2 && Cnltag3ge1) acount->Fill(9);
+//                     if(Cnltag1ge2 && Cnltag2ge2 && Cnltag3ge2) acount->Fill(10);//closure test; should be the same as Cnltag3ge2
+                    if(Cnltag1ge1 && Cnltag2ge1) {//this corresponds to old comparison when theta2D wasn't implemented
+                        acount->Fill(5);
+                        if(Cnltag3ge1){
+                            acount->Fill(6);
+                            if(Cnltag1ge2 && Cnltag2ge1) {
+                                acount->Fill(7);
+                                if(Cnltag2ge2) {
+                                    acount->Fill(8);
+                                    if(Cnltag3ge1){
+                                        acount->Fill(9);
+                                        if(Cnltag3ge2) acount->Fill(10);//closure test; should be the same as Cnltag3ge2
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     // nominal
-                    if(Cnalem1) acount->Fill(11);
-                    if(Cnalem2) acount->Fill(12);
-                    if(Cnalem2 && Cnem1) acount->Fill(13);
-                    if(Cnalem2 && Cnem2) acount->Fill(14);
-                    if(Cnalem2 && Cnem2 && Cntag1) acount->Fill(15);
-                    if(Cnalem2 && Cnem2 && Cntag2) acount->Fill(16);//closure test; should be the same as Cntag2
+//                     if(Cnalem1) acount->Fill(11);
+//                     if(Cnalem2) acount->Fill(12);
+//                     if(Cnalem2 && Cnem1) acount->Fill(13);
+//                     if(Cnalem2 && Cnem2) acount->Fill(14);
+//                     if(Cnalem2 && Cnem2 && Cntag1) acount->Fill(15);
+//                     if(Cnalem2 && Cnem2 && Cntag2) acount->Fill(16);//closure test; should be the same as Cntag2: acount->Fill(17);
 
+                    if(Cnalem1 && Cnem1) {
+                        acount->Fill(11);
+                        if(Cntag1) {
+                            acount->Fill(12);
+                            if(Cnalem2 && Cnem1) {
+                                acount->Fill(13);
+                                if(Cnem2) {
+                                    acount->Fill(14);
+                                    if(Cntag1) {
+                                        acount->Fill(15);
+                                        if(Cntag2) acount->Fill(16);//closure test; should be the same as Cntag2: acount->Fill(17);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if(Cntag2) {
+                        if(otfile) count->Fill("Ntag(noTheta2D)>1",1);
+                    }
                     // SR: require at least 2 tagged jets
                     if(Cntag2) {
-                        if(otfile) count->Fill("Ntag",1);
+                        if(otfile) count->Fill("Ntag>1",1);
                         if(otfile) {
                             acount->Fill(17);
                             H_T4->Fill(HT);

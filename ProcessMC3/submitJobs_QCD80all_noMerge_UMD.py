@@ -11,24 +11,31 @@ options = parseInputArgs()
 Pmode = 1
 ProdTag = options.outtag
 OutDir  = "/data/users/jengbou/histos"
-WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD"
+WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD/temp/"+ProdTag
 
 JobTime = datetime.now()
 fTag = JobTime.strftime("%Y%m%d_%H%M%S")
 
 sTags = {}
-##sTags["modelA"]=["1",30,15]#0530
-sTags["modelA"]=["1",31,16]#0523
-sTags["modelB"]=["2",30,15]
-##sTags["QCD80HT700to1000"]=["15",5352,200] # 1536
-##sTags["QCD80HT1000to1500"]=["16",2214,60] # 47, 651
-##sTags["QCD80HT1500to2000"]=["17",1943,50] # 49, 452
-##sTags["QCD80HT2000toInf"]=["18",867,40]  # 14, 261
-## YH's ntuple
-sTags["QCD80HT1000to1500"]=["16",2126,30]
-sTags["QCD80HT1500to2000"]=["17",1844,30]
-sTags["QCD80HT2000toInf"]=["18",838,40]
+sTags["Data"]=["10",6767,60]# G, H only
+##sTags["modelA"]=["1",30,15]
+##sTags["modelB"]=["2",30,15]
+## YH's ntuple 8/23
+##sTags["QCD80HT500to700"]=["14",1075,100]
+##sTags["QCD80HT700to1000"]=["15",1904,30]
+##sTags["QCD80HT1000to1500"]=["16",1788,60]
+##sTags["QCD80HT1500to2000"]=["17",1708,60]
+##sTags["QCD80HT2000toInf"]=["18",751,40]
+## YH's ntuple 11/03
+##sTags["QCD80HT500to700"]=["14",1092,100]
+##sTags["QCD80HT700to1000"]=["15",2666,30]
+##sTags["QCD80HT1000to1500"]=["16",2218,30]
+##sTags["QCD80HT1500to2000"]=["17",1942,50]
+##sTags["QCD80HT2000toInf"]=["18",864,40]
 
+#test
+##sTags["Data"]=["10",30,10]
+##sTags["QCD80HT700to1000"]=["15",30,10]
 
 jobTags = OrderedDict(sorted(sTags.items(), key=lambda x: x[1]))
 
@@ -45,8 +52,9 @@ condor_script_template = """
 universe = vanilla
 Executable = condor-executableNoMerge.sh
 +IsLocalJob = true
++IsHighPriorityJob = true
 Should_transfer_files = NO
-Requirements = TARGET.FileSystemDomain == "privnet" && machine != "r510-0-1.privnet"
+Requirements = TARGET.FileSystemDomain == "privnet" && machine !="compute-0-5.privnet" && machine !="compute-0-6.privnet" && machine !="compute-0-8.privnet" && machine !="r510-0-6.privnet"
 Output = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stdout
 Error  = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stderr
 Log    = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).condor
@@ -115,7 +123,7 @@ for k,v in jobTags.items():
             print 'Executing condorcmd'
             p=subprocess.Popen(condorcmd, shell=True)
             p.wait()
-            time.sleep(2)
+            time.sleep(0.2)
             #if count == 20: time.sleep(300)
             count += 1
             print "Histos output dir: %s/%s"%(OutDir,ProdTag)

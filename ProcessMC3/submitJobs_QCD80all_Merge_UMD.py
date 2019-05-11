@@ -11,15 +11,15 @@ options = parseInputArgs()
 Pmode = 2
 ProdTag = options.outtag
 OutDir  = "/data/users/jengbou/histos"
-WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD"
+WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD/temp/"+ProdTag
 
 JobTime = datetime.now()
 fTag = JobTime.strftime("%Y%m%d_%H%M%S")
 
 sTags = {}
-##sTags["modelA"]=["1",30,15]#0517
-sTags["modelA"]=["1",31,16]#0523
-sTags["modelB"]=["2",30,15]
+## Remember to change corresponding nfiles in main.cc
+sTags["modelA"]=["1"]
+sTags["modelB"]=["2"]
 
 
 jobTags = OrderedDict(sorted(sTags.items(), key=lambda x: x[1]))
@@ -32,7 +32,7 @@ universe = vanilla
 Executable = condor-executableMerge.sh
 +IsLocalJob = true
 Should_transfer_files = NO
-Requirements = TARGET.FileSystemDomain == "privnet" && machine != "r510-0-1.privnet"
+Requirements = TARGET.FileSystemDomain == "privnet" && machine != "r510-0-1.privnet" && machine !="r510-0-9.privnet"
 Output = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stdout
 Error  = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stderr
 Log    = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).condor
@@ -46,8 +46,6 @@ for k,v in jobTags.items():
     print "Submitting jobs for [%-20s]"%k
     sTag_ = k
     Imode_ = v[0]
-    numFiles_ = v[1]
-    filesPerJob_ = v[2]
 
     dirname = "jobs/%s_Merge_%s"%(sTag_,fTag)
 

@@ -11,7 +11,7 @@ using std::vector;
 #include <sys/stat.h>
 
 
-void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname,bool donorm, std::string bbname="./");
+void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* samplenames,std::string indir,std::string ohname,bool donorm, std::string outdir="./");
 
 
 #endif

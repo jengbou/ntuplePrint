@@ -15,6 +15,7 @@ using std::vector;
 #include <TCanvas.h>
 #include "EMJselect.h"
 #include "EMJ16003.h"
+#include "QCDhists.h"
 
 
 int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* outputfilename,
@@ -72,6 +73,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     vector<vector<int> > *track_jet_index = 0;
     vector<vector<int> > *track_vertex_index = 0;
     vector<vector<int> > *track_algo = 0;
+    vector<vector<int> > *track_quality = 0;
     vector<vector<float> > *track_vertex_weight =0;
     vector<vector<float> > *track_ipZ =0;
     vector<vector<float> > *track_ipXY = 0;
@@ -118,6 +120,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     tt->SetBranchAddress("track_index",&track_index);
     tt->SetBranchAddress("track_jet_index",&track_jet_index);
     tt->SetBranchAddress("track_algo",&track_algo);
+    tt->SetBranchAddress("track_quality",&track_quality);
     tt->SetBranchAddress("track_vertex_index",&track_vertex_index);
     tt->SetBranchAddress("track_vertex_weight",&track_vertex_weight);
     tt->SetBranchAddress("track_ipXY",&track_ipXY);
@@ -433,7 +436,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
         //if(NNNjet<4) iijjkk=NNNjet;
         //      std::cout<<"iijjkk is "<<iijjkk<<std::endl;
         for(int ij=0;ij<NNNjet;ij++) {
-
+            vector<int> track_qualitys = track_quality->at(ij);
             vector<float> track_ipXYs = track_ipXY->at(ij);
             vector<float> track_ipXYSigs = track_ipXYSig->at(ij);
             vector<int> track_sources = track_source->at(ij);
@@ -465,7 +468,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                                 if(otfile) hjetcut->Fill(5);
                                 almostemerging[ij]=true;
 
-                                if(ij<4) nalmostemerging=nalmostemerging+1;
+                                if(ij<4) nalmostemerging+=1;
                                 /*
                                   if(ij<4) {
                                   std::cout<<" an almost emerging jet "<<ij<<std::endl;
@@ -476,7 +479,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                                 if(r0[ij]>maxIPcut) { // max IP cut
 
                                     emerging[ij]=true;
-                                    if(ij<4) nemerging+=1.;
+                                    if(ij<4) nemerging+=1;
                                     /*
                                       if(ij<4) {
                                       std::cout<<" an emerging jet "<<ij<<std::endl;
@@ -498,7 +501,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
                                     }
                                     if(jet_meanip[ij]>r0[ij]) std::cout<<"DANGER DANGER"<<std::endl;
                                     for (unsigned itrack=0; itrack<track_ipXYs.size(); itrack++) {
-                                        if(track_sources[itrack]==0) {
+                                        if(track_sources[itrack]==0 && ((track_qualitys[itrack] & 4)>0)) {
                                             if(otfile) hipXYEJ->Fill(track_ipXYs[itrack]);
                                             if(otfile) hipXYSigEJ->Fill(track_ipXYSigs[itrack]);
                                             if(otfile) htvwEJ->Fill(track_vertex_weights[itrack]);
@@ -543,7 +546,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
 
         // require at least 4 jets
         bool C4jet=true;
-        if(NNNjet<3) C4jet=false;
+        if(NNNjet<4) C4jet=false;
         // HT
         double HT = (*jet_pt)[0]+(*jet_pt)[1]+(*jet_pt)[2]+(*jet_pt)[3];
         if(otfile) H_T->Fill(HT);
@@ -992,6 +995,7 @@ int EMJselect(bool otfile, bool hasPre, const char* inputfilename,const char* ou
     delete track_jet_index;
     delete track_vertex_index;
     delete track_algo;
+    delete track_quality;
     delete track_vertex_weight;
     delete track_ipZ;
     delete track_ipXY;

@@ -7,9 +7,9 @@
 #include "MergeHists.h"
 
 
-void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname,bool donorm, std::string bbname)
+void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* samplenames,std::string indir,std::string ohname,bool donorm, std::string outdir)
 {
-
+    QCDhists* qcdtools=0;
     std::string inputfile;
     std::string outputfile;
 
@@ -17,7 +17,7 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
     // get normalization
     vector<double> norm(nbin);
     if(donorm) {
-        HistNorm(norm,nbin,xsec,nfiles,binnames,bbname);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
+        qcdtools->HistNorm(norm,nbin,xsec,nfiles,samplenames,outdir);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
     } else{
         for(int i=0;i<nbin;i++) norm[i]=1.;
     }
@@ -37,7 +37,7 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
 
     std::cout<<"normalizing histograms"<<std::endl;
     // merge 1D histograms
-    const int nhist=110;
+    const int nhist=100;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
         "count","acount","hfrwgt",
@@ -46,13 +46,13 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
         "H_T","H_T0","H_T1","H_T2","H_T3","H_T4","H_TFR",
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
-        "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax","hHTnm1",
-        "hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
-        "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1","hipXYEJ",
-        "hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
+        "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax",
+        //"hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
+        //"hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
+        "hipXYEJ","hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
         "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-        "hn2maxipnm1","hjptfrb","hjptfra1",
-        "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+        //"hn2maxipnm1","hjptfrb","hjptfra1",
+        //"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
         "hpt3ko","hpt4ko","hmass","hmassFR","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
@@ -66,11 +66,19 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
         "hmedtheta2DSR","hlogmedtheta2DSR","hmedipXYSigSR","hlogmedipXYSigSR",
         "hmedtheta2DFR","hlogmedtheta2DFR","hmedipXYSigFR","hlogmedipXYSigFR",
         "hfr_ntrkpt1d","hfr_ntrkpt1n","hntrkSR","hntrkFR",
+        "hjptaSR","hjptaFR","hetaaSR","hetaaFR","h_nemgSR","h_nemgFR",
+        "hnjetSR","hnjetFR",
     };
+
+    // runtype==1
+//     const int nhist=2;
+//     std::vector<TH1F*> vv(nhist);
+//     std::string histnames[nhist]={"count","acount"};
+
     vector<double> outnorm(nbin);
     for(int i=0;i<nhist;i++) {
         std::cout<<" entering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
-        vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames,donorm,bbname);
+        vv[i]=qcdtools->HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,samplenames,donorm,outdir);
     }
 
     // merge 2D histograms
@@ -83,10 +91,25 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
         "htheta2DvipXYSigSR",
         "htheta2DvipXYSigFR",
     };
+
+    //runtype==1
+//     const int nhist2=8;
+//     std::vector<TH2F*> vv2(nhist2);
+//     std::string histnames2[nhist2]={
+//         "btagEff_Den_b",
+//         "btagEff_Den_udsg",
+//         "btagEff_Num_b",
+//         "btagEff_Num_udsg",
+//         "btagEff_Den_b_all",
+//         "btagEff_Den_udsg_all",
+//         "btagEff_Num_b_all",
+//         "btagEff_Num_udsg_all",
+//     };
+
     vector<double> outnorm2(nbin);
     for(int i=0;i<nhist2;i++) {
         std::cout<<" entering Histman2 with i = "<<i<<": "<<histnames2[i]<<std::endl;
-        vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames,donorm,bbname);
+        vv2[i]=qcdtools->HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,samplenames,donorm,outdir);
     }
 
     // output total event count
@@ -99,7 +122,7 @@ void MergeHists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string
     std::cout<<"total is "<<ttotal<<std::endl;;
 
     std::cout<<"outputting histograms"<<std::endl;
-    outputfile=bbname+ohname;
+    outputfile=outdir+ohname;
     TFile out(outputfile.c_str(),"RECREATE");
     normhst->Write();
 

@@ -4,35 +4,167 @@
 #include "EMJscan.h"
 #include "EMJ16003.h"
 #include "EMJbkg.h"
+#include "BtagEff.h"
+#include "TH1.h"
+#include "TMatrixD.h"
+#include "TDecompLU.h"
+#include "TDecompSVD.h"
+#include "BTagCalibrationStandalone.cpp"
+#include "TRandom.h"
 
+//const int runtype=1;//0: EMJbkg; 1: BtagEff
 
 const bool mergeOnly = false;
 bool scanCuts = false;
 bool verbose = false;
 
 //void QCDhists()
-void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* binnames,std::string aaname,std::string ohname, int dooptk, int doopta, bool hasPre,bool donorm, bool blind, bool b16003, std::string bbname="./", bool crabformat=true)
+QCDhists::QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* samplenames,std::string indir,std::string ohname, int dooptk, int doopta, bool hasPre,bool donorm, bool blind, bool b16003, std::string outdir="./", bool crabformat=true,bool isData=false)
 {
+    std::string CutSet="1";
 
     if (b16003) scanCuts = false;
     std::string inputfile;
     std::string outputfile;
-  
-    // opt
-    float DHTcut=1000;
-    float Dpt1cut=400;
-    float Dpt2cut=200;
-    float Dpt3cut=200;
+
+    // opt CutSet: 1-4,9
+    float DHTcut=900;
+    float Dpt1cut=225;
+    float Dpt2cut=100;
+    float Dpt3cut=100;
     float Dpt4cut=100;
-    float Dalphacut=0.04;
-    float DmaxIPcut=0.4;
-    float Djetacut = 2.;
-    // dont forget there is a hidden cut nalmostemergin<4!!!!!!!!!!!!!!!!!
-    int Dnemcut=2;
+    float DMETcut=0;
+    int DntagType=22;
+    int Dnemcut=2;//This maybe superseded by ntagType in EMJbkg.cc
+    float Djetacut = 2.0;
     int Dntrk1=0;
-    // for alpha max scan
+
+
+    //emcut1
+    float DPUdzCut=2.5;
+    float DsigzCut=4.0;
+    float DmedIPcut=0.05;
+
+    float DalphaCut=0.25;
+
+    if (CutSet == "9") DalphaCut = 0.4;
+    if (CutSet == "10" || CutSet == "11" || CutSet == "11a") DalphaCut = 0.5;
+
+    if (CutSet == "2") {
+        DPUdzCut = 4.0;
+        DmedIPcut = 0.10;
+    }
+    else if (CutSet == "3" || CutSet == "10") {
+        // emcut3
+        DPUdzCut = 15.0;
+        DsigzCut = 30.0;
+        DmedIPcut = 0.15;
+
+        DntagType=12;
+        Dnemcut=1;
+        DMETcut=150.0;
+    }
+    else if (CutSet == "4") {
+        // emcut4
+        DPUdzCut = 4.0;
+        DsigzCut = 20.0;
+        DmedIPcut = 0.25;
+
+        DntagType=12;
+        Dnemcut=1;
+        DMETcut=200.0;
+    }
+    else if (CutSet == "5"){
+        DHTcut=1100;
+        Dpt1cut=275;
+        Dpt2cut=250;
+        Dpt3cut=150;
+        Dpt4cut=150;
+
+        //emcut1
+    }
+    else if (CutSet == "6"){
+        DHTcut=1000;
+        Dpt1cut=250;
+        Dpt2cut=150;
+        Dpt3cut=100;
+        Dpt4cut=100;
+
+        // emcut5
+        DsigzCut = 4.0;
+        DmedIPcut = 0.10;
+    }
+    else if (CutSet == "7"){
+        DHTcut=1000;
+        Dpt1cut=250;
+        Dpt2cut=150;
+        Dpt3cut=100;
+        Dpt4cut=100;
+
+        // emcut6
+        DsigzCut = 20.0;
+    }
+    else if (CutSet == "8"){
+        DHTcut=1200;
+        Dpt1cut=300;
+        Dpt2cut=250;
+        Dpt3cut=200;
+        Dpt4cut=150;
+
+        // emcut7
+        DsigzCut = 10.0;
+    }
+    else if (CutSet == "X") {
+        DHTcut=900;
+        Dpt1cut=100;
+        Dpt2cut=100;
+        Dpt3cut=100;
+        Dpt4cut=100;
+
+        // emcutX
+        DPUdzCut = 2.5;
+        DsigzCut = 8.0;
+        DmedIPcut = 0.08;
+        DalphaCut = 0.30;
+    }
+    else if (CutSet == "11") {
+        // emcut11
+        DPUdzCut = 4.0;
+        DsigzCut = 20.0;
+        DmedIPcut = 0.10;
+
+        DntagType=12;
+        Dnemcut=1;
+        DMETcut=200.0;
+    }
+    else if (CutSet == "11a") {
+        // emcut11a
+        DPUdzCut = 4.0;
+        DsigzCut = 20.0;
+        DmedIPcut = 0.10;
+
+        DntagType=1;
+        Dnemcut=1;
+        DMETcut=200.0;
+    }
+
     const int ncutscan=3;
     //const int ncutscan=1;
+
+    std::cout << "Cutset[" << std::setw(2) << CutSet << "]: HT pt1 pt2 pt3 pt4 MET nemg(ntagType) PUdz 3Dsig medIP alpha3Dcut"
+              << std::endl
+              << std::setw(12) << " "
+              << DHTcut << " "
+              << Dpt1cut << " "
+              << Dpt2cut << " "
+              << Dpt3cut << " "
+              << Dpt4cut << " "
+              << DMETcut << " "
+              << Dnemcut << "(" << DntagType << ") "
+              << DPUdzCut << " "
+              << DsigzCut << " "
+              << DmedIPcut << " "
+              << DalphaCut << std::endl;
 
     // scan cut related
     const int nkincut=6;
@@ -52,20 +184,24 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     if (!mergeOnly){
         std::cout<<"making histograms for each file in each bin"<<std::endl;
         for(int i=0;i<nbin;i++) {  // for each bin
-            mkdir((bbname+binnames[i]).c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            mkdir((outdir+samplenames[i]).c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-                //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-                //inputfile=aaname+binnames[i]+"/ntuple_"+binnames[i]+"_"+std::to_string(j+1)+"_hlt1p1.root";
+                if (j==0){
+                    initialize();
+                }
+                //inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+                //inputfile=indir+samplenames[i]+"/ntuple_"+samplenames[i]+"_"+std::to_string(j+1)+"_hlt1p1.root";
 
-                inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";//condor format
-                if (crabformat) inputfile=aaname+binnames[i]+"/ntuple_"+std::to_string(j+1)+".root";//crab format
+                inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.histo.root";//condor format
+                if (crabformat) inputfile=indir+samplenames[i]+"/ntuple_"+std::to_string(j+1)+".root";//crab format
                 std::cout<<"input file is "<<inputfile<<std::endl;
-                outputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+                outputfile=outdir+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
                 std::cout<<"output file is "<<outputfile<<std::endl;
                 int itmp;
                 if(!b16003) {
-                    //itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
-                    itmp = EMJbkg(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+                    //itmp = EMJselect(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,DalphaCut,DmedIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+                    itmp = EMJbkg(true,hasPre,CutSet.c_str(),inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,DalphaCut,DmedIPcut,0.9,0.9,Dntrk1,DntagType,DPUdzCut,DsigzCut,DMETcut,blind,isData);
+                    //itmp = BtagEff(true,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,DalphaCut,DmedIPcut,0.9,0.9,Dntrk1,Dnemcut,blind,isData);
                 } else {
                     itmp = EMJ16003(true,hasPre,inputfile.c_str(),outputfile.c_str());
                 }
@@ -78,9 +214,9 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         if(dooptk==1) {
             for(int i=0;i<nbin;i++) {  // for each bin
                 for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-                    //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-                    inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";// condor format
-                    if (crabformat) inputfile=aaname+binnames[i]+"/ntuple_"+std::to_string(j+1)+".root";// crab format
+                    //inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+                    inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.histo.root";// condor format
+                    if (crabformat) inputfile=indir+samplenames[i]+"/ntuple_"+std::to_string(j+1)+".root";// crab format
                     std::cout<<"input file is "<<inputfile<<std::endl;
 
 
@@ -118,19 +254,19 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
                 for(int i=0;i<nbin;i++) {  // for each bin
                     for(int j=0;j<nfiles[i];j++) { //for each file for that bin
                         std::cout<<"k i j="<<k<<" "<<i<<" "<<j<<std::endl;
-                        //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
-                        //inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+".root";
-                        inputfile=aaname+binnames[i]+"/"+binnames[i]+"_"+std::to_string(j+1)+"_0.histo.root";// condor format
-                        if (crabformat) inputfile=aaname+binnames[i]+"/ntuple_"+std::to_string(j+1)+".root";// crab format
+                        //inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.ntpl.root";
+                        //inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+".root";
+                        inputfile=indir+samplenames[i]+"/"+samplenames[i]+"_"+std::to_string(j+1)+"_0.histo.root";// condor format
+                        if (crabformat) inputfile=indir+samplenames[i]+"/ntuple_"+std::to_string(j+1)+".root";// crab format
                         std::cout<<"input file is "<<inputfile<<std::endl;
                         int iii=0;
-                        outputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+                        outputfile=outdir+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
                         std::cout<<"output file is "<<outputfile<<std::endl;
 
                         if(doopta==1) {
-                            iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,acut2,DmaxIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
+                            iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,acut2,DmedIPcut,0.9,0.9,Dntrk1,Dnemcut,blind);
                         } else {
-                            iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,Dalphacut,acut2,0.9,0.9,Dntrk1,Dnemcut,blind);
+                            iii = EMJselect(false,hasPre,inputfile.c_str(),outputfile.c_str(),DHTcut, Dpt1cut,Dpt2cut,Dpt3cut,Dpt4cut,Djetacut,DalphaCut,acut2,0.9,0.9,Dntrk1,Dnemcut,blind);
                         }
                         ipass[k][i]+=iii;
                         std::cout<<" iii ipass  is "<<iii<<" "<<ipass[k][i]<<std::endl;
@@ -143,7 +279,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
     //  double norm[nbin];
     vector<double> norm(nbin);
     if(donorm) {
-        HistNorm(norm,nbin,xsec,nfiles,binnames,bbname);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
+        HistNorm(norm,nbin,xsec,nfiles,samplenames,outdir);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
     } else{
         for(int i=0;i<nbin;i++) norm[i]=1.;
     }
@@ -163,6 +299,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
     //make and  output summed and renormalized histograms
     std::cout<<"normalizing histograms"<<std::endl;
+
     const int nhist=100;
     std::vector<TH1F*> vv(nhist);
     std::string histnames[nhist]={
@@ -173,12 +310,12 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax",
-//         "hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
-//         "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
+        //         "hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
+        //         "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
         "hipXYEJ","hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
         "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-//         "hn2maxipnm1","hjptfrb","hjptfra1",
-//         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+        //         "hn2maxipnm1","hjptfrb","hjptfra1",
+        //         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
         "hpt3ko","hpt4ko","hmass","hmassFR","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
@@ -193,11 +330,19 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         "hjptaSR","hjptaFR","hetaaSR","hetaaFR","h_nemgSR","h_nemgFR",
         "hnjetSR","hnjetFR",
     };
+
+
+    // runtype==1
+//     const int nhist=2;
+//     std::vector<TH1F*> vv(nhist);
+//     std::string histnames[nhist]={"count","acount"};
+
     vector<double> outnorm(nbin);
     for(int i=0;i<nhist;i++) {
         std::cout<<" entering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
-        vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,binnames,donorm,bbname);
+        vv[i]=HistMan(goalintlum,histnames[i],norm,outnorm,nbin,xsec,nfiles,samplenames,donorm,outdir);
     }
+
 
     const int nhist2=12;
     std::vector<TH2F*> vv2(nhist2);
@@ -208,10 +353,25 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         "htheta2DvipXYSigSR",
         "htheta2DvipXYSigFR",
     };
+
+    //runtype==1
+//     const int nhist2=8;
+//     std::vector<TH2F*> vv2(nhist2);
+//     std::string histnames2[nhist2]={
+//         "btagEff_Den_b",
+//         "btagEff_Den_udsg",
+//         "btagEff_Num_b",
+//         "btagEff_Num_udsg",
+//         "btagEff_Den_b_all",
+//         "btagEff_Den_udsg_all",
+//         "btagEff_Num_b_all",
+//         "btagEff_Num_udsg_all",
+//     };
+
     vector<double> outnorm2(nbin);
     for(int i=0;i<nhist2;i++) {
         std::cout<<" entering Histman2 with i = "<<i<<": "<<histnames2[i]<<std::endl;
-        vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,binnames,donorm,bbname);
+        vv2[i]=HistMan2(goalintlum,histnames2[i],norm,outnorm2,nbin,xsec,nfiles,samplenames,donorm,outdir);
     }
 
     // output total event count
@@ -260,7 +420,7 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
 
 
     std::cout<<"outputting histograms"<<std::endl;
-    outputfile=bbname+ohname;
+    outputfile=outdir+ohname;
     TFile out(outputfile.c_str(),"RECREATE");
     normhst->Write();
     if (scanCuts){
@@ -275,13 +435,24 @@ void QCDhists(float goalintlum,int nbin, float* xsec, int* nfiles, std::string* 
         vv2[i]->Write();
     }
 
-
     return;
 }
 
+BTagCalibrationStandalone calib_("CSVv2", "BtagFiles/CSVv2_Moriond17_mistag_G_H.csv");
+BTagCalibrationStandaloneReader readerB_(BTagEntryStandalone::OP_LOOSE, "central");  // nominal
+BTagCalibrationStandaloneReader readerL_(BTagEntryStandalone::OP_LOOSE, "central");  // nominal
+// BTagCalibrationStandaloneReader readerB_(BTagEntryStandalone::OP_MEDIUM, "central");  // nominal
+// BTagCalibrationStandaloneReader readerL_(BTagEntryStandalone::OP_MEDIUM, "central");  // nominal
+// BTagCalibrationStandaloneReader readerB_(BTagEntryStandalone::OP_TIGHT, "central");  // nominal
+// BTagCalibrationStandaloneReader readerL_(BTagEntryStandalone::OP_TIGHT, "central");  // nominal
+TRandom *r0 = new TRandom();
 
+void QCDhists::initialize() {
+    readerB_.load(calib_, BTagEntryStandalone::FLAV_B,"comb");
+    readerL_.load(calib_, BTagEntryStandalone::FLAV_UDSG,"incl");
+}
 
-TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm,std::string bbname) {
+TH1F* QCDhists::HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* samplenames,bool donorm,std::string dirname) {
 
     std::string inputfile;
 
@@ -290,7 +461,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
     vector<TH1F> sum(nbin);
     for(int i=0;i<nbin;i++) {  // for each bin
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-            inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            inputfile=dirname+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
             std::cout << inputfile << std::endl;
             TFile* in = new TFile(inputfile.c_str());
             if (in->IsZombie()) {in->Close(); continue;}
@@ -333,7 +504,7 @@ TH1F* HistMan(float goalintlum,std::string thisHIST,vector<double>& norm,vector<
     return SUM;
 }
 
-TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm,std::string bbname) {
+TH2F* QCDhists::HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* samplenames,bool donorm,std::string dirname) {
 
     std::string inputfile;
 
@@ -343,7 +514,7 @@ TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector
     vector<TH2F> sum(nbin);
     for(int i=0;i<nbin;i++) {  // for each bin
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-            inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            inputfile=dirname+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
             TFile* in = new TFile(inputfile.c_str());
             if (in->IsZombie()) {in->Close(); continue;}
             if(j==0) {
@@ -383,7 +554,7 @@ TH2F* HistMan2(float goalintlum,std::string thisHIST,vector<double>& norm,vector
     return SUM;
 }
 
-void  HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::string* binnames,std::string bbname) {
+void QCDhists::HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::string* samplenames,std::string dirname) {
 
     std::cout<<"entering HistNorm"<<std::endl; 
 
@@ -394,7 +565,7 @@ void  HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::stri
     vector<TH1F> sum(nbin);
     for(int i=0;i<nbin;i++) {  // for each bin
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-            inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            inputfile=dirname+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
             std::cout<<i<<" "<<j<<" "<<inputfile<<std::endl;
             in = new TFile(inputfile.c_str());
             if (in->IsZombie()) {in->Close(); continue;}
@@ -421,7 +592,7 @@ void  HistNorm(vector<double>& norm,int nbin,float* xsec, int* nfiles, std::stri
 }
 
 
-TH1F* HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* binnames,bool donorm,std::string bbname) {
+TH1F* QCDhists::HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vector<double>& outnorm,int nbin,float* xsec, int* nfiles, std::string* samplenames,bool donorm,std::string dirname) {
 
     std::string inputfile;
 
@@ -432,7 +603,7 @@ TH1F* HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vecto
         TList *listI = new TList;
         int ij=0;
         for(int j=0;j<nfiles[i];j++) { //for each file for that bin
-            inputfile=bbname+binnames[i]+"/histos"+binnames[i]+"_"+std::to_string(j)+".root";
+            inputfile=dirname+samplenames[i]+"/histos"+samplenames[i]+"_"+std::to_string(j)+".root";
             TFile* in = new TFile(inputfile.c_str());
             if (in->IsZombie()) {in->Close(); continue;}
             if (!in->GetListOfKeys()->Contains(thisHIST.c_str())) return (new TH1F(thisHIST.c_str(),"dummy empty hist",10,0.,10.));
@@ -475,7 +646,7 @@ TH1F* HistMerge(float goalintlum,std::string thisHIST,vector<double>& norm,vecto
     return SUM;
 }
 
-double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
+double QCDhists::fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
     double fakerate = 0.0;
 
     if (varType == 1) {//alpha (tracksource = 0, trackquality highPurity, pvWeight>0)
@@ -913,7 +1084,7 @@ double fakerate(double jet_pt, double jet_eta, int jet_nTrack, int varType){
 
 }
 
-double fakerateTP(double jet_pt, double jet_eta, int jet_nTrack, int varType){
+double QCDhists::fakerateTP(double jet_pt, double jet_eta, int jet_nTrack, int varType){
     double fakerate = 0.0;
 
     if (varType == 1) {//alpha (tracksource = 0, trackquality highPurity, pvWeight>0)
@@ -1305,626 +1476,1779 @@ double fakerateTP(double jet_pt, double jet_eta, int jet_nTrack, int varType){
 
 }
 
-
-double fakerateF(double jet_pt, double jet_eta, int jet_nTrack, int varType, int flav){
+//[MC] FakeRate
+double QCDhists::fakerateF(double jet_pt, double jet_eta, int jet_nTrack, int varType, int flav, std::string cutset_){
     double fakerate = 0.0;
-    if (fabs(flav)==5 || fabs(flav)==8) {// default: b and g->bb
-        if( jet_pt>=100 && jet_pt<200 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.715059876442;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.629313707352;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.528343737125;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.507715523243;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.469951748848;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.439262956381;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.401671767235;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.363309115171;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.326585620642;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.296461105347;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.258569836617;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.222324073315;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.195010304451;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.163752108812;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.140868544579;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.119272492826;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.100279137492;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0826535075903;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0638188943267;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0559257231653;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0424351431429;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0365692898631;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0293366611004;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.022599350661;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0171766523272;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0168513003737;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0122290300205;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00733736064285;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00623644841835;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.00793581176549;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.00518085062504;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.00479727284983;
-            else if( jet_nTrack>=33 && jet_nTrack<36 ) fakerate = 0.00976078398526;
+    double error = 0.0;
+
+    if (cutset_=="X"){
+        //~/Dropbox/UMD\ Analysis/FakeRate/20171115/fakerate_QCDMC_3DSig_8_Med_8.txt
+        //MC fake rate bin in nTrk, flavor; alpha3dsig only; D1 cuts (5mm); a3Dsig cut=0.25
+        if (fabs(flav)==5 || fabs(flav)==8) {// default: b and g->bb
+
+            if( jet_nTrack>=0.0 && jet_nTrack<4.0 ) {
+                fakerate = 0.0764036476612;
+            }
+            if( jet_nTrack>=4.0 && jet_nTrack<8.0 ) {
+                fakerate = 0.0240180138499;
+            }
+            if( jet_nTrack>=8.0 && jet_nTrack<12.0 ) {
+                fakerate = 0.00735678197816;
+            }
+            if( jet_nTrack>=12.0 && jet_nTrack<16.0 ) {
+                fakerate = 0.00186479813419;
+            }
+            if( jet_nTrack>=16.0 && jet_nTrack<20.0 ) {
+                fakerate = 0.000393063208321;
+            }
+            if( jet_nTrack>=20.0 && jet_nTrack<24.0 ) {
+                fakerate = 0.000105553546746;
+            }
+            if( jet_nTrack>=24.0 && jet_nTrack<40.0 ) {
+                fakerate = 1.39190433401e-06;
+            }
+            if( jet_nTrack>=40.0 && jet_nTrack<80.0 ) {
+                fakerate = 0.0;
+            }
         }
-        else if( jet_pt>=200 && jet_pt<300 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.766644239426;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.661502659321;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.497469037771;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.494727581739;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.495208054781;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.44789364934;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.425969421864;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.400438308716;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.362398028374;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.337267398834;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.306725084782;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.275644272566;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.246207788587;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.21221858263;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.187123671174;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.162651032209;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.14050988853;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.117521502078;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0994837731123;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.0853370204568;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0699598491192;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0596641488373;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0470349006355;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0376072451472;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0317801348865;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0238691847771;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0205276757479;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.016407025978;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0100565757602;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0121419224888;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.00575947761536;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.0057715815492;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.00471845502034;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.00305754481815;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00598808191717;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.00464069005102;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00156007974874;
-            else if( jet_nTrack>=38 && jet_nTrack<40 ) fakerate = 9.03845648281e-06;
+        else {//g,u,d,c,s
+            if( jet_nTrack>=0.0 && jet_nTrack<4.0 ) {
+                fakerate = 0.0272194761783;
+            }
+            if( jet_nTrack>=4.0 && jet_nTrack<8.0 ) {
+                fakerate = 0.0024541572202;
+            }
+            if( jet_nTrack>=8.0 && jet_nTrack<12.0 ) {
+                fakerate = 0.000505852687638;
+            }
+            if( jet_nTrack>=12.0 && jet_nTrack<16.0 ) {
+                fakerate = 0.00015330662427;
+            }
+            if( jet_nTrack>=16.0 && jet_nTrack<20.0 ) {
+                fakerate = 5.15911160619e-05;
+            }
+            if( jet_nTrack>=20.0 && jet_nTrack<24.0 ) {
+                fakerate = 2.135487739e-05;
+            }
+            if( jet_nTrack>=24.0 && jet_nTrack<40.0 ) {
+                fakerate = 6.16831357547e-06;
+            }
+            if( jet_nTrack>=40.0 && jet_nTrack<80.0 ) {
+                fakerate = 0.0;
+            }
+
         }
-        else if( jet_pt>=300 && jet_pt<400 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.591901659966;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.463596314192;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.585190534592;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.491322517395;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.461325109005;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.433495372534;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.42331725359;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.384311169386;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.343639194965;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.32081386447;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.294203609228;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.27275159955;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.245075434446;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.218041613698;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.194739356637;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.171788409352;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.158191621304;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.13571421802;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.119220420718;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.103109136224;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0881746262312;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0768402591348;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0597792975605;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0515190511942;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0410923399031;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0334663018584;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0284008923918;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0203177854419;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0163359735161;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0146741019562;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.0126445731148;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.00880257040262;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.00698458123952;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.00431843055412;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00560474162921;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.00341084669344;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00200200802647;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.00312445149757;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.00133896083571;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.00259156827815;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.00330586731434;
-            else if( jet_nTrack>=42 && jet_nTrack<44 ) fakerate = 0.00202568154782;
+    }//end of cutsetX
+    else if (cutset_=="1"){
+        //std::cout<<"[MC] CutSet = 1"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset1.txt
+        //cutset1
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.091007791;
+                error = 0.056625968;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.034747239;
+                error = 0.010749298;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.035219494;
+                error = 0.025553014;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000241418;
+                error = 0.003399285;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.006634058;
+                error = 0.005712825;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
         }
-        else if( jet_pt>=400 && jet_pt<500 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.499583095312;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.450487554073;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.500702619553;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.491060495377;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.486063927412;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.439745545387;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.378054827452;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.344892859459;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.342964202166;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.309404373169;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.276457190514;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.262597471476;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.231651797891;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.224189996719;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.197939813137;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.181883990765;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.166576698422;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.141870379448;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.127526342869;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.113013081253;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.092493519187;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0846745967865;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0732051581144;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0595168806612;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0533206872642;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0408093817532;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0308560002595;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0300334058702;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0240820683539;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0201674029231;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.0141323199496;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.0135890766978;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.0101735536009;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.00839622691274;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00733977090567;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.00661996938288;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00415988545865;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.00545014487579;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.00192761630751;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.00531906681135;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.00155104300939;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 0.000190330873011;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.000231184167205;
-            else if( jet_nTrack>=44 && jet_nTrack<46 ) fakerate = 0.000426233513281;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.00641486980021;
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.011468501;
+                error = 0.001658203;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002515812;
+                error = 0.000401359;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000047768;
+                error = 0.000790234;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000293478;
+                error = 0.000174225;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
         }
-        else if( jet_pt>=500 && jet_pt<700 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.920715034008;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.581622302532;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.324101954699;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.541637420654;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.455724567175;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.378196239471;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.401509702206;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.34158629179;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.326691269875;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.305788725615;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.283505499363;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.251563817263;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.252281159163;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.192850738764;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.195830658078;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.178407281637;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.170073494315;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.147526562214;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.136231586337;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.114961661398;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0962586924434;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0835715830326;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0720031931996;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0673136338592;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0601850897074;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0456812269986;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0424221903086;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0280471350998;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0296144168824;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0237792115659;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.0169200859964;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.0151808932424;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.0160291325301;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.0088355075568;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00864937249571;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.00590739864856;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00558930682018;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.0037547533866;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.00624633487314;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.00242132181302;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.00371199380606;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 0.00232599675655;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.00207602279261;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 0.00138432916719;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 0.000106653409603;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 0.000885473156814;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.00187107559759;
-            else if( jet_nTrack>=48 && jet_nTrack<52 ) fakerate = 0.00132475944702;
-            else if( jet_nTrack>=52 && jet_nTrack<53 ) fakerate = 0.000343284773408;
-            else if( jet_nTrack>=53 && jet_nTrack<54 ) fakerate = 0.000471311243018;
-            else if( jet_nTrack>=54 && jet_nTrack<55 ) fakerate = 0.000542446679901;
-            else if( jet_nTrack>=55 && jet_nTrack<56 ) fakerate = 0.00513691082597;
+    }//end of cutset1
+    else if (cutset_=="2"){
+        //std::cout<<"[MC] CutSet = 2"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset2.txt
+        //cutset2
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.017776422;
+                error = 0.059319302;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.002533249;
+//                 error = 0.000382620;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.002772487;
+                error = 0.005547458;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.000318333;
+//                 error = 0.000133305;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.009511134;
+                error = 0.009995830;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.000078965;
+//                 error = 0.000080139;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
         }
-        else if( jet_pt>=700 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.0;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.272499978542;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.351407468319;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.384297341108;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.32820519805;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.333652466536;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.30006146431;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.229936897755;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.223351731896;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.219748437405;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.217988535762;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.195175051689;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.185304924846;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.179233416915;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.157421916723;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.151232481003;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.126067653298;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.117333039641;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.111748322845;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.104287564754;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.0923201143742;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0840925723314;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.0726553052664;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0625237897038;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.0589427165687;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.0544106028974;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.0398165099323;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.0375618040562;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.0290282871574;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0292799528688;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.0226878318936;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.0195199176669;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.0179017689079;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.014044621028;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00960959307849;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.0100202020258;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00780270900577;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.00687822094187;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.00579924928024;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.00496913213283;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.00317132775672;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 0.00394399557263;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.0030550006777;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 0.00284199137241;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 0.00232639769092;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 0.00255473703146;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.000801635440439;
-            else if( jet_nTrack>=48 && jet_nTrack<49 ) fakerate = 0.00107172341086;
-            else if( jet_nTrack>=49 && jet_nTrack<50 ) fakerate = 0.00165503879543;
-            else if( jet_nTrack>=50 && jet_nTrack<51 ) fakerate = 0.00096572691109;
-            else if( jet_nTrack>=51 && jet_nTrack<52 ) fakerate = 0.00229308777489;
-            else if( jet_nTrack>=52 && jet_nTrack<53 ) fakerate = 0.00216134591028;
-            else if( jet_nTrack>=53 && jet_nTrack<54 ) fakerate = 0.00127281574532;
-            else if( jet_nTrack>=54 && jet_nTrack<55 ) fakerate = 0.00114713376388;
-            else if( jet_nTrack>=55 && jet_nTrack<56 ) fakerate = 0.00040523026837;
-            else if( jet_nTrack>=56 && jet_nTrack<57 ) fakerate = 0.00117483024951;
-            else if( jet_nTrack>=57 && jet_nTrack<58 ) fakerate = 0.00140666321386;
-            else if( jet_nTrack>=58 && jet_nTrack<59 ) fakerate = 0.00161025836132;
-            else if( jet_nTrack>=59 && jet_nTrack<60 ) fakerate = 0.00293966941535;
-            else if( jet_nTrack>=60 && jet_nTrack<62 ) fakerate = 0.00260410434566;
-            else if( jet_nTrack>=62 && jet_nTrack<63 ) fakerate = 0.0;
-            else if( jet_nTrack>=63 && jet_nTrack<64 ) fakerate = 0.0;
-            else if( jet_nTrack>=64 && jet_nTrack<65 ) fakerate = 0.0;
-            else if( jet_nTrack>=65 && jet_nTrack<66 ) fakerate = 0.0;
-            else if( jet_nTrack>=66 && jet_nTrack<67 ) fakerate = 0.0045856917277;
-            else if( jet_nTrack>=67 && jet_nTrack<68 ) fakerate = 0.0;
-            else if( jet_nTrack>=68 && jet_nTrack<69 ) fakerate = 0.0;
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.009646106;
+                error = 0.001920828;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002533249;
+                error = 0.000382620;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000509282;
+                error = 0.000212996;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000318333;
+                error = 0.000133305;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.000078965;
+//                 error = 0.000080139;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000078965;
+                error = 0.000080139;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
         }
+    }//end of cutset2
+    else if (cutset_=="3"){
+        //std::cout<<"[MC] CutSet = 3"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset3.txt
+        //cutset3
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.005435236;
+                error = 0.006502964;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000474873;
+                error = 0.002526085;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.005688290;
+                error = 0.001619985;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000778228;
+                error = 0.000277043;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000138929;
+                error = 0.000096240;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000066653;
+                error = 0.000052848;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000068944;
+                error = 0.000069848;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset3
+    else if (cutset_=="4"){
+        //std::cout<<"[MC] CutSet = 4"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset4.txt
+        //cutset4
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.001413448;
+                error = 0.048206738;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.004730882;
+                error = 0.004399605;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.004409454;
+                error = 0.004343413;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.004691387;
+                error = 0.001487461;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000344542;
+                error = 0.000177416;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset4
+    else if (cutset_=="5"){
+        //std::cout<<"[MC] CutSet = 5"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset5.txt
+        //cutset5
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.106563225;
+                error = 0.068887879;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.034559544;
+                error = 0.010682442;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.035705920;
+                error = 0.025923635;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000246726;
+                error = 0.003036555;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.009337957;
+                error = 0.008216448;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.011129123;
+                error = 0.001893431;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002525200;
+                error = 0.000398519;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000015756;
+                error = 0.000814237;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000293273;
+                error = 0.000161504;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset5
+    else if (cutset_=="6"){
+        //std::cout<<"[MC] CutSet = 6"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset6.txt
+        //cutset6
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.005767023;
+                error = 0.005732841;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.001942574;
+                error = 0.003015861;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012686262;
+                error = 0.004026754;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002139245;
+                error = 0.000328302;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000242342;
+                error = 0.000208354;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset6
+    else if (cutset_=="7"){
+        //std::cout<<"[MC] CutSet = 7"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset7.txt
+        //cutset7
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.085752450;
+                error = 0.092576154;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.005402870;
+                error = 0.005250144;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.003395952;
+                error = 0.004667172;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.005398412;
+                error = 0.003012322;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001008174;
+                error = 0.000246674;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000141152;
+                error = 0.000179217;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000054247;
+                error = 0.000039226;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset7
+    else if (cutset_=="8"){
+        //std::cout<<"[MC] CutSet = 8"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset8.txt
+        //cutset8
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.082552657;
+                error = 0.070909274;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.017333694;
+                error = 0.010369442;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.004979199;
+                error = 0.006896357;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.001863467;
+                error = 0.003561052;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.008585087;
+                error = 0.002023294;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001776625;
+                error = 0.000400376;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000364279;
+                error = 0.000253261;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000100283;
+                error = 0.000154937;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset8
+    else if (cutset_=="9"){
+        //std::cout<<"[MC] CutSet = 9"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180201r1/FakeRate_cutset9.txt
+        //cutset9
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.140636355;
+                error = 0.095017506;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.029160412;
+                error = 0.014766987;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.018177882;
+                error = 0.014256610;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.014818208;
+                error = 0.012781939;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.014810834;
+                error = 0.002667873;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.005120015;
+                error = 0.000621572;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.001360814;
+                error = 0.000501770;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000159184;
+                error = 0.000502774;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000195149;
+                error = 0.000141333;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000250109;
+                error = 0.000253132;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset9
+    else if (cutset_=="10"){
+        //std::cout<<"[MC] CutSet = 10"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180222_cut10/FakeRate_cutset10.txt
+        //cutset10
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.061317001;
+                error = 0.090330640;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002033191;
+                error = 0.008962274;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000432861;
+                error = 0.011457711;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000432861;
+                error = 0.011457711;
+//                 fakerate = 0.014920635;
+//                 error = 0.012054389;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.007742672;
+                error = 0.002782491;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002660405;
+                error = 0.000440500;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.001222754;
+                error = 0.000256548;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000535164;
+                error = 0.000256586;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000592041;
+                error = 0.000576590;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset10 (=cutset 3 except a3d cut =0.5)
+    else if (cutset_=="11" || cutset_=="11a"){
+        //std::cout<<"[MC] CutSet = 11"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180227_cut11/FakeRate_cutset11.txt
+        //cutset11
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.063960016;
+                error = 0.075843471;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.001469939;
+                error = 0.007620897;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.007549996;
+                error = 0.008793359;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.010295879;
+                error = 0.002199902;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002575297;
+                error = 0.000380299;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000903147;
+                error = 0.000281890;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000573658;
+                error = 0.000199477;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000074672;
+                error = 0.000075485;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset11 (=cutset 4 except a3d cut =0.5 & medID cut=0.10)
+    else if (cutset_=="21"){
+        //std::cout<<"[MC] CutSet = 21"<<std::endl;
+        //FakeRateHistograms_20181029/fakerate_p20181030/FakeRate_cutset1.txt
+        //cutset21 == cutset1 2017
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.085364841;
+                error = 0.052403670;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.032302987;
+                error = 0.009883264;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.036249205;
+                error = 0.026352946;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000249382;
+                error = 0.002855125;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.008695275;
+                error = 0.007620107;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.023867251;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.671910291;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.011556502;
+                error = 0.001602595;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002607194;
+                error = 0.000373927;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000003050;
+                error = 0.000824383;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000293200;
+                error = 0.000157078;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000999705;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.028620991;
+            }
+        }
+    }//end of cutset21 (=cutset 1 except 2017 FR)
+    else{
+        std::cout<<"CutSet["<<cutset_<<"] not defined!"<<std::endl;
     }
-    else {//g,u,d,c,s
-        if( jet_pt>=100 && jet_pt<200 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.116929680109;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.0776538178325;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.0538891553879;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0415382906795;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0316988527775;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.0250606592745;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0193945094943;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0146419722587;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0112940631807;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.00823308341205;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.00598462251946;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00450083101168;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00336895207874;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00252591259778;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00190512055997;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00143598543946;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0010693782242;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.000833429046907;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.000605412409641;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.000423416495323;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.000423510908149;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.000318155100103;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00023320899345;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.000230387493502;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.000127563762362;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.000122862751596;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.000105378574517;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.000107260457298;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 4.58786780655e-05;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 3.37183860211e-06;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 4.77731509818e-06;
-        }
-        else if( jet_pt>=200 && jet_pt<300 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.108254872262;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.074730053544;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.0513213984668;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0410384088755;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0327457636595;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.027534108609;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0222020410001;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0185786578804;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0156719554216;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0125106573105;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0104531822726;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00823249574751;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00651287473738;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00500586302951;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00411078240722;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00320230936632;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00246857269667;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00184428191278;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00141112843994;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00110363855492;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00084279559087;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.000741443480365;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.000489442143589;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.000401988858357;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.000336873577908;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.000284847978037;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.000250481680268;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.000155415211339;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.000132717294036;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.000159239934874;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 4.78518049931e-05;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 4.54061628261e-05;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 8.17726831883e-05;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.00017799444322;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 5.16239015269e-05;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.0;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 6.78041487845e-07;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.0;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 1.45537467233e-06;
-        }
-        else if( jet_pt>=300 && jet_pt<400 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.0907843187451;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.0560795851052;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.049036514014;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0390446595848;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0304229017347;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.0255571380258;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0214924663305;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0184146333486;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0162382181734;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.013980647549;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0114672658965;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.00995473284274;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.00833496358246;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00704440334812;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00598440179601;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00464624864981;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00395054928958;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00314948242158;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00249475007877;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00206430442631;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00155460077804;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00131264445372;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00106300867628;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.000933959672693;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.000744890305214;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.000631943810731;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00044018618064;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.000346210144926;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.000320376100717;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.000289181567496;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.000208661906072;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.000182903779205;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.000143267461681;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.000136656686664;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 6.0026657593e-05;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 5.18191009178e-05;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 6.88793224981e-05;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.000145528509165;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 7.97821194283e-05;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 5.24160786881e-05;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 6.79302829667e-05;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 4.81825736642e-06;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.0;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 0.0;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 0.0;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 2.19233443204e-05;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.0;
-            else if( jet_nTrack>=48 && jet_nTrack<49 ) fakerate = 2.24663085646e-06;
-        }
-        else if( jet_pt>=400 && jet_pt<500 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.0994534566998;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.0532199628651;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.0447547473013;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0352230519056;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0299788024276;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.0244853626937;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0217329263687;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0187269691378;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0166731029749;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0149432225153;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0131156900898;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0118324719369;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0102959554642;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.00897935125977;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.00799846835434;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.00683767907321;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0058213295415;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00467379018664;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00422027660534;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00333816837519;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00273886718787;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00230916379951;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00178867008071;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00155322323553;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00129058444872;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.000987972831354;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.000830858596601;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00069657311542;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.000539968721569;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.000432714936323;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.000362792372471;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.000262513203779;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.000260592787527;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.000281449873;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.000257843319559;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.000146337828483;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.000147041253513;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 5.30376455572e-05;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 9.99950643745e-05;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 7.82359347795e-05;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 1.43478227983e-05;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 9.39989986364e-05;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 2.33539194596e-05;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 2.46599865932e-05;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 0.0;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 0.0;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.0;
-            else if( jet_nTrack>=48 && jet_nTrack<49 ) fakerate = 2.6267618523e-05;
-            else if( jet_nTrack>=49 && jet_nTrack<50 ) fakerate = 0.0014248683583;
-            else if( jet_nTrack>=50 && jet_nTrack<51 ) fakerate = 0.0;
-            else if( jet_nTrack>=51 && jet_nTrack<52 ) fakerate = 7.67048986745e-05;
-        }
-        else if( jet_pt>=500 && jet_pt<700 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.0858066082001;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.0586804300547;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.0443582907319;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0356691963971;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0337994284928;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.0284771174192;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0246626529843;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0231386981905;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0207361020148;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0192219540477;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.0170571003109;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.015814114362;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0143355354667;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0131427785382;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0116070406511;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0100796399638;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.00938135385513;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.00794247630984;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.00697147566825;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00603941828012;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00516418647021;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.00450647808611;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00315080280416;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.0031693787314;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00259743374772;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00213916227221;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00197701016441;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00135822803713;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00134331779554;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.00108657393139;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.000713593210094;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.00102262641303;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.000524442468304;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.000803839589935;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.000555855804123;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.000357956392691;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.000303968816297;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.000543461123016;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.000191067476408;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.000214508268982;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.000183827185538;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 0.000195658096345;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.000156530193635;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 2.94724686682e-05;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 9.50700050453e-05;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 9.79013784672e-05;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.000185092809261;
-            else if( jet_nTrack>=48 && jet_nTrack<49 ) fakerate = 3.53252253262e-05;
-            else if( jet_nTrack>=49 && jet_nTrack<50 ) fakerate = 0.000297106569633;
-            else if( jet_nTrack>=50 && jet_nTrack<51 ) fakerate = 2.82178989437e-05;
-            else if( jet_nTrack>=51 && jet_nTrack<52 ) fakerate = 0.000144546211231;
-            else if( jet_nTrack>=52 && jet_nTrack<53 ) fakerate = 0.0;
-            else if( jet_nTrack>=53 && jet_nTrack<54 ) fakerate = 0.000250924611464;
-            else if( jet_nTrack>=54 && jet_nTrack<55 ) fakerate = 4.26125334343e-05;
-            else if( jet_nTrack>=55 && jet_nTrack<56 ) fakerate = 5.47255185666e-05;
-            else if( jet_nTrack>=56 && jet_nTrack<57 ) fakerate = 7.0546499046e-05;
-            else if( jet_nTrack>=57 && jet_nTrack<58 ) fakerate = 0.000768716272432;
-            else if( jet_nTrack>=58 && jet_nTrack<59 ) fakerate = 0.0;
-            else if( jet_nTrack>=59 && jet_nTrack<60 ) fakerate = 0.000177867972525;
-        }
-        else if( jet_pt>=700 ){
-            if( jet_nTrack>=0 && jet_nTrack<1 ) fakerate = 0.0;
-            else if( jet_nTrack>=1 && jet_nTrack<2 ) fakerate = 0.0447863936424;
-            else if( jet_nTrack>=2 && jet_nTrack<3 ) fakerate = 0.0588819645345;
-            else if( jet_nTrack>=3 && jet_nTrack<4 ) fakerate = 0.0513378120959;
-            else if( jet_nTrack>=4 && jet_nTrack<5 ) fakerate = 0.0438645370305;
-            else if( jet_nTrack>=5 && jet_nTrack<6 ) fakerate = 0.0386700183153;
-            else if( jet_nTrack>=6 && jet_nTrack<7 ) fakerate = 0.0364851355553;
-            else if( jet_nTrack>=7 && jet_nTrack<8 ) fakerate = 0.0314921587706;
-            else if( jet_nTrack>=8 && jet_nTrack<9 ) fakerate = 0.0285205300897;
-            else if( jet_nTrack>=9 && jet_nTrack<10 ) fakerate = 0.0260573718697;
-            else if( jet_nTrack>=10 && jet_nTrack<11 ) fakerate = 0.0235692001879;
-            else if( jet_nTrack>=11 && jet_nTrack<12 ) fakerate = 0.02212530002;
-            else if( jet_nTrack>=12 && jet_nTrack<13 ) fakerate = 0.0207715183496;
-            else if( jet_nTrack>=13 && jet_nTrack<14 ) fakerate = 0.0190450642258;
-            else if( jet_nTrack>=14 && jet_nTrack<15 ) fakerate = 0.0174615960568;
-            else if( jet_nTrack>=15 && jet_nTrack<16 ) fakerate = 0.0161285307258;
-            else if( jet_nTrack>=16 && jet_nTrack<17 ) fakerate = 0.0139742586762;
-            else if( jet_nTrack>=17 && jet_nTrack<18 ) fakerate = 0.0134326573461;
-            else if( jet_nTrack>=18 && jet_nTrack<19 ) fakerate = 0.0118568539619;
-            else if( jet_nTrack>=19 && jet_nTrack<20 ) fakerate = 0.0109351547435;
-            else if( jet_nTrack>=20 && jet_nTrack<21 ) fakerate = 0.00968848727643;
-            else if( jet_nTrack>=21 && jet_nTrack<22 ) fakerate = 0.00895960722119;
-            else if( jet_nTrack>=22 && jet_nTrack<23 ) fakerate = 0.0073858378455;
-            else if( jet_nTrack>=23 && jet_nTrack<24 ) fakerate = 0.00651353038847;
-            else if( jet_nTrack>=24 && jet_nTrack<25 ) fakerate = 0.00586835388094;
-            else if( jet_nTrack>=25 && jet_nTrack<26 ) fakerate = 0.00529484637082;
-            else if( jet_nTrack>=26 && jet_nTrack<27 ) fakerate = 0.00424272380769;
-            else if( jet_nTrack>=27 && jet_nTrack<28 ) fakerate = 0.00410476280376;
-            else if( jet_nTrack>=28 && jet_nTrack<29 ) fakerate = 0.00343705480918;
-            else if( jet_nTrack>=29 && jet_nTrack<30 ) fakerate = 0.00304065016098;
-            else if( jet_nTrack>=30 && jet_nTrack<31 ) fakerate = 0.0027418883983;
-            else if( jet_nTrack>=31 && jet_nTrack<32 ) fakerate = 0.00238865474239;
-            else if( jet_nTrack>=32 && jet_nTrack<33 ) fakerate = 0.00205157999881;
-            else if( jet_nTrack>=33 && jet_nTrack<34 ) fakerate = 0.00169514503796;
-            else if( jet_nTrack>=34 && jet_nTrack<35 ) fakerate = 0.00164767552633;
-            else if( jet_nTrack>=35 && jet_nTrack<36 ) fakerate = 0.00149726239033;
-            else if( jet_nTrack>=36 && jet_nTrack<37 ) fakerate = 0.00120591977611;
-            else if( jet_nTrack>=37 && jet_nTrack<38 ) fakerate = 0.00144696678035;
-            else if( jet_nTrack>=38 && jet_nTrack<39 ) fakerate = 0.00106767576654;
-            else if( jet_nTrack>=39 && jet_nTrack<40 ) fakerate = 0.000990787753835;
-            else if( jet_nTrack>=40 && jet_nTrack<41 ) fakerate = 0.000736114860047;
-            else if( jet_nTrack>=41 && jet_nTrack<42 ) fakerate = 0.00078924826812;
-            else if( jet_nTrack>=42 && jet_nTrack<43 ) fakerate = 0.000829569704365;
-            else if( jet_nTrack>=43 && jet_nTrack<44 ) fakerate = 0.000609877693933;
-            else if( jet_nTrack>=44 && jet_nTrack<45 ) fakerate = 0.000497099827044;
-            else if( jet_nTrack>=45 && jet_nTrack<46 ) fakerate = 0.000568752584513;
-            else if( jet_nTrack>=46 && jet_nTrack<47 ) fakerate = 0.000466152909212;
-            else if( jet_nTrack>=47 && jet_nTrack<48 ) fakerate = 0.000465505669126;
-            else if( jet_nTrack>=48 && jet_nTrack<49 ) fakerate = 0.000449804530945;
-            else if( jet_nTrack>=49 && jet_nTrack<50 ) fakerate = 0.000436621834524;
-            else if( jet_nTrack>=50 && jet_nTrack<51 ) fakerate = 0.000426853308454;
-            else if( jet_nTrack>=51 && jet_nTrack<52 ) fakerate = 0.000510422629304;
-            else if( jet_nTrack>=52 && jet_nTrack<53 ) fakerate = 0.000362708873581;
-            else if( jet_nTrack>=53 && jet_nTrack<54 ) fakerate = 0.000419475400122;
-            else if( jet_nTrack>=54 && jet_nTrack<55 ) fakerate = 0.000385161780287;
-            else if( jet_nTrack>=55 && jet_nTrack<56 ) fakerate = 0.000453403539723;
-            else if( jet_nTrack>=56 && jet_nTrack<57 ) fakerate = 0.000172137253685;
-            else if( jet_nTrack>=57 && jet_nTrack<58 ) fakerate = 4.65822886326e-05;
-            else if( jet_nTrack>=58 && jet_nTrack<59 ) fakerate = 0.000253831822192;
-            else if( jet_nTrack>=59 && jet_nTrack<60 ) fakerate = 0.000317007652484;
-            else if( jet_nTrack>=60 && jet_nTrack<61 ) fakerate = 0.000221586102271;
-            else if( jet_nTrack>=61 && jet_nTrack<62 ) fakerate = 0.000322647509165;
-            else if( jet_nTrack>=62 && jet_nTrack<63 ) fakerate = 0.0;
-            else if( jet_nTrack>=63 && jet_nTrack<64 ) fakerate = 0.0;
-            else if( jet_nTrack>=64 && jet_nTrack<65 ) fakerate = 0.0;
-            else if( jet_nTrack>=65 && jet_nTrack<66 ) fakerate = 0.0;
-            else if( jet_nTrack>=66 && jet_nTrack<67 ) fakerate = 0.000709799816832;
-            else if( jet_nTrack>=67 && jet_nTrack<68 ) fakerate = 0.00042257248424;
-            else if( jet_nTrack>=68 && jet_nTrack<69 ) fakerate = 0.00153069198132;
-        }
-    }
+
+//     if (fakerate>0.0) {
+//         r0->SetSeed(ULong_t(jet_pt));
+//         double tmpfr=fakerate-r0->Gaus(0,error);
+//         if (tmpfr>0.0) return tmpfr;
+//         else return 0.0;
+//     }
+//     else return fakerate;
 
     return fakerate;
+}//End of fakerateF
 
+Int_t QCDhists::GetNtrkBin( const int jet_nTrack ){
+    Int_t bin=-1;
+    if( jet_nTrack>=0 && jet_nTrack<4  ) bin = 1;
+    if( jet_nTrack>=4 && jet_nTrack<8  ) bin = 2;
+    if( jet_nTrack>=8 && jet_nTrack<12  ) bin = 3;
+    if( jet_nTrack>=12 && jet_nTrack<16  ) bin = 4;
+    if( jet_nTrack>=16 && jet_nTrack<20  ) bin = 5;
+    if( jet_nTrack>=20 && jet_nTrack<24  ) bin = 6;
+    if( jet_nTrack>=24 && jet_nTrack<40  ) bin = 7;
+    if( jet_nTrack>=40 ) bin = 8;
+    return bin;
 }
+
+// gamma+jets data
+double QCDhists::fakerateFD(double jet_pt, double jet_eta, int jet_nTrack, int varType, int flav, std::string cutSet){
+    double fakerate = 0.0;
+    double error = 0.0;
+
+    if (cutSet=="X"){
+        //~/Dropbox/UMD\ Analysis/FakeRate/20171115/fakerate_QCDMC_3DSig_8_Med_8.txt
+        //MC fake rate bin in nTrk, flavor; alpha3dsig only; D1 cuts (5mm); a3Dsig cut=0.25
+        if (fabs(flav)==5 || fabs(flav)==8) {// default: b and g->bb
+
+            if( jet_nTrack>=0.0 && jet_nTrack<4.0 ) {
+                fakerate = 0.0764036476612;
+            }
+            if( jet_nTrack>=4.0 && jet_nTrack<8.0 ) {
+                fakerate = 0.0240180138499;
+            }
+            if( jet_nTrack>=8.0 && jet_nTrack<12.0 ) {
+                fakerate = 0.00735678197816;
+            }
+            if( jet_nTrack>=12.0 && jet_nTrack<16.0 ) {
+                fakerate = 0.00186479813419;
+            }
+            if( jet_nTrack>=16.0 && jet_nTrack<20.0 ) {
+                fakerate = 0.000393063208321;
+            }
+            if( jet_nTrack>=20.0 && jet_nTrack<24.0 ) {
+                fakerate = 0.000105553546746;
+            }
+            if( jet_nTrack>=24.0 && jet_nTrack<40.0 ) {
+                fakerate = 1.39190433401e-06;
+            }
+            if( jet_nTrack>=40.0 && jet_nTrack<80.0 ) {
+                fakerate = 0.0;
+            }
+        }
+        else {//g,u,d,c,s
+            if( jet_nTrack>=0.0 && jet_nTrack<4.0 ) {
+                fakerate = 0.0272194761783;
+            }
+            if( jet_nTrack>=4.0 && jet_nTrack<8.0 ) {
+                fakerate = 0.0024541572202;
+            }
+            if( jet_nTrack>=8.0 && jet_nTrack<12.0 ) {
+                fakerate = 0.000505852687638;
+            }
+            if( jet_nTrack>=12.0 && jet_nTrack<16.0 ) {
+                fakerate = 0.00015330662427;
+            }
+            if( jet_nTrack>=16.0 && jet_nTrack<20.0 ) {
+                fakerate = 5.15911160619e-05;
+            }
+            if( jet_nTrack>=20.0 && jet_nTrack<24.0 ) {
+                fakerate = 2.135487739e-05;
+            }
+            if( jet_nTrack>=24.0 && jet_nTrack<40.0 ) {
+                fakerate = 6.16831357547e-06;
+            }
+            if( jet_nTrack>=40.0 && jet_nTrack<80.0 ) {
+                fakerate = 0.0;
+            }
+
+        }
+    }//end of cutsetX
+    else if (cutSet=="1"){
+        //std::cout<<"[Data] CutSet = 1"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset1.txt
+        //cutset1
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.044195049;
+                error = 0.062926506;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.066300757;
+                error = 0.011223864;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.025045995;
+                error = 0.007403220;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.005860697;
+                error = 0.007175669;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.015725104;
+                error = 0.001647199;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002351884;
+                error = 0.000400395;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000344560;
+                error = 0.000323935;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000211086;
+                error = 0.000396216;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000417405;
+                error = 0.000301608;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+
+    }//end of cutset1
+    else if (cutSet=="2"){
+        //std::cout<<"[Data] CutSet = 2"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset2.txt
+        //cutset2
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.013937147;
+//                 error = 0.003622609;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002611315;
+                error = 0.008099194;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.012256928;
+                error = 0.007141428;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+//                 fakerate = 0.000467706;
+//                 error = 0.000182418;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.013937147;
+                error = 0.003622609;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002585000;
+                error = 0.000351653;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000236379;
+                error = 0.000306443;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000467706;
+                error = 0.000182418;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset2
+    else if (cutSet=="3"){
+        //std::cout<<"[Data] CutSet = 3"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset3.txt
+        //cutset3
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.002884209;
+                error = 0.003948002;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.024049988;
+                error = 0.085467658;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001426918;
+                error = 0.000248509;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000280365;
+                error = 0.000176596;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000101748;
+                error = 0.000072359;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000344517;
+                error = 0.000363641;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset3
+    else if (cutSet=="4"){
+        //std::cout<<"[Data] CutSet = 4"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset4.txt
+        //cutset4
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.003019468;
+                error = 0.003124473;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.005227647;
+                error = 0.002085540;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000747301;
+                error = 0.000169026;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset4
+    else if (cutSet=="5"){
+        //std::cout<<"[Data] CutSet = 5"<<std::endl;
+        //FakeRateHistograms_v2/fakerate_p20171211r1/FakeRate_cutset5.txt
+        //cutset5
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.044195049;
+                error = 0.062926506;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.066300757;
+                error = 0.011223864;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.025045995;
+                error = 0.007403220;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.005860697;
+                error = 0.007175669;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.015725104;
+                error = 0.001647199;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002351884;
+                error = 0.000400395;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000344560;
+                error = 0.000323935;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000211086;
+                error = 0.000396216;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000417405;
+                error = 0.000301608;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset5
+    else if (cutSet=="6"){
+        //std::cout<<"[Data] CutSet = 6"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset6.txt
+        //cutset6
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.004874171;
+                error = 0.007225038;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.008500207;
+                error = 0.005179613;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012395947;
+                error = 0.003749585;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001960682;
+                error = 0.000306980;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000238004;
+                error = 0.000140176;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset6
+    else if (cutSet=="7"){
+        //std::cout<<"[Data] CutSet = 7"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset7.txt
+        //cutset7
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.021617584;
+                error = 0.008291794;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000469282;
+                error = 0.003321747;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.009204083;
+                error = 0.003265770;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000780240;
+                error = 0.000294516;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000275936;
+                error = 0.000165483;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000238004;
+                error = 0.000140176;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset7
+    else if (cutSet=="8"){
+        //std::cout<<"[Data] CutSet = 8"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180109r1/FakeRate_cutset8.txt
+        //cutset8
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.016383125;
+                error = 0.144820405;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.041638434;
+                error = 0.012032606;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.004972943;
+                error = 0.006165526;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.001672277;
+                error = 0.005924211;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012647440;
+                error = 0.003912600;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001743738;
+                error = 0.000431009;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000595314;
+                error = 0.000292252;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000191787;
+                error = 0.000344736;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset8
+    else if (cutSet=="9"){
+        //std::cout<<"[Data] CutSet = 9"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180201r1/FakeRate_cutset9.txt
+        //cutset9
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.046485364;
+                error = 0.182139700;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.063739181;
+                error = 0.016713895;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.037514411;
+                error = 0.013565677;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.015383565;
+                error = 0.014730966;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.019020380;
+                error = 0.004923453;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.004988618;
+                error = 0.000626857;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000913211;
+                error = 0.000604533;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000516047;
+                error = 0.000832754;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.001137016;
+                error = 0.000932514;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset9 (=cutset 1 except a3d cut =0.4)
+    else if (cutSet=="10"){
+        //std::cout<<"[Data] CutSet = 10"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180222_cut10/FakeRate_cutset10.txt
+        //cutset10
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.014767224;
+                error = 0.008692570;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.008138913;
+                error = 0.029221028;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012542081;
+                error = 0.027295911;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.003518312;
+                error = 0.000431324;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.001209196;
+                error = 0.000384633;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.001321519;
+                error = 0.000324626;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000197349;
+                error = 0.002066180;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset10 (=cutset 3 except a3d cut =0.5)
+    else if (cutSet=="11" || cutSet=="11a"){
+        //std::cout<<"[Data] CutSet = 11"<<std::endl;
+        //FakeRateHistograms_Cut0105/fakerate_p20180227_cut11/FakeRate_cutset11.txt
+        //cutset11
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.016085995;
+                error = 0.010242065;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.012783732;
+                error = 0.008152422;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000260225;
+                error = 0.004937175;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012391529;
+                error = 0.003500236;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.002809802;
+                error = 0.000409830;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000652494;
+                error = 0.000361470;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000313428;
+                error = 0.000290809;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000923301;
+                error = 0.000731900;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+        }
+    }//end of cutset11 (=cutset 4 except a3d cut =0.5 & medID cut=0.10)
+    else if (cutSet=="21"){
+        //std::cout<<"[Data] CutSet = 21"<<std::endl;
+        //FakeRateHistograms_20181029/fakerate_p20181030/FakeRate_cutset1.txt
+        //cutset21 == cutset1 2017
+        if (fabs(flav)==5 || fabs(flav)==8) {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.042640701;
+                error = 0.014196423;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.014077252;
+                error = 0.009043920;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.003157260;
+                error = 0.005000407;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.068417704;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.034407973;
+                error = 0.044103475;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 2.333466706;
+            }
+        }
+        else {
+            if( jet_nTrack>=1.00 && jet_nTrack<6.00 ) {
+                fakerate = 0.012757472;
+                error = 0.002188627;
+            }
+            else if( jet_nTrack>=6.00 && jet_nTrack<11.00 ) {
+                fakerate = 0.001609106;
+                error = 0.000529965;
+            }
+            else if( jet_nTrack>=11.00 && jet_nTrack<16.00 ) {
+                fakerate = 0.000573322;
+                error = 0.000469009;
+            }
+            else if( jet_nTrack>=16.00 && jet_nTrack<21.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=21.00 && jet_nTrack<24.00 ) {
+                fakerate = 0.000000000;
+                error = 0.007098993;
+            }
+            else if( jet_nTrack>=24.00 && jet_nTrack<40.00 ) {
+                fakerate = 0.000000000;
+                error = 0.000000000;
+            }
+            else if( jet_nTrack>=40.00 && jet_nTrack<80.00 ) {
+                fakerate = 0.000000000;
+                error = 0.244031412;
+            }
+        }
+    }//end of cutset21 (=cutset 1 except 2017 FR)
+    else {
+        std::cout<<"CutSet["<<cutSet<<"] not defined!"<<std::endl;
+    }
+
+//     if (fakerate>0.0) {
+//         r0->SetSeed(ULong_t(jet_pt));
+//         double tmpfr=fakerate-r0->Gaus(0,error);
+//         if (tmpfr>0.0) return tmpfr;
+//         else return 0.0;
+//     }
+//     else return fakerate;
+
+    return fakerate;
+}//end of fakerateFD
+
+
+// MC fake rate bin in eta, nTrk; alpha3dsig only; D1 cuts (5mm); a3Dsig cut=0.25
+// // MC fake rate bin in nTrk only; alpha3dsig only
+// double fakerateF(double jet_pt, double jet_eta, int jet_nTrack, int varType, int flav){
+//     double fakerate = 0.0;
+//     double error = 0.0;
+//     if (fabs(flav)==5 || fabs(flav)==8) {// default: b and g->bb
+
+//         if( fabs(jet_eta)<1.4 ){
+
+//         }
+//         else {
+
+//         }
+
+
+//     }
+//     else {//g,u,d,c,s
+//         if( fabs(jet_eta)<1.4 ){
+
+//         }
+//         else {
+
+//         }
+
+
+//     }
+//     return fakerate;
+// }
 
 double ntrkrewgt(int nTrk){
     double wgt = 1.0;
@@ -1955,7 +3279,154 @@ double ntrkrewgt(int nTrk){
     return wgt;
 }
 
-double frWeight(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<vector<float> > *track_pt, int njetscut, double jptcut, int varType){
+
+void QCDhists::fillFRPlots(std::string cutname, char * hnames[9],
+                           vector<float> *jet_pt, vector<float> *jet_eta, vector<int> &goodjetIdx,
+                           vector<int> &jntrack, vector<float> &jet_medipsig, vector<float> &jet_logmedipsig,
+                           vector<float> &jet_medtheta2D, vector<float> &jet_logmedtheta2D,
+                           vector<float> &jet_e,vector<float> &jet_px,vector<float> &jet_py, vector<float> &jet_pz,
+                           double *frwgts, double scale, double ncomb)
+{
+    for (int i=0;i<4;i++) {
+        double varWgt = scale*frwgts[i];
+        int jdx0 = goodjetIdx[i];
+
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[0])+"_"+cutname)))->Fill(jet_pt->at(jdx0),varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[1])+"_"+cutname)))->Fill(jet_eta->at(jdx0),varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[2])+"_"+cutname)))->Fill(jntrack[jdx0],varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[3])+"_"+cutname)))->Fill(jet_medipsig[jdx0],varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[4])+"_"+cutname)))->Fill(jet_logmedipsig[jdx0],varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[5])+"_"+cutname)))->Fill(jet_medtheta2D[jdx0],varWgt);
+        ((TH1F*)gDirectory->Get(TString(std::string(hnames[6])+"_"+cutname)))->Fill(jet_logmedtheta2D[jdx0],varWgt);
+
+        // 2D
+        ((TH2F*)gDirectory->Get(TString(std::string(hnames[8])+"_"+cutname)))->Fill(jet_medtheta2D[jdx0],jet_medipsig[jdx0],varWgt);
+
+        for (int j=0;j<4;j++) {
+            if (i==j) continue;
+            int jdx1 = goodjetIdx[j];
+            double mass = sqrt(
+                               pow((jet_e[jdx0]+jet_e[jdx1]),2) -
+                               pow((jet_px[jdx0]+jet_px[jdx1]),2) -
+                               pow((jet_py[jdx0]+jet_py[jdx1]),2) -
+                               pow((jet_pz[jdx0]+jet_pz[jdx1]),2)
+                               );
+            //(TH1*)R__H(hnames[7])->Fill(mass,varWgt);//only work for TH1
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[7])+"_"+cutname)))->Fill(mass,varWgt/ncomb);
+        }
+    }
+}
+
+void QCDhists::fillFRPlots2(std::string cutname, char * hnames[9],
+                            vector<float> *jet_pt, vector<float> *jet_eta, vector<int> &goodjetIdx,
+                            vector<int> &jntrack, vector<float> &jet_medipsig, vector<float> &jet_logmedipsig,
+                            vector<float> &jet_medtheta2D, vector<float> &jet_logmedtheta2D,
+                            vector<float> &jet_e,vector<float> &jet_px,vector<float> &jet_py, vector<float> &jet_pz,
+                            double *frwgts, double scale, double ncomb)
+{
+    int nthComb=0;
+    for(int i0=0;i0<4;i0++) {
+        int idx0 = goodjetIdx[i0];
+        for(Int_t i1=0; i1<4; i1++) {
+            if (i1==i0) continue;
+            int idx1 = goodjetIdx[i1];
+            for(Int_t i2=0; i2<4; i2++) {
+                if (i2==i0 || i2==i1) continue;
+//                 int idx2 = goodjetIdx[i2];
+//                 for(Int_t i3=0; i3<4; i3++) {
+//                     if (i3==i0 || i3==i1 || i3==i2) continue;
+//                     int idx3 = goodjetIdx[i3];
+//                 }
+                double varWgt = scale*frwgts[nthComb];
+                nthComb++;
+
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[0])+"_"+cutname)))->Fill(jet_pt->at(idx0),varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[1])+"_"+cutname)))->Fill(jet_eta->at(idx0),varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[2])+"_"+cutname)))->Fill(jntrack[idx0],varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[3])+"_"+cutname)))->Fill(jet_medipsig[idx0],varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[4])+"_"+cutname)))->Fill(jet_logmedipsig[idx0],varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[5])+"_"+cutname)))->Fill(jet_medtheta2D[idx0],varWgt);
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[6])+"_"+cutname)))->Fill(jet_logmedtheta2D[idx0],varWgt);
+
+                // 2D
+                ((TH2F*)gDirectory->Get(TString(std::string(hnames[8])+"_"+cutname)))->Fill(jet_medtheta2D[idx0],jet_medipsig[idx0],varWgt);
+
+                double mass = sqrt(
+                                   pow((jet_e[idx0]+jet_e[idx1]),2) -
+                                   pow((jet_px[idx0]+jet_px[idx1]),2) -
+                                   pow((jet_py[idx0]+jet_py[idx1]),2) -
+                                   pow((jet_pz[idx0]+jet_pz[idx1]),2)
+                                   );
+                //(TH1*)R__H(hnames[7])->Fill(mass,varWgt);//only work for TH1
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[7])+"_"+cutname)))->Fill(mass,scale*frwgts[nthComb]/ncomb);
+            }
+        }
+    }
+}
+
+void QCDhists::fillFRPlots22(std::string cutname, char * hnames[9],
+                             vector<float> *jet_pt, vector<float> *jet_eta, vector<int> &goodjetIdx,
+                             vector<int> &jntrack, vector<float> &jet_medipsig, vector<float> &jet_logmedipsig,
+                             vector<float> &jet_medtheta2D, vector<float> &jet_logmedtheta2D,
+                             vector<float> &jet_e,vector<float> &jet_px,vector<float> &jet_py, vector<float> &jet_pz,
+                             double *frwgts, double scale, double ncomb)
+{
+    int nthComb=0;
+    for(int i0=0;i0<4;i0++) {
+        int idx0 = goodjetIdx[i0];
+        for(Int_t i1=i0+1; i1<4; i1++) {
+            int idx1 = goodjetIdx[i1];
+            double varWgt = scale*frwgts[nthComb];
+            //std::cout<<"varWgt["<<nthComb<<"]="<<varWgt<<std::endl;
+            //TString teststr = TString(std::string(hnames[0])+"_"+cutname);
+            //std::cout << teststr << std::endl;
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[0])+"_"+cutname)))->Fill(jet_pt->at(idx0),varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[1])+"_"+cutname)))->Fill(jet_eta->at(idx0),varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[2])+"_"+cutname)))->Fill(jntrack[idx0],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[3])+"_"+cutname)))->Fill(jet_medipsig[idx0],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[4])+"_"+cutname)))->Fill(jet_logmedipsig[idx0],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[5])+"_"+cutname)))->Fill(jet_medtheta2D[idx0],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[6])+"_"+cutname)))->Fill(jet_logmedtheta2D[idx0],varWgt);
+
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[0])+"_"+cutname)))->Fill(jet_pt->at(idx1),varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[1])+"_"+cutname)))->Fill(jet_eta->at(idx1),varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[2])+"_"+cutname)))->Fill(jntrack[idx1],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[3])+"_"+cutname)))->Fill(jet_medipsig[idx1],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[4])+"_"+cutname)))->Fill(jet_logmedipsig[idx1],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[5])+"_"+cutname)))->Fill(jet_medtheta2D[idx1],varWgt);
+            ((TH1F*)gDirectory->Get(TString(std::string(hnames[6])+"_"+cutname)))->Fill(jet_logmedtheta2D[idx1],varWgt);
+
+            // 2D
+            ((TH2F*)gDirectory->Get(TString(std::string(hnames[8])+"_"+cutname)))->Fill(jet_medtheta2D[idx0],jet_medipsig[idx0],varWgt);
+            ((TH2F*)gDirectory->Get(TString(std::string(hnames[8])+"_"+cutname)))->Fill(jet_medtheta2D[idx1],jet_medipsig[idx1],varWgt);
+
+            for(Int_t i2=0; i2<4; i2++) {
+                if (i2==i0 || i2==i1) continue;
+                int idx2 = goodjetIdx[i2];
+                double mass = sqrt(
+                                   pow((jet_e[idx0]+jet_e[idx2]),2) -
+                                   pow((jet_px[idx0]+jet_px[idx2]),2) -
+                                   pow((jet_py[idx0]+jet_py[idx2]),2) -
+                                   pow((jet_pz[idx0]+jet_pz[idx2]),2)
+                                   );
+                //(TH1*)R__H(hnames[7])->Fill(mass,varWgt);//only work for TH1
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[7])+"_"+cutname)))->Fill(mass,varWgt/ncomb);
+                double mass1 = sqrt(
+                                   pow((jet_e[idx1]+jet_e[idx2]),2) -
+                                   pow((jet_px[idx1]+jet_px[idx2]),2) -
+                                   pow((jet_py[idx1]+jet_py[idx2]),2) -
+                                   pow((jet_pz[idx1]+jet_pz[idx2]),2)
+                                   );
+                //(TH1*)R__H(hnames[7])->Fill(mass1,varWgt);//only work for TH1
+                ((TH1F*)gDirectory->Get(TString(std::string(hnames[7])+"_"+cutname)))->Fill(mass1,varWgt/ncomb);
+            }
+            //std::cout<<"End of "<<nthComb<<"-th comb"<<std::endl;
+            nthComb++;
+        }
+    }
+}
+
+double QCDhists::frWeight(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<vector<float> > *track_pt, int njetscut, double jptcut, int varType){
     double p0 = 1.;
     double p1 = 0.;
     int njets = (njetscut == -1 ? jetpt->size() : std::min(njetscut,(int)jetpt->size()));
@@ -1985,7 +3456,7 @@ double frWeight(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basic
     return (1.0 - p0 - p1);
 }
 
-double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p0 = 1.;
     double p1 = 0.;
     int njets = (njetscut == -1 ? jetpt->size() : std::min(njetscut,(int)jetpt->size()));
@@ -2013,7 +3484,7 @@ double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basi
     return (1.0 - p0 - p1);
 }
 
-double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p0 = 1.;
     double p1 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
@@ -2038,7 +3509,34 @@ double frWeight1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodj
     return (1.0 - p0 - p1);
 }
 
-double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightF1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType, std::string cutset){
+    double p0 = 1.;
+    double p1 = 0.;
+    int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
+    if (verbose) {
+        std::cout << "[frWeightF1] varType = " << varType << std::endl;
+        std::cout << "[frWeightF1] njets = " << njets << std::endl;
+        std::cout << "[frWeightF1] jet pt cut = " << jptcut << std::endl;
+    }
+    for(Int_t j=0; j<njets; j++) {
+        int jdx = goodjetIdx[j];
+        int ntrks1 = ntrack[jdx];
+        int flav1 = flavor[jdx];
+        if (verbose) std::cout << "[frWeightF1] Jet pT = " << jetpt->at(jdx) << std::endl;
+        p0 *= (1.0 - fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1,cutset));
+        double p11 = fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1,cutset);
+        for(Int_t k=0; k<njets; k++) {
+            int kdx = goodjetIdx[k];
+            int ntrks2 = ntrack[kdx];
+            int flav2 = flavor[kdx];
+            if (kdx!=jdx) p11 *= (1.0 - fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2,cutset));
+        }
+        p1 += p11;
+    }
+    return (1.0 - p0 - p1);
+}
+
+double QCDhists::frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p0 = 1.;
     int njets = (njetscut == -1 ? jetpt->size() : std::min(njetscut,(int)jetpt->size()));
     if (verbose) {
@@ -2058,7 +3556,7 @@ double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *bas
     return p0;
 }
 
-double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p0 = 1.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2075,7 +3573,7 @@ double frWeightT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
     return p0;
 }
 
-double frWeightFT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightFT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType, std::string cutset){
     double p0 = 1.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2088,12 +3586,12 @@ double frWeightFT0(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
         int ntrks = ntrack[jdx];
         int flav = flavor[jdx];
         if (verbose) std::cout << "[frWeightFT0] Jet pT = " << jetpt->at(jdx) << std::endl;
-        p0 *= (1.0 - fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks,varType,flav));
+        p0 *= (1.0 - fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks,varType,flav,cutset));
     }
     return p0;
 }
 
-double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p1 = 0.;
     int njets = (njetscut == -1 ? jetpt->size() : std::min(njetscut,(int)jetpt->size()));
     if (verbose) {
@@ -2119,7 +3617,7 @@ double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *bas
     return p1;
 }
 
-double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p1 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2142,7 +3640,7 @@ double frWeightT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
     return p1;
 }
 
-double frWeightFT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightFT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType, std::string cutset){
     double p1 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2155,19 +3653,111 @@ double frWeightFT1(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
         int ntrks1 = ntrack[jdx];
         int flav1 = flavor[jdx];
         if (verbose) std::cout << "[frWeightFT1] Jet pT = " << jetpt->at(jdx) << std::endl;
-        double p11 = fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1);
+        double p11 = fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1,cutset);
         for(Int_t k=0; k<njets; k++) {
             int kdx = goodjetIdx[k];
             int ntrks2 = ntrack[kdx];
             int flav2 = flavor[kdx];
-            if (kdx!=jdx) p11 *= (1.0 - fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2));
+            if (kdx!=jdx) p11 *= (1.0 - fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2,cutset));
         }
         p1 += p11;
     }
     return p1;
 }
 
-double frWeightT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+//Ntag==1; unfolded b flavor dependent; only for 4-jet events
+double QCDhists::frWeightFT12(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, double jptcut, int bUnfType, int nbTagged, int ptType, int varType, bool isData, std::string cutset){
+    double frwgttmp=0.;
+    if (verbose) {
+        std::cout << "[frWeightFT12] varType = " << varType << std::endl;
+        std::cout << "[frWeightFT12] jet pt cut = " << jptcut << std::endl;
+    }
+    // loop # unfolded "true" b jets
+    TMatrixD Mwgt(5,5);
+    bool goodWgt = UnfoldWgtPtDep(Mwgt, bUnfType, jetpt, isData);
+    if (!goodWgt) {
+        std::cout << "Bad unfolding matrix inversion!" << std::endl;
+    }
+    for (int nbT=0;nbT<5;nbT++){
+        double evtWgt = 0.0;
+//         if (isData) evtWgt=UnfoldWgtD(bUnfType, nbT, nbTagged, ptType);
+//         else evtWgt=UnfoldWgt(bUnfType, nbT, nbTagged, ptType);
+//         evtWgt=UnfoldWgtPtDep(bUnfType, nbT, nbTagged, jetpt, isData);
+        evtWgt=Mwgt(nbT, nbTagged);
+
+        double frwgts[5];
+        int ncomb=1;
+        switch (nbT) {
+        case 1: ncomb=4; break;
+        case 2: ncomb=6; break;
+        case 3: ncomb=4; break;
+        default: break;
+        }
+        evtWgt/=ncomb;
+        switch (nbT) {
+        case 0: {
+            int flavors[] = {0,0,0,0};
+            frWeightUFT1(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+            frwgttmp+=(evtWgt*frwgts[4]);
+            break;}
+        case 1: {
+            for (int fidx=0;fidx<4;fidx++) {
+                int flavors[] = {0,0,0,0};
+                flavors[fidx]=5;
+                frWeightUFT1(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                frwgttmp+=(evtWgt*frwgts[4]);
+            }
+            break;}
+        case 2: {
+            //flavor double counted due to looping
+            for (int fidx0=0;fidx0<4;fidx0++) {
+                for (int fidx1=fidx0+1;fidx1<4;fidx1++) {
+                    int flavors[] = {0,0,0,0};
+                    flavors[fidx0]=5;
+                    flavors[fidx1]=5;
+                    frWeightUFT1(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                    frwgttmp+=(evtWgt*frwgts[4]);
+                }
+            }
+            break;}
+        case 3: {
+            for (int fidx=0;fidx<4;fidx++) {
+                int flavors[] = {5,5,5,5};
+                flavors[fidx]=0;
+                frWeightUFT1(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                frwgttmp+=(evtWgt*frwgts[4]);
+            }
+            break;}
+        case 4: {
+            int flavors[] = {5,5,5,5};
+            frWeightUFT1(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+            frwgttmp+=(evtWgt*frwgts[4]);
+            break;}
+        }
+    }   
+    return frwgttmp;
+}
+
+//Ntag==1; unfolded b flavor dependent; only for 4-jet events
+void QCDhists::frWeightUFT1(double (&frwgts)[5], vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int* flavor, int varType, bool isData, std::string cutset){
+    double frwgttmp=0.0;
+    for(int i0=0;i0<4;i0++) {
+        int idx0 = goodjetIdx[i0];
+        double jfr = (isData ? fakerateFD(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset) :
+                      fakerateF(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset));
+        for(Int_t i1=0; i1<4; i1++) {
+            int idx1 = goodjetIdx[i1];
+            if (i0!=i1) jfr *= (isData ? (1.0 - fakerateFD(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset)):
+                                (1.0 - fakerateF(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset)));
+        }
+        frwgts[i0]=jfr;
+        frwgttmp+=jfr;
+    }
+    frwgts[4]=frwgttmp;
+}
+
+
+double QCDhists::frWeightT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p2 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2196,8 +3786,8 @@ double frWeightT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
     return p2;
 }
 
-//Ntag==2; tag-and-probe
-double frWeightT21(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+//Ntag==21; tag-and-probe
+double QCDhists::frWeightT21(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p2 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2235,8 +3825,8 @@ double frWeightT21(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
 }
 
 
-//Ntag==22
-double frWeightFT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType){
+//Ntag==2
+double QCDhists::frWeightFT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType, std::string cutset){
     double p2 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2248,29 +3838,206 @@ double frWeightFT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
         int jdx = goodjetIdx[j];
         int ntrks1 = ntrack[jdx];
         int flav1 = flavor[jdx];
-        //std::cout << "[frWeightFT2] jet flavor = " << flav1 << std::endl;
-        double p11=fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1);
+        double p11=fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1,cutset);
         for(Int_t k=0; k<njets; k++) {
             if (k==j) continue;
             double p12 = p11;
             int kdx = goodjetIdx[k];
             int ntrks2 = ntrack[kdx];
             int flav2 = flavor[kdx];
-            double p22 = p12*fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2);
-            for(Int_t l=0; l<njets; l++) {
+            double p22 = p12*fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2,cutset);
+            int nComb = 0;
+            for(Int_t l=0; l<njets; l++, nComb++) {
                 if (l==j || l==k) continue;
                 int ldx = goodjetIdx[l];
                 int ntrks3 = ntrack[ldx];
                 int flav3 = flavor[ldx];
-                p22 *= (1.0-fakerateF(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType,flav3));
+                p22 *= (1.0-fakerateF(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType,flav3,cutset));
             }
-            p2 += p22/2.0;
+            //p2 += p22/nComb;
+            p2 += p22/(njets-2);
         }
     }
     return p2;
 }
 
-double frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
+
+//Ntag==2; unfolded b flavor dependent; only for 4-jet events
+double QCDhists::frWeightFT22(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, double jptcut, int bUnfType, int nbTagged, int ptType, int varType, bool isData, std::string cutset){
+    double frwgttmp=0.;
+    if (verbose) {
+        std::cout << "[frWeightFT22] varType = " << varType << std::endl;
+        std::cout << "[frWeightFT22] jet pt cut = " << jptcut << std::endl;
+    }
+
+    TMatrixD Mwgt(5,5);
+    bool goodWgt = UnfoldWgtPtDep(Mwgt, bUnfType, jetpt, isData);
+    if (!goodWgt) {
+        std::cout << "Bad unfolding matrix inversion!" << std::endl;
+    }
+    // loop # unfolded "true" b jets
+    for (int nbT=0;nbT<5;nbT++){
+        double evtWgt = 0.0;
+//         if (isData) evtWgt=UnfoldWgtD(bUnfType, nbT, nbTagged, ptType);
+//         else evtWgt=UnfoldWgt(bUnfType, nbT, nbTagged, ptType);
+//         evtWgt=UnfoldWgtPtDep(bUnfType, nbT, nbTagged, jetpt, isData);
+        evtWgt=Mwgt(nbT, nbTagged);
+
+        double frwgts[7];
+        int ncomb=1;
+        switch (nbT) {
+        case 1: ncomb=4; break;
+        case 2: ncomb=6; break;
+        case 3: ncomb=4; break;
+        default: break;
+        }
+        evtWgt/=ncomb;
+        switch (nbT) {
+        case 0: {
+            int flavors[] = {0,0,0,0};
+            frWeightUFT23(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+            frwgttmp+=(evtWgt*frwgts[6]);
+            break;}
+        case 1: {
+            for (int fidx=0;fidx<4;fidx++) {
+                int flavors[] = {0,0,0,0};
+                flavors[fidx]=5;
+                frWeightUFT23(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                frwgttmp+=(evtWgt*frwgts[6]);
+            }
+            break;}
+        case 2: {
+            //flavor double counted due to looping
+            for (int fidx0=0;fidx0<4;fidx0++) {
+                for (int fidx1=fidx0+1;fidx1<4;fidx1++) {
+                    int flavors[] = {0,0,0,0};
+                    flavors[fidx0]=5;
+                    flavors[fidx1]=5;
+                    frWeightUFT23(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                    frwgttmp+=(evtWgt*frwgts[6]);
+                }
+            }
+            break;}
+        case 3: {
+            for (int fidx=0;fidx<4;fidx++) {
+                int flavors[] = {5,5,5,5};
+                flavors[fidx]=0;
+                frWeightUFT23(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+                frwgttmp+=(evtWgt*frwgts[6]);
+            }
+            break;}
+        case 4: {
+            int flavors[] = {5,5,5,5};
+            frWeightUFT23(frwgts,jetpt,jeteta,goodjetIdx,ntrack,flavors,varType,isData,cutset);
+            frwgttmp+=(evtWgt*frwgts[6]);
+            break;}
+        }
+    }   
+    return frwgttmp;
+}
+
+
+//Ntag==2; unfolded b flavor dependent; only for 4-jet events
+double QCDhists::frWeightUFT2(vector<float> *jetpt, vector<float> *jeteta, vector<int> &jetIdx, vector<int> &ntrack, vector<int> &flavor, int varType, bool isData, std::string cutset){
+    if (verbose) {
+        for (int i=0;i<4;i++) {
+            std::cout << "flavor [" << i << "]= " << flavor[i] << std::endl;
+        }
+    }
+    double jfr=0.0;
+    if (isData) {
+        jfr = fakerateFD(jetpt->at(jetIdx[0]),jeteta->at(jetIdx[0]),ntrack[jetIdx[0]],varType,flavor[0],cutset);
+        jfr *= (1.0-fakerateFD(jetpt->at(jetIdx[1]),jeteta->at(jetIdx[1]),ntrack[jetIdx[1]],varType,flavor[1],cutset));
+        jfr *= fakerateFD(jetpt->at(jetIdx[2]),jeteta->at(jetIdx[2]),ntrack[jetIdx[2]],varType,flavor[2],cutset);
+        jfr *= (1.0-fakerateFD(jetpt->at(jetIdx[3]),jeteta->at(jetIdx[3]),ntrack[jetIdx[3]],varType,flavor[3],cutset));
+    }
+    else {
+        jfr = fakerateF(jetpt->at(jetIdx[0]),jeteta->at(jetIdx[0]),ntrack[jetIdx[0]],varType,flavor[0],cutset);
+        jfr *= (1.0-fakerateF(jetpt->at(jetIdx[1]),jeteta->at(jetIdx[1]),ntrack[jetIdx[1]],varType,flavor[1],cutset));
+        jfr *= fakerateF(jetpt->at(jetIdx[2]),jeteta->at(jetIdx[2]),ntrack[jetIdx[2]],varType,flavor[2],cutset);
+        jfr *= (1.0-fakerateF(jetpt->at(jetIdx[3]),jeteta->at(jetIdx[3]),ntrack[jetIdx[3]],varType,flavor[3],cutset));
+    }
+    return jfr;
+}
+
+//Ntag==2; unfolded b flavor dependent; only for 4-jet events
+void QCDhists::frWeightUFT22(double (&frwgts)[25], vector<float> *jetpt, vector<float> *jeteta,
+                   vector<int> &goodjetIdx, vector<int> &ntrack, int* flavor, int varType, bool isData, std::string cutset){
+    double frwgttmp=0.0;
+    int nthComb=0;
+    for(int i0=0;i0<4;i0++) {
+        int idx0 = goodjetIdx[i0];
+        double jfr = (isData? fakerateFD(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset):
+                      fakerateF(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset));
+
+        for(Int_t i1=0; i1<4; i1++) {
+            if (i1==i0) continue;
+            int idx1 = goodjetIdx[i1];
+            double kfr = jfr;
+            if (isData) kfr*=(1.0 - fakerateFD(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset));
+            else kfr*=(1.0 - fakerateF(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset));
+
+            for(Int_t i2=0; i2<4; i2++) {
+                if (i2==i0 || i2==i1) continue;
+                int idx2 = goodjetIdx[i2];
+                double lfr = kfr;
+                if (isData) lfr*=fakerateFD(jetpt->at(idx2),jeteta->at(idx2),ntrack[idx2],varType,flavor[i2],cutset);
+                else lfr*=fakerateF(jetpt->at(idx2),jeteta->at(idx2),ntrack[idx2],varType,flavor[i2],cutset);
+
+                for(Int_t i3=0; i3<4; i3++) {
+                    if (i3==i0 || i3==i1 || i3==i2) continue;
+                    int idx3 = goodjetIdx[i3];
+                    if (isData) lfr *= (1.0 - fakerateFD(jetpt->at(idx3),jeteta->at(idx3),ntrack[idx3],varType,flavor[i3],cutset));
+                    else lfr *= (1.0 - fakerateF(jetpt->at(idx3),jeteta->at(idx3),ntrack[idx3],varType,flavor[i3],cutset));
+                }
+                frwgts[nthComb]=lfr;
+                frwgttmp+=lfr/2;
+                nthComb++;
+            }
+        }
+    }
+    //std::cout<<"nTotalComb = "<<nthComb<<std::endl;
+    frwgts[24]=frwgttmp;
+}
+
+//Ntag==2; unfolded b flavor dependent; only for 4-jet events
+void QCDhists::frWeightUFT23(double (&frwgts)[7], vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int* flavor, int varType, bool isData, std::string cutset){
+    double frwgttmp=0.0;
+    int nthComb=0;
+    for(int i0=0;i0<4;i0++) {
+        int comb[] = {0,0,0,0};
+        comb[0]=i0;
+        int idx0 = goodjetIdx[i0];
+        double jfr = (isData ? fakerateFD(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset):
+                      fakerateF(jetpt->at(idx0),jeteta->at(idx0),ntrack[idx0],varType,flavor[i0],cutset));
+
+        for(Int_t i1=i0+1; i1<4; i1++) {
+            comb[1]=i1;
+            int idx1 = goodjetIdx[i1];
+            double kfr = jfr;
+            if (isData) kfr*=fakerateFD(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset);
+            else kfr*=fakerateF(jetpt->at(idx1),jeteta->at(idx1),ntrack[idx1],varType,flavor[i1],cutset);
+            int nTemp=0;
+            for(Int_t i2=0; i2<4; i2++) {
+                if (i2==i0 || i2==i1) continue;
+                comb[nTemp+2]=i2;
+                int idx2 = goodjetIdx[i2];
+                if (isData) kfr*=(1.0-fakerateFD(jetpt->at(idx2),jeteta->at(idx2),ntrack[idx2],varType,flavor[i2],cutset));
+                else kfr*=(1.0-fakerateF(jetpt->at(idx2),jeteta->at(idx2),ntrack[idx2],varType,flavor[i2],cutset));
+                nTemp++;
+            }
+            frwgts[nthComb]=kfr;
+            frwgttmp+=kfr;
+            //std::cout<<"["<<nthComb<<"] Comb = ["<<comb[0]+1<<","<<comb[1]+1<<","<<comb[2]+1<<","<<comb[3]+1<<"]" <<std::endl;
+            nthComb++;
+        }
+    }
+    //std::cout<<"nTotalComb = "<<nthComb<<std::endl;
+    frwgts[6]=frwgttmp;
+}
+
+
+double QCDhists::frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, int njetscut, double jptcut, int varType){
     double p3 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2304,7 +4071,7 @@ double frWeightT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &good
     return p3;
 }
 
-double frWeightFT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType){
+double QCDhists::frWeightFT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goodjetIdx, vector<int> &ntrack, vector<int> &flavor, int njetscut, double jptcut, int varType, std::string cutset){
     double p3 = 0.;
     int njets = (njetscut == -1 ? goodjetIdx.size() : std::min(njetscut,(int)goodjetIdx.size()));
     if (verbose) {
@@ -2316,26 +4083,27 @@ double frWeightFT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
         int jdx = goodjetIdx[j];
         int ntrks1 = ntrack[jdx];
         int flav1 = flavor[jdx];
-        double p31 = fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1);
-        for(Int_t k=j+1; k<njets; k++) {
+        double p31 = fakerateF(jetpt->at(jdx),jeteta->at(jdx),ntrks1,varType,flav1,cutset);
+        for(Int_t k=0; k<njets; k++) {
+            if (k==j) continue;
             int kdx = goodjetIdx[k];
             int ntrks2 = ntrack[kdx];
             int flav2 = flavor[kdx];
-            double p32 = p31 * fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2);
-            for(Int_t l=k+1; l<njets; l++) {
+            double p32 = p31 * fakerateF(jetpt->at(kdx),jeteta->at(kdx),ntrks2,varType,flav2,cutset);
+            for(Int_t l=0; l<njets; l++) {
+                if (l==j || l==k) continue;
                 int ldx = goodjetIdx[l];
                 int ntrks3 = ntrack[ldx];
                 int flav3 = flavor[ldx];
-                double p33 = p32 * fakerateF(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType,flav3);
+                double p33 = p32 * fakerateF(jetpt->at(ldx),jeteta->at(ldx),ntrks3,varType,flav3,cutset);
                 for(Int_t m=0; m<njets; m++) {
                     if (m==j || m==k || m ==l) continue;
                     int mdx = goodjetIdx[m];
                     int ntrks4 = ntrack[mdx];
                     int flav4 = flavor[mdx];
-                    p33 *= (1.0-fakerateF(jetpt->at(mdx),jeteta->at(mdx),ntrks4,varType,flav4));
-                    //p33 *= (1.0-fakerate(jetpt->at(mdx),jeteta->at(mdx),ntrks4,varType));
+                    p33 *= (1.0-fakerateF(jetpt->at(mdx),jeteta->at(mdx),ntrks4,varType,flav4,cutset));
                 }
-                p3 += p33;
+                p3 += p33/6.0;
             }
         }
     }
@@ -2343,7 +4111,7 @@ double frWeightFT3(vector<float> *jetpt, vector<float> *jeteta, vector<int> &goo
 }
 
 // Only 4 leading jets
-double frWeight4(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, double jptcut, int varType){
+double QCDhists::frWeight4(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basicjet, vector<int> &ntrack, double jptcut, int varType){
     double p0 = 1.;
     double p1 = 0.;
     double p4 = 1.;
@@ -2380,7 +4148,7 @@ double frWeight4(vector<float> *jetpt, vector<float> *jeteta, vector<bool> *basi
 }
 
 
-double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_pvWeight)
+double QCDhists::GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_pvWeight)
 {
     double ptsum_total=0, ptsum=0;
     for (unsigned itk=0; itk < track_pt.size(); itk++) {
@@ -2395,7 +4163,7 @@ double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> 
     return alpha;
 }
 
-double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
+double QCDhists::GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
                 vector<float> &track_pvWeight, vector<float> &track_ref_zs, float pv_z, float pilecut)
 {
     double ptsum_total=0, ptsum=0;
@@ -2412,14 +4180,14 @@ double GetAlpha(vector<float> &track_pt, vector<int> &track_source, vector<int> 
     return alpha;
 }
 
-double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_ipXYSigs)
+double QCDhists::GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality, vector<float> &track_ipXYSigs)
 {
     double ptsum_total=0, ptsum=0;
     for (unsigned itk=0; itk < track_pt.size(); itk++) {
         if ( track_source.at(itk) != 0 ) continue; // Only process tracks with source=0
         if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
         ptsum_total += track_pt.at(itk);
-        if ( track_ipXYSigs.at(itk) < 4.0 ) ptsum += track_pt.at(itk);
+        if ( fabs(track_ipXYSigs.at(itk)) < 4.0 ) ptsum += track_pt.at(itk);
     }
 
     double alpha = (ptsum_total > 0 ? ptsum/ptsum_total : 0.);
@@ -2428,7 +4196,7 @@ double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<
 }
 
 // default for analysis_20170523_v0
-double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
+double QCDhists::GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
                      vector<float> &track_ipXYSigs, vector<float> &track_ref_zs, float pv_z, float pilecut)
 {
     double ptsum_total=0, ptsum=0;
@@ -2437,7 +4205,7 @@ double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<
         if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
         if (fabs(pv_z-track_ref_zs.at(itk))>pilecut) continue;// remove tracks with exceedingly large z
         ptsum_total += track_pt.at(itk);
-        if ( track_ipXYSigs.at(itk) < 4.0 ) ptsum += track_pt.at(itk);
+        if ( fabs(track_ipXYSigs.at(itk)) < 4.0 ) ptsum += track_pt.at(itk);
     }
 
     double alpha = (ptsum_total > 0 ? ptsum/ptsum_total : 0.);
@@ -2445,7 +4213,25 @@ double GetAlpha2Dsig(vector<float> &track_pt, vector<int> &track_source, vector<
     return alpha;
 }
 
-double nGJrewgt(int nGoodJet){
+double QCDhists::GetAlpha3Dsig(vector<float> &track_pt, vector<int> &track_source, vector<int> &track_quality,
+                               vector<float> &track_ipXYSigs, vector<float> &track_ref_zs, float pv_z, float pilecut, float sigzcut)
+{
+    double ptsum_total=0, ptsum=0;
+    for (unsigned itk=0; itk < track_pt.size(); itk++) {
+        if ( track_source.at(itk) != 0 ) continue; // Only process tracks with source=0
+        if ( (track_quality.at(itk) & 4 ) == 0 ) continue; // Only process tracks with "highPurity" quality
+        if (fabs(pv_z-track_ref_zs.at(itk))>pilecut) continue;// remove tracks with exceedingly large z
+        ptsum_total += track_pt.at(itk);
+        double ip3Dsimp = sqrt(pow((pv_z-track_ref_zs.at(itk))/0.01,2)+pow(track_ipXYSigs.at(itk),2));
+        if ( ip3Dsimp < sigzcut ) ptsum += track_pt.at(itk);
+    }
+
+    double alpha = (ptsum_total > 0 ? ptsum/ptsum_total : 0.);
+    if (verbose) std::cout << std::fixed << std::setprecision(6) << "[GetAlpha3Dsig] alpha = " << alpha << std::endl;
+    return alpha;
+}
+
+double QCDhists::nGJrewgt(int nGoodJet){
     double wgt = 1.0;
 
     if (nGoodJet==4)       wgt = 0.99161;
@@ -2457,4 +4243,1556 @@ double nGJrewgt(int nGoodJet){
     else if (nGoodJet==10) wgt = 1.60758;
 
     return wgt;
+}
+
+//~/Dropbox/UMD\ Analysis/FakeRate/20170926/responsematrixandinvert_MC_lowpT.txt
+//~/Dropbox/UMD\ Analysis/FakeRate/20170926/responsematrixandinvert_MC_highpT.txt
+//Fixed with correct MC mis-tag rate
+double QCDhists::UnfoldWgt(int bUnfType, int nbtrue, int nbtagged, int ptType){
+    // ptType = 1: low pT mistag; 2: high pT mistag
+    if (ptType==1) {
+        if (bUnfType==1) {//CSVv2L
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.4772270061;
+                case 1: return -0.1995346353;
+                case 2: return 0.0269518974;
+                case 3: return -0.0036404947;
+                case 4: return 0.0004917354;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.5491470731;
+                case 1: return 1.5951064013;
+                case 2: return -0.4208949539;
+                case 3: return 0.0846011464;
+                case 4: return -0.0151755960;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0765528521;
+                case 1: return -0.4343855485;
+                case 2: return 1.6818795409;
+                case 3: return -0.6579461414;
+                case 4: return 0.1756270180;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0047429829;
+                case 1: return 0.0400494935;
+                case 2: return -0.3017932177;
+                case 3: return 1.7323689470;
+                case 4: return -0.9033465320;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0001101978;
+                case 1: return -0.0012357111;
+                case 2: return 0.0138567333;
+                case 3: return -0.1553834574;
+                case 4: return 1.7424033746;
+                default: break;
+                }
+            }
+        }
+        else if (bUnfType==2){//CSVv2M
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0489790138;
+                case 1: return -0.4119945430;
+                case 2: return 0.1618140127;
+                case 3: return -0.0635536930;
+                case 4: return 0.0249611998;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0498607489;
+                case 1: return 1.4631957629;
+                case 2: return -1.1416712401;
+                case 3: return 0.6710897498;
+                case 4: return -0.3510386959;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0008887550;
+                case 1: return -0.0518131102;
+                case 2: return 2.0272730472;
+                case 3: return -2.3647570517;
+                case 4: return 1.8512957186;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0000070408;
+                case 1: return 0.0006143209;
+                case 2: return -0.0476982683;
+                case 3: return 2.7900427223;
+                case 4: return -4.3392441127;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.000000020917;
+                case 1: return -0.0000024306;
+                case 2: return 0.0002824485;
+                case 3: return -0.0328217274;
+                case 4: return 3.8140258903;
+                default: break;
+                }
+            }
+
+        }
+        else if (bUnfType==3){//CSVv2T
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0095747547;
+                case 1: return -1.0382442203;
+                case 2: return 1.0677278290;
+                case 3: return -1.0980487004;
+                case 4: return 1.1292306108;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0096089967;
+                case 1: return 2.0528281275;
+                case 2: return -4.2120844092;
+                case 3: return 6.4923204909;
+                case 4: return -8.8986661650;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0000342964;
+                case 1: return -0.0146186361;
+                case 2: return 4.1640781981;
+                case 3: return -12.8006388748;
+                case 4: return 26.2965306067;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.000000054405;
+                case 1: return 0.0000347566;
+                case 2: return -0.0197450810;
+                case 3: return 8.4263449007;
+                case 4: return -34.5373869211;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 3.23636E-11;
+                case 1: return -2.75563E-08;
+                case 2: return 0.0000234630;
+                case 3: return -0.0199778164;
+                case 4: return 17.0102918686;
+                default: break;
+                }
+            }
+        }
+        else{
+            std::cout << "b unfolding type type not defined!" << std::endl;
+        }
+    }
+    else if (ptType==2) {//High pT mistag
+        if (bUnfType==1) {//CSVv2L
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.6686791061;
+                case 1: return -0.2253947941;
+                case 2: return 0.0304449268;
+                case 3: return -0.0041123113;
+                case 4: return 0.0005554654;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.8019921327;
+                case 1: return 1.7748219486;
+                case 2: return -0.4648315310;
+                case 3: return 0.0931916086;
+                case 4: return -0.0166946688;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.1445435296;
+                case 1: return -0.6202304367;
+                case 2: return 1.8292279883;
+                case 3: return -0.7076502549;
+                case 4: return 0.1881610991;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0115782970;
+                case 1: return 0.0737410436;
+                case 2: return -0.4196562002;
+                case 3: return 1.8281778706;
+                case 4: return -0.9425390614;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0003477939;
+                case 1: return -0.0029377614;
+                case 2: return 0.0248148162;
+                case 3: return -0.2096069130;
+                case 4: return 1.7705171657;
+                default: break;
+                }
+            }
+        }
+        else if (bUnfType==2){//CSVv2M
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0741125093;
+                case 1: return -0.4218659159;
+                case 2: return 0.1656910700;
+                case 3: return -0.0650764370;
+                case 4: return 0.0255592691;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0761111830;
+                case 1: return 1.4993705671;
+                case 2: return -1.1660377483;
+                case 3: return 0.6846497414;
+                case 4: return -0.3579315341;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0020224530;
+                case 1: return -0.0788892654;
+                case 2: return 2.0720267640;
+                case 3: return -2.4050276457;
+                case 4: return 1.8796749795;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0000238850;
+                case 1: return 0.0013928249;
+                case 2: return -0.0723174088;
+                case 3: return 2.8349237925;
+                case 4: return -4.3871556331;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.000000105780;
+                case 1: return -0.0000082107;
+                case 2: return 0.0006373230;
+                case 3: return -0.0494694512;
+                case 4: return 3.8398529186;
+                default: break;
+                }
+            }
+
+        }
+        else if (bUnfType==3){//CSVv2T
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0130127955;
+                case 1: return -1.0417798931;
+                case 2: return 1.0713639063;
+                case 3: return -1.1017880334;
+                case 4: return 1.1330761318;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0130759535;
+                case 1: return 2.0616091592;
+                case 2: return -4.2264785337;
+                case 3: return 6.5126394234;
+                case 4: return -8.9252347979;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0000632941;
+                case 1: return -0.0198933228;
+                case 2: return 4.1819296106;
+                case 3: return -12.8390099106;
+                case 4: return 26.3640105347;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -1.36166E-07;
+                case 1: return 6.41257E-05;
+                case 2: return -0.0268582480;
+                case 3: return 8.4553102939;
+                case 4: return -34.6115289818;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 1.09852E-10;
+                case 1: return -6.89401E-08;
+                case 2: return 0.0000432648;
+                case 3: return -0.0271517732;
+                case 4: return 17.0396771132;
+                default: break;
+                }
+            }
+        }
+        else{
+            std::cout << "b unfolding type type not defined!" << std::endl;
+        }
+    }
+    else{
+        std::cout << "b mis-tag rate pT type type not defined!" << std::endl;
+    }
+
+    return 0;
+}
+
+// Unfold for data
+double QCDhists::UnfoldWgtD(int bUnfType, int nbtrue, int nbtagged, int ptType){
+    // ptType = 1: low pT mistag; 2: high pT mistag
+    if (ptType==1) {
+        if (bUnfType==1) {//CSVv2L
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.5578131183;
+                case 1: return -0.2599384783;
+                case 2: return 0.0433736317;
+                case 3: return -0.0072373738;
+                case 4: return 0.0012076365;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.6536634742;
+                case 1: return 1.7361390042;
+                case 2: return -0.5611885615;
+                case 3: return 0.1389424348;
+                case 4: return -0.0307432153;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.1028547485;
+                case 1: return -0.5292047379;
+                case 2: return 1.8731453134;
+                case 3: return -0.8939399822;
+                case 4: return 0.2934902128;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0071930314;
+                case 1: return 0.0549138905;
+                case 2: return -0.3746629576;
+                case 3: return 1.9579476642;
+                case 4: return -1.2452468188;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0001886387;
+                case 1: return -0.0019096785;
+                case 2: return 0.0193325740;
+                case 3: return -0.1957127430;
+                case 4: return 1.9812921849;
+                default: break;
+                }
+            }
+        }
+        else if (bUnfType==2){//CSVv2M
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0575929199;
+                case 1: return -0.5232634626;
+                case 2: return 0.2588941796;
+                case 3: return -0.1280926359;
+                case 4: return 0.0633761771;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0588078574;
+                case 1: return 1.5879766164;
+                case 2: return -1.5569651070;
+                case 3: return 1.1519441743;
+                case 4: return -0.7587526123;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0012262625;
+                case 1: return -0.0656183180;
+                case 2: return 2.3624040681;
+                case 3: return -3.4584872903;
+                case 4: return 3.4064783068;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0000113645;
+                case 1: return 0.0009093715;
+                case 2: return -0.0647813329;
+                case 3: return 3.4823802686;
+                case 4: return -6.7971763515;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0000000395;
+                case 1: return -0.0000042073;
+                case 2: return 0.0004481922;
+                case 3: return -0.0477445167;
+                case 4: return 5.0860744799;
+                default: break;
+                }
+            }
+
+        }
+//         else if (bUnfType==3){//CSVv2T
+//             if (nbtrue==0){
+//                 switch (nbtagged) {
+//                 case 0: return 1.0095747547;
+//                 case 1: return -1.0382442203;
+//                 case 2: return 1.0677278290;
+//                 case 3: return -1.0980487004;
+//                 case 4: return 1.1292306108;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==1){
+//                 switch (nbtagged) {
+//                 case 0: return -0.0096089967;
+//                 case 1: return 2.0528281275;
+//                 case 2: return -4.2120844092;
+//                 case 3: return 6.4923204909;
+//                 case 4: return -8.8986661650;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==2){
+//                 switch (nbtagged) {
+//                 case 0: return 0.0000342964;
+//                 case 1: return -0.0146186361;
+//                 case 2: return 4.1640781981;
+//                 case 3: return -12.8006388748;
+//                 case 4: return 26.2965306067;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==3){
+//                 switch (nbtagged) {
+//                 case 0: return -0.000000054405;
+//                 case 1: return 0.0000347566;
+//                 case 2: return -0.0197450810;
+//                 case 3: return 8.4263449007;
+//                 case 4: return -34.5373869211;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==4){
+//                 switch (nbtagged) {
+//                 case 0: return 3.23636E-11;
+//                 case 1: return -2.75563E-08;
+//                 case 2: return 0.0000234630;
+//                 case 3: return -0.0199778164;
+//                 case 4: return 17.0102918686;
+//                 default: break;
+//                 }
+//             }
+//         }
+        else{
+            std::cout << "b unfolding type type not defined!" << std::endl;
+        }
+    }
+    else if (ptType==2) {//High pT mistag
+        if (bUnfType==1) {//CSVv2L
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.7862707518;
+                case 1: return -0.2980591803;
+                case 2: return 0.0497344957;
+                case 3: return -0.0082987548;
+                case 4: return 0.0013847397;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.9646278926;
+                case 1: return 1.9638921439;
+                case 2: return -0.6285367895;
+                case 3: return 0.1550767905;
+                case 4: return -0.0342524569;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.1953455902;
+                case 1: return -0.7628151036;
+                case 2: return 2.0688806023;
+                case 3: return -0.9728385349;
+                case 4: return 0.3177214785;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0175818629;
+                case 1: return 0.1015176246;
+                case 2: return -0.5247432097;
+                case 3: return 2.0910058076;
+                case 4: return -1.3098419741;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0005934135;
+                case 1: return -0.0045354846;
+                case 2: return 0.0346649013;
+                case 3: return -0.2649453084;
+                case 4: return 2.0249882127;
+                default: break;
+                }
+            }
+        }
+        else if (bUnfType==2){//CSVv2M
+            if (nbtrue==0){
+                switch (nbtagged) {
+                case 0: return 1.0916058829;
+                case 1: return -0.5400919989;
+                case 2: return 0.2672204060;
+                case 3: return -0.1322121889;
+                case 4: return 0.0654144014;
+                default: break;
+                }
+            }
+            else if (nbtrue==1){
+                switch (nbtagged) {
+                case 0: return -0.0946384771;
+                case 1: return 1.6431563521;
+                case 2: return -1.6027962953;
+                case 3: return 1.1837880525;
+                case 4: return -0.7790440191;
+                default: break;
+                }
+            }
+            else if (nbtrue==2){
+                switch (nbtagged) {
+                case 0: return 0.0030768115;
+                case 1: return -0.1053196961;
+                case 2: return 2.4378936595;
+                case 3: return -3.5416048185;
+                case 4: return 3.4792200036;
+                default: break;
+                }
+            }
+            else if (nbtrue==3){
+                switch (nbtagged) {
+                case 0: return -0.0000444582;
+                case 1: return 0.0022717156;
+                case 2: return -0.1034305536;
+                case 3: return 3.5656598577;
+                case 4: return -6.9058838138;
+                default: break;
+                }
+            }
+            else if (nbtrue==4){
+                switch (nbtagged) {
+                case 0: return 0.0000002409;
+                case 1: return -0.0000163728;
+                case 2: return 0.0011127835;
+                case 3: return -0.0756309028;
+                case 4: return 5.1402934279;
+                default: break;
+                }
+            }
+
+        }
+//         else if (bUnfType==3){//CSVv2T
+//             if (nbtrue==0){
+//                 switch (nbtagged) {
+//                 case 0: return 1.0130127955;
+//                 case 1: return -1.0417798931;
+//                 case 2: return 1.0713639063;
+//                 case 3: return -1.1017880334;
+//                 case 4: return 1.1330761318;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==1){
+//                 switch (nbtagged) {
+//                 case 0: return -0.0130759535;
+//                 case 1: return 2.0616091592;
+//                 case 2: return -4.2264785337;
+//                 case 3: return 6.5126394234;
+//                 case 4: return -8.9252347979;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==2){
+//                 switch (nbtagged) {
+//                 case 0: return 0.0000632941;
+//                 case 1: return -0.0198933228;
+//                 case 2: return 4.1819296106;
+//                 case 3: return -12.8390099106;
+//                 case 4: return 26.3640105347;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==3){
+//                 switch (nbtagged) {
+//                 case 0: return -1.36166E-07;
+//                 case 1: return 6.41257E-05;
+//                 case 2: return -0.0268582480;
+//                 case 3: return 8.4553102939;
+//                 case 4: return -34.6115289818;
+//                 default: break;
+//                 }
+//             }
+//             else if (nbtrue==4){
+//                 switch (nbtagged) {
+//                 case 0: return 1.09852E-10;
+//                 case 1: return -6.89401E-08;
+//                 case 2: return 0.0000432648;
+//                 case 3: return -0.0271517732;
+//                 case 4: return 17.0396771132;
+//                 default: break;
+//                 }
+//             }
+//         }
+        else{
+            std::cout << "b unfolding type type not defined!" << std::endl;
+        }
+    }
+    else{
+        std::cout << "b mis-tag rate pT type type not defined!" << std::endl;
+    }
+
+    return 0;
+}
+
+
+// Ref: AN-17-018 (table not shown in the note but in text:
+// /Users/jengbou/Dropbox/MyResearch/MyAnalysis/CMS/Notes/tdr2/notes/AN-17-018/trunk/MCefficiencyQCD.tex
+double QCDhists::effCSVv2(int bUnfType, double pt, int flav, bool isData) {
+    double eff_ = 0;
+    double sf_ = 1.0;
+    if (pt>=1000) pt = 1000.;
+    if (isData) {
+        if (flav==0) {//b and g->bb
+            sf_ =  readerB_.eval(BTagEntryStandalone::FLAV_B, 0.0, pt);
+            //std::cout<< "scalefactor b jet = " << sf_ << std::endl;
+        }
+        else if (flav==1) {//udsg
+            sf_ =  readerL_.eval(BTagEntryStandalone::FLAV_UDSG, 0.0, pt);
+            //std::cout<< "scalefactor l jet = " << sf_ << std::endl;
+        }
+        else{//c
+        }
+    }
+    if (bUnfType==1) {
+        //CSVv2L
+        if (flav==0) {//b and g->bb
+            if (pt>=30 && pt<165){
+                eff_ = 0.625404+0.00629137*pt-7.44931*pow(10,-5)*pow(pt,2)+3.79928*pow(10,-7)*pow(pt,3)-7.23654*pow(10,-10)*pow(pt,4);
+            }
+            else if (pt>=165){
+                eff_ = 0.845173-0.000226895*pt-2.12743*pow(10,-8)*pow(pt,2);
+            }
+        }
+        else if (flav==1) {//udsg
+            if (pt>=30 && pt<195){
+                eff_ = 0.239697-0.0060077*pt+7.44621*pow(10,-5)*pow(pt,2)-3.7838*pow(10,-7)*pow(pt,3)+6.96297*pow(10,-10)*pow(pt,4);
+            }
+            else if (pt>=195){
+                eff_ = 0.0652218+0.000191387*pt-5.82485*pow(10,-8)*pow(pt,2);
+            }
+        }
+    }
+    else if (bUnfType==2) {//CSVv2M
+    }
+    else if (bUnfType==3) {//CSVv2T
+    }
+    else {//Undefined
+    }
+
+    return eff_*sf_;
+}
+
+// Ref: BTV-16-002 p.96
+double QCDhists::effDeepCSV(int bUnfType, double pt, int flav, bool isData) {
+    double eff_ = 0;
+    if (bUnfType==1) {
+        //DeepCSVL
+        if (isData) {
+            if (flav==0) {//b and g->bb
+                if (pt>=20 && pt<160){
+                    eff_=0.4344+0.02069*pt-0.0004429*pow(pt,2)+5.137*pow(10,-6)*pow(pt,3)-3.406*pow(10,-8)*pow(pt,4)+1.285*pow(10,-10)*pow(pt,5)-2.559*pow(10,-13)*pow(pt,6)+2.084*pow(10,-16)*pow(pt,7);
+                }
+                else if (pt>=160 && pt<300){
+                    eff_=0.714+0.002617*pt-1.656*pow(10,-5)*pow(pt,2)+4.767*pow(10,-8)*pow(pt,3)-6.431*pow(10,-11)*pow(pt,4)+3.287*pow(10,-14)*pow(pt,5);
+                }
+                else if (pt>=300){// removed upper limit (1000) to avoid sigular matrix due to zero efficiency
+                    eff_=0.872-6.885*pow(10,-5)*pt+4.34*pow(10,-8)*pow(pt,2);
+                }
+            }
+            else if (flav==1) {//udsg
+                if (pt>=20 && pt<150){
+                    eff_=0.245-0.0054*pt+6.92*pow(10,-5)*pow(pt,2)-3.89*pow(10,-7)*pow(pt,3)+1.021*pow(10,-9)*pow(pt,4)-1.007*pow(10,-12)*pow(pt,5);
+                }
+                else if (pt>=150){// removed upper limit (1000) to avoid sigular matrix due to zero efficiency
+                    eff_=0.0558+0.000428*pt-1.0*pow(10,-7)*pow(pt,2);
+                }
+            }
+            else{//c
+            }
+        }
+        else {//ttbar MC
+            if (flav==0) {//b and g->bb
+                if (pt>=20 && pt<100){
+                    eff_=0.491+0.0191*pt-0.0004172*pow(pt,2)+4.893*pow(10,-6)*pow(pt,3)-3.266*pow(10,-8)*pow(pt,4)+1.238*pow(10,-10)*pow(pt,5)-2.474*pow(10,-13)*pow(pt,6)+2.021*pow(10,-16)*pow(pt,7);
+                }
+                else if (pt>=100 && pt<300){
+                    eff_=0.912-0.001846*pt+2.479*pow(10,-5)*pow(pt,2)-1.417*pow(10,-7)*pow(pt,3)+3.617*pow(10,-10)*pow(pt,4)-3.433*pow(10,-13)*pow(pt,5);
+                }
+                else if (pt>=300){// removed upper limit (1000) to avoid sigular matrix due to zero efficiency
+                    eff_=0.892-0.00014*pt+1.01*pow(10,-7)*pow(pt,2);
+                }
+            }
+            else if (flav==1) {//udsg
+                if (pt>=20 && pt<250){
+                    eff_=0.2407-0.00593*pt+8.5*pow(10,-5)*pow(pt,2)-5.658*pow(10,-7)*pow(pt,3)+1.828*pow(10,-9)*pow(pt,4)-2.287*pow(10,-12)*pow(pt,5);
+                }
+                else if (pt>=250){// removed upper limit (1000) to avoid sigular matrix due to zero efficiency
+                    eff_=0.0541+0.00036*pt-7.392*pow(10,-8)*pow(pt,2);
+                }
+            }
+            else{//c
+            }
+        }
+    }
+    else if (bUnfType==2) {//DeepCSVM
+        if (isData) {}
+        else {}
+    }
+    else if (bUnfType==3) {//DeepCSVT
+        if (isData) {}
+        else {}
+    }
+    else {//Undefined
+    }
+
+    return eff_;
+}
+
+
+double QCDhists::effBTag(int bUnfType, double pt, int flav, bool isData) {
+    double eff_ = 0;
+    double sf_ = 1.0;
+    if (isData) {
+        if (pt>=1000) pt = 999.;
+        if (flav==0) {//b and g->bb
+            sf_ =  readerB_.eval(BTagEntryStandalone::FLAV_B, 0.0, pt);
+            //std::cout<< "scalefactor b jet = " << sf_ << std::endl;
+        }
+        else if (flav==1) {//udsg
+            sf_ =  readerL_.eval(BTagEntryStandalone::FLAV_UDSG, 0.0, pt);
+            //std::cout<< "scalefactor l jet = " << sf_ << std::endl;
+        }
+        else{//c
+        }
+    }
+    if (bUnfType==1) {
+        //CSVv2L
+        if (flav==0) {//b and g->bb
+            // systematic 500toInf all selected jets
+//             if (pt>=20 && pt<30){
+//                 eff_ = 0.0;
+//             }
+//             else if (pt>=30 && pt<30){
+//                 eff_ = 0.801967;
+//             }
+//             else if (pt>=50 && pt<70){
+//                 eff_ = 0.799573;
+//             }
+//             else if (pt>=70 && pt<100){
+//                 eff_ = 0.80511;
+//             }
+//             else if (pt>=100 && pt<140){
+//                 eff_ = 0.804147;
+//             }
+//             else if (pt>=140 && pt<200){
+//                 eff_ = 0.809298;
+//             }
+//             else if (pt>=200 && pt<300){
+//                 eff_ = 0.809617;
+//             }
+//             else if (pt>=300 && pt<600){
+//                 eff_ = 0.816883;
+//             }
+//             else if (pt>=600){
+//                 eff_ = 0.803702;
+//             }
+
+            // Default 500toInf passing pre-selection
+            if (pt>=100 && pt<140){
+                eff_ = 0.807549;//0.802547;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.804981;//0.801777;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.803957;//0.802073;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.8076;//0.811238;
+            }
+            else if (pt>=600){
+                eff_ = 0.78868;//0.803135;
+            }
+
+        }
+        else if (flav==1) {//udsgc
+            // systematic 500toInf all selected jets
+//             if (pt>=20 && pt<30){
+//                 eff_ = 0.0;
+//             }
+//             else if (pt>=30 && pt<30){
+//                 eff_ = 0.122245;
+//             }
+//             else if (pt>=50 && pt<70){
+//                 eff_ = 0.124183;
+//             }
+//             else if (pt>=70 && pt<100){
+//                 eff_ = 0.128752;
+//             }
+//             else if (pt>=100 && pt<140){
+//                 eff_ = 0.133395;
+//             }
+//             else if (pt>=140 && pt<200){
+//                 eff_ = 0.145496;
+//             }
+//             else if (pt>=200 && pt<300){
+//                 eff_ = 0.156708;
+//             }
+//             else if (pt>=300 && pt<600){
+//                 eff_ = 0.179475;
+//             }
+//             else if (pt>=600){
+//                 eff_ = 0.222216;
+//             }
+
+            // 500toInf passing pre-selection
+            if (pt>=100 && pt<140){
+                eff_ = 0.127032;//0.131396;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.138622;//0.142532;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.151775;//0.154968;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.182386;//0.18302;
+            }
+            else if (pt>=600){
+                eff_ = 0.22567;//0.223272;
+            }
+
+        }
+        else{//c
+        }
+    }//End CSVv2L
+    else if (bUnfType==2) {//CSVv2M
+        if (flav==0) {//b and g->bb
+            if (pt>=100 && pt<140){
+                eff_ = 0.640644;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.629018;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.611541;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.58964;
+            }
+            else if (pt>=600){
+                eff_ = 0.519469;
+            }
+        }
+        else if (flav==1) {//udsgc
+            if (pt>=100 && pt<140){
+                eff_ = 0.0226542;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.0264172;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.0305033;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.038221;
+            }
+            else if (pt>=600){
+                eff_ = 0.045846;
+            }
+        }
+    }//End CSVv2M
+    else if (bUnfType==3) {//CSVv2T
+        if (flav==0) {//b and g->bb
+            if (pt>=100 && pt<140){
+                eff_ = 0.442714;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.427096;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.401281;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.36345;
+            }
+            else if (pt>=600){
+                eff_ = 0.318183;
+            }
+        }
+        else if (flav==1) {//udsgc
+            if (pt>=100 && pt<140){
+                eff_ = 0.00395776;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.00502544;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.00597841;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.00768997;
+            }
+            else if (pt>=600){
+                eff_ = 0.0123835;
+            }
+        }
+
+    }//End CSVv2T
+    else if (bUnfType==4) {//CSVv2 User
+        if (flav==0) {//b and g->bb
+            if (pt>=100 && pt<140){
+                eff_ = 0.77394;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.7736;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.77264;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.769626;
+            }
+            else if (pt>=600){
+                eff_ = 0.729124;
+            }
+        }
+        else if (flav==1) {//udsgc
+            if (pt>=100 && pt<140){
+                eff_ = 0.0880548;
+            }
+            else if (pt>=140 && pt<200){
+                eff_ = 0.101232;
+            }
+            else if (pt>=200 && pt<300){
+                eff_ = 0.115253;
+            }
+            else if (pt>=300 && pt<600){
+                eff_ = 0.13782;
+            }
+            else if (pt>=600){
+                eff_ = 0.159787;
+            }
+        }
+    }//End CSVv2 user
+    else {//Undefined
+    }
+
+    return eff_*sf_;
+}
+
+
+// UMD Emerging Jets group estimation
+double QCDhists::effBTagPara(int bUnfType, double pt, int flav, bool isData) {
+    double eff_ = 0;
+    double sf_ = 1.0;
+    if (pt>=1000) pt = 1000.;
+    if (isData) {
+        if (flav==0) {//b and g->bb
+            sf_ =  readerB_.eval(BTagEntryStandalone::FLAV_B, 0.0, pt);
+            //std::cout<< "scalefactor b jet = " << sf_ << std::endl;
+        }
+        else if (flav==1) {//udsg
+            sf_ =  readerL_.eval(BTagEntryStandalone::FLAV_UDSG, 0.0, pt);
+            //std::cout<< "scalefactor l jet = " << sf_ << std::endl;
+        }
+        else{//c
+        }
+    }
+    if (bUnfType==1) {
+        //CSVv2L
+        if (flav==0) {//b and g->bb
+            //if (pt>=100 && pt<170){
+            if (pt>=100 && pt<175){//analysis_20180126_v0_p20180219_UMD_BtagEff_r1
+                //eff_ = 1.13252-8.51292*pow(10,-3)*pt+7.06146*pow(10,-5)*pow(pt,2)-1.88610*pow(10,-7)*pow(pt,3);
+                eff_ = 1.00020-5.43908*pow(10,-3)*pt+4.81536*pow(10,-5)*pow(pt,2)-1.35117*pow(10,-7)*pow(pt,3);
+            }
+            //else if (pt>=170 && pt<290){
+            else if (pt>=175 && pt<290){//analysis_20180126_v0_p20180219_UMD_BtagEff_r1
+                //eff_ = 1.17946-5.28402*pow(10,-3)*pt+2.38701*pow(10,-5)*pow(pt,2)-3.49534*pow(10,-8)*pow(pt,3);
+                eff_ = 0.910730-1.71551*pow(10,-3)*pt+8.38286*pow(10,-6)*pow(pt,2)-1.28359*pow(10,-8)*pow(pt,3);
+            }
+            else if (pt>=290 && pt<575){
+                //eff_ = -0.298764+1.01243*pow(10,-2)*pt-3.42044*pow(10,-5)*pow(pt,2)+5.08782*pow(10,-8)*pow(pt,3)-2.81822*pow(10,-11)*pow(pt,4);
+                eff_ = 0.211333+5.30634*pow(10,-3)*pt-1.72964*pow(10,-5)*pow(pt,2)+2.47381*pow(10,-8)*pow(pt,3)-1.32797*pow(10,-11)*pow(pt,4);
+            }
+            else if (pt>=575){
+                //eff_ = 0.224663+2.34533*pow(10,-3)*pt-3.04098*pow(10,-6)*pow(pt,2)+1.25291*pow(10,-9)*pow(pt,3);
+                eff_ = 0.267642+2.14461*pow(10,-3)*pt-2.77930*pow(10,-6)*pow(pt,2)+1.12336*pow(10,-9)*pow(pt,3);
+            }
+        }
+        else if (flav==1) {//udsg+c
+            //if (pt>=100 && pt<170){
+            if (pt>=100 && pt<165){//analysis_20180126_v0_p20180219_UMD_BtagEff_r1
+                //eff_ = -0.790549+3.15976*pow(10,-2)*pt-4.13510*pow(10,-4)*pow(pt,2)+2.40094*pow(10,-6)*pow(pt,3)-5.13356*pow(10,-9)*pow(pt,4);
+                eff_ = -1.85241+6.54939*pow(10,-2)*pt-8.18323*pow(10,-4)*pow(pt,2)+4.53507*pow(10,-6)*pow(pt,3)-9.32263*pow(10,-9)*pow(pt,4);
+            }
+            //else if (pt>=170 && pt<270){
+            else if (pt>=165 && pt<270){//analysis_20180126_v0_p20180219_UMD_BtagEff_r1
+                //eff_ = 1.08587-1.31000*pow(10,-2)*pt+4.27287*pow(10,-5)*pow(pt,2)+1.30308*pow(10,-7)*pow(pt,3)-9.42234*pow(10,-10)*pow(pt,4)+1.35103*pow(10,-12)*pow(pt,5);
+                eff_ = 2.09104-2.76730*pow(10,-2)*pt+9.39869*pow(10,-5)*pow(pt,2)+2.77580*pow(10,-7)*pow(pt,3)-2.13824*pow(10,-9)*pow(pt,4)+3.19607*pow(10,-12)*pow(pt,5);
+            }
+            else if (pt>=270 && pt<475){
+                //eff_ = 0.197115-6.87138*pow(10,-4)*pt+2.86535*pow(10,-6)*pow(pt,2)-3.07054*pow(10,-9)*pow(pt,3);
+                eff_ = 0.202451-7.84820*pow(10,-4)*pt+3.19867*pow(10,-6)*pow(pt,2)-3.38650*pow(10,-9)*pow(pt,3);
+            }
+            else if (pt>=475){
+                //eff_ = 0.395237-1.48947*pow(10,-3)*pt+3.47386*pow(10,-6)*pow(pt,2)-3.10196*pow(10,-9)*pow(pt,3)+9.63860*pow(10,-13)*pow(pt,4);
+                eff_ = 0.386765-1.46702*pow(10,-3)*pt+3.47448*pow(10,-6)*pow(pt,2)-3.12835*pow(10,-9)*pow(pt,3)+9.79634*pow(10,-13)*pow(pt,4);
+            }
+        }
+        else{//c
+//             if (pt>=100 && pt<170){
+//                 eff_ = *pow(10,)*pt  *pow(10,)*pow(pt,2) *pow(10,)*pow(pt,3) *pow(10,)*pow(pt,4) *pow(10,)*pow(pt,5) *pow(10,)*pow(pt,6);
+//             }
+//             else if (pt>=170 && pt<290){
+//                 eff_ = *pow(10,)*pt  *pow(10,)*pow(pt,2) *pow(10,)*pow(pt,3) *pow(10,)*pow(pt,4) *pow(10,)*pow(pt,5) *pow(10,)*pow(pt,6);
+//             }
+//             else if (pt>=290 && pt<575){
+//                 eff_ = *pow(10,)*pt  *pow(10,)*pow(pt,2) *pow(10,)*pow(pt,3) *pow(10,)*pow(pt,4) *pow(10,)*pow(pt,5) *pow(10,)*pow(pt,6);
+//             }
+//             else if (pt>=575){
+//                 eff_ = *pow(10,)*pt  *pow(10,)*pow(pt,2) *pow(10,)*pow(pt,3) *pow(10,)*pow(pt,4) *pow(10,)*pow(pt,5) *pow(10,)*pow(pt,6);
+//             }
+        }
+    }
+    else if (bUnfType==2) {//CSVv2M
+    }
+    else if (bUnfType==3) {//CSVv2T
+    }
+    else {//Undefined
+    }
+
+    return eff_*sf_;
+}
+
+
+//double QCDhists::UnfoldWgtPtDep(int bUnfType, int nbtrue, int nbtagged, vector<float> *jetpt, bool isData){
+bool QCDhists::UnfoldWgtPtDep(TMatrixD& MB, int bUnfType, vector<float> *jetpt, bool isData){
+
+    bool status = true;
+    double effs_[2][4];
+    for (int i=0;i<4;i++){
+        effs_[0][i]=effBTag(bUnfType,jetpt->at(i),0,isData);//b
+        effs_[1][i]=effBTag(bUnfType,jetpt->at(i),1,isData);//light
+//         effs_[0][i]=effBTagPara(bUnfType,jetpt->at(i),0,isData);//b
+//         effs_[1][i]=effBTagPara(bUnfType,jetpt->at(i),1,isData);//light
+//         effs_[0][i]=effCSVv2(bUnfType,jetpt->at(i),0,isData);//b
+//         effs_[1][i]=effCSVv2(bUnfType,jetpt->at(i),1,isData);//light
+//         effs_[0][i]=effDeepCSV(bUnfType,jetpt->at(i),0,isData);//b
+//         effs_[1][i]=effDeepCSV(bUnfType,jetpt->at(i),1,isData);//light
+//         effs_[0][i]=0.857;//data
+//         effs_[1][i]=0.0899;//data
+    }
+
+    // Start of Matrix
+    TMatrixD MA(5,5);
+
+    //MA(0,0) = pow(1.0-effs_[1][0],4);
+    MA(0,0) = (1.0-effs_[1][0])*(1.0-effs_[1][1])*(1.0-effs_[1][2])*(1.0-effs_[1][3]);
+
+    //MA(0,1) = pow(1.0-effs_[0][0],1)*pow(1.0-effs_[1][0],3);
+    MA(0,1)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=1.0-effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(1.0-effs_[1][j]);
+            }
+        }
+        MA(0,1)+=(tmp/4.0);
+    }
+
+    //MA(0,2) = pow(1.0-effs_[0][0],2)*pow(1.0-effs_[1][0],2);
+    MA(0,2)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=1.0-effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp1=tmp*(1.0-effs_[0][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp1*=(1.0-effs_[1][k]);
+                    }
+                }
+                MA(0,2)+=(tmp1/12.0);
+            }
+        }
+    }
+
+    //MA(0,3) = pow(1.0-effs_[0][0],3)*pow(1.0-effs_[1][0],1);
+    MA(0,3)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=1.0-effs_[1][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(1.0-effs_[0][j]);
+            }
+        }
+        MA(0,3)+=(tmp/4.0);
+    }
+
+    //MA(0,4) = pow(1.0-effs_[0][0],4);
+    MA(0,4) = (1.0-effs_[0][0])*(1.0-effs_[0][1])*(1.0-effs_[0][2])*(1.0-effs_[0][3]);
+
+    //MA(1,0) = 4.0*pow(effs_[1][0],1)*pow(1.0-effs_[1][0],3);
+    MA(1,0)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[1][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(1.0-effs_[1][j]);
+            }
+        }
+        MA(1,0)+=tmp;
+    }
+
+    //MA(1,1) = effs_[0][0]*pow(1.0-effs_[1][0],3)+3.0*(1.0-effs_[0][0])*effs_[1][0]*pow(1.0-effs_[1][0],2);
+    MA(1,1)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[0][i];
+        double tmp10=(1-effs_[0][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp00*=(1.0-effs_[1][j]);
+                double tmp11=tmp10*effs_[1][j];
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp11*=(1.0-effs_[1][k]);
+                    }
+                }
+                MA(1,1)+=(tmp11/4.0);
+            }
+        }
+        MA(1,1)+=(tmp00/4.0);
+    }
+
+    //MA(1,2) = 2.0*effs_[0][0]*(1.0-effs_[0][0])*pow(1.0-effs_[1][0],2)+2.0*pow(1.0-effs_[0][0],2)*effs_[1][0]*(1.0-effs_[1][0]);
+    MA(1,2)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[0][i];
+        double tmp10=effs_[1][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp01=tmp00*(1.0-effs_[0][j]);
+                double tmp11=tmp10*(1.0-effs_[1][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp01*=(1.0-effs_[1][k]);
+                        tmp11*=(1.0-effs_[0][k]);
+                    }
+                }
+                MA(1,2)+=(tmp01/6.0);
+                MA(1,2)+=(tmp11/6.0);
+            }
+        }
+    }
+
+    //MA(1,3) = effs_[1][0]*pow(1.0-effs_[0][0],3)+3.0*(1.0-effs_[1][0])*effs_[0][0]*pow(1.0-effs_[0][0],2);
+    MA(1,3)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[1][i];
+        double tmp10=(1-effs_[1][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp00*=(1.0-effs_[0][j]);
+                double tmp11=tmp10*effs_[0][j];
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp11*=(1.0-effs_[0][k]);
+                    }
+                }
+                MA(1,3)+=(tmp11/4.0);
+            }
+        }
+        MA(1,3)+=(tmp00/4.0);
+    }
+
+    //MA(1,4) = 4.0*pow(effs_[0][0],1)*pow(1.0-effs_[0][0],3);
+    MA(1,4)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(1.0-effs_[0][j]);
+            }
+        }
+        MA(1,4)+=tmp;
+    }
+
+    //MA(2,0) = 6.0*pow(effs_[1][0],2)*pow(1.0-effs_[1][0],2);
+    MA(2,0)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[1][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp1=tmp*effs_[1][j];
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp1*=(1.0-effs_[1][k]);
+                    }
+                }
+                MA(2,0)+=(tmp1/2.0);
+            }
+        }
+    }
+
+    //MA(2,1) = 3.0*effs_[0][0]*effs_[1][0]*pow(1.0-effs_[1][0],2)    +3.0*pow(effs_[1][0],2)*(1.0-effs_[0][0])*(1.0-effs_[1][0]);
+    MA(2,1)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[0][i];
+        double tmp10=(1-effs_[0][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp01=tmp00*effs_[1][j];
+                double tmp11=tmp10*(1.0-effs_[1][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp01*=(1.0-effs_[1][k]);
+                        tmp11*=(effs_[1][k]);
+                    }
+                }
+                MA(2,1)+=(tmp01/4.0);
+                MA(2,1)+=(tmp11/4.0);
+            }
+        }
+    }
+
+    //MA(2,2) = pow(effs_[0][0],2)*pow(1.0-effs_[1][0],2)+4.0*effs_[0][0]*(1.0-effs_[0][0])*effs_[1][0]*(1.0-effs_[1][0])+pow(1.0-effs_[0][0],2)*pow(effs_[1][0],2);
+    MA(2,2)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[0][i];
+        double tmp10=(1-effs_[0][i]);
+        double tmp20=effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp01=tmp00*effs_[0][j];
+                double tmp11=tmp10*(1.0-effs_[0][j]);
+                double tmp21=tmp20*(1.0-effs_[0][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp01*=(1.0-effs_[1][k]);
+                        tmp11*=(effs_[1][k]);
+                        double tmp22 = tmp21*(effs_[1][k]);
+                        for (int l=0;l<4;l++){
+                            if (l!=j && l!=i && l!=k){
+                                tmp22*=(1-effs_[1][l]);
+                            }
+                        }
+                        MA(2,2)+=(tmp22/6.0);
+                    }
+                }
+                MA(2,2)+=(tmp01/12.0);
+                MA(2,2)+=(tmp11/12.0);
+            }
+        }
+    }
+
+    //MA(2,3) = 3.0*effs_[1][0]*effs_[0][0]*pow(1.0-effs_[0][0],2)+3.0*(1.0-effs_[1][0])*(1.0-effs_[0][0])*pow(effs_[0][0],2);
+    MA(2,3)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=effs_[1][i];
+        double tmp10=(1-effs_[1][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp01=tmp00*effs_[0][j];
+                double tmp11=tmp10*(1.0-effs_[0][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp01*=(1.0-effs_[0][k]);
+                        tmp11*=(effs_[0][k]);
+                    }
+                }
+                MA(2,3)+=(tmp01/4.0);
+                MA(2,3)+=(tmp11/4.0);
+            }
+        }
+    }
+
+    //MA(2,4) = 6.0*pow(effs_[0][0],2)*pow(1.0-effs_[0][0],2);
+    MA(2,4)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp1=tmp*effs_[0][j];
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp1*=(1.0-effs_[0][k]);
+                    }
+                }
+                MA(2,4)+=(tmp1/2.0);
+            }
+        }
+    }
+
+    //MA(3,0) = 4.0*pow(effs_[1][0],3)*(1.0-effs_[1][0]);
+    MA(3,0)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=(1-effs_[1][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(effs_[1][j]);
+            }
+        }
+        MA(3,0)+=tmp;
+    }
+
+    //MA(3,1) = 3.0*effs_[0][0]*(1.0-effs_[1][0])*pow(effs_[1][0],2)+(1.0-effs_[0][0])*pow(effs_[1][0],3);
+    MA(3,1)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=(1-effs_[0][i]);
+        double tmp10=(effs_[0][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp00*=(effs_[1][j]);
+                double tmp11=tmp10*(1-effs_[1][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp11*=(effs_[1][k]);
+                    }
+                }
+                MA(3,1)+=(tmp11/4.0);
+            }
+        }
+        MA(3,1)+=(tmp00/4.0);
+    }
+
+
+    //MA(3,2) = 2.0*pow(effs_[0][0],2)*(1.0-effs_[1][0])*effs_[1][0]+2.0*effs_[0][0]*(1.0-effs_[0][0])*pow(effs_[1][0],2);
+    MA(3,2)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=(1-effs_[0][i]);
+        double tmp10=(1-effs_[1][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp01=tmp00*(effs_[0][j]);
+                double tmp11=tmp10*(effs_[1][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp01*=(effs_[1][k]);
+                        tmp11*=(effs_[0][k]);
+                    }
+                }
+                MA(3,2)+=(tmp01/6.0);
+                MA(3,2)+=(tmp11/6.0);
+            }
+        }
+    }
+
+
+    //MA(3,3) = pow(effs_[0][0],3)*(1.0-effs_[1][0])+3.0*pow(effs_[0][0],2)*(1.0-effs_[0][0])*effs_[1][0];
+    MA(3,3)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp00=(1-effs_[1][i]);
+        double tmp10=(effs_[1][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp00*=(effs_[0][j]);
+                double tmp11=tmp10*(1-effs_[0][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp11*=(effs_[0][k]);
+                    }
+                }
+                MA(3,3)+=(tmp11/4.0);
+            }
+        }
+        MA(3,3)+=(tmp00/4.0);
+    }
+
+    //MA(3,4) = 4.0*pow(effs_[0][0],3)*(1.0-effs_[0][0]);
+    MA(3,4)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=(1-effs_[0][i]);
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(effs_[0][j]);
+            }
+        }
+        MA(3,4)+=tmp;
+    }
+
+    //MA(4,0) = pow(effs_[1][0],4);
+    MA(4,0) = (effs_[1][0])*(effs_[1][1])*(effs_[1][2])*(effs_[1][3]);
+
+    //MA(4,1) = pow(effs_[1][0],3)*pow(effs_[0][0],1);
+    MA(4,1)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(effs_[1][j]);
+            }
+        }
+        MA(4,1)+=(tmp/4.0);
+    }
+
+    //MA(4,2) = pow(effs_[1][0],2)*pow(effs_[0][0],2);
+    MA(4,2)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[0][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                double tmp1=tmp*(effs_[0][j]);
+                for (int k=0;k<4;k++){
+                    if (k!=j && k!=i){
+                        tmp1*=(effs_[1][k]);
+                    }
+                }
+                MA(4,2)+=(tmp1/12.0);
+            }
+        }
+    }
+
+    //MA(4,3) = pow(effs_[1][0],1)*pow(effs_[0][0],3);
+    MA(4,3)=0.0;
+    for (int i=0;i<4;i++){
+        double tmp=effs_[1][i];
+        for (int j=0;j<4;j++){
+            if (j!=i){
+                tmp*=(effs_[0][j]);
+            }
+        }
+        MA(4,3)+=(tmp/4.0);
+    }
+
+    //MA(4,4) = pow(effs_[0][0],4);
+    MA(4,4) = (effs_[0][0])*(effs_[0][1])*(effs_[0][2])*(effs_[0][3]);
+    // End of Matrix
+
+    MA.SetTol(1.e-23);
+
+    // Note: SVD can manipulate sigular matrix but potentially can also hide real problem.
+    // Therefore, use TDecompLU as default matrix inversion check.
+    TDecompLU lu(MA);
+    //TDecompSVD svd(MA);
+    //TMatrixD MB(5,5);
+    if (!lu.Decompose()){
+    //if (!svd.Decompose()){
+        std::cout << "[Decompose ERROR]: Decomposition failed, matrix singular ?" << std::endl;
+        status = false;
+        for (int i=0;i<2;i++){
+            for (int j=0;j<4;j++){
+                std::cout << "[Decompose ERROR] Effs(" << i << "," << j <<")=" << effs_[i][j] << std::endl;
+            }
+        }
+        for (int i=0;i<5;i++){
+            for (int j=0;j<5;j++){
+                std::cout << "[Decompose ERROR] MA(" << i << "," << j <<")=" << MA(i,j) << std::endl;
+            }
+        }
+        for (int i=0;i<4;i++){
+            std::cout << "[Decompose ERROR] Jet[" << i << "] pt = " << jetpt->at(i) << std::endl;
+        }
+        //if (isData) return UnfoldWgtD(bUnfType, nbtrue, nbtagged, 1);
+        //else return UnfoldWgt(bUnfType, nbtrue, nbtagged, 1);
+        if (isData) {
+            for (int nbT=0;nbT<5;nbT++){
+                for (int nbTagged=0;nbTagged<5;nbTagged++){
+                    MB(nbT,nbTagged) = UnfoldWgtD(bUnfType, nbT, nbTagged, 1);
+                }
+            }
+        } else {
+            for (int nbT=0;nbT<5;nbT++){
+                for (int nbTagged=0;nbTagged<5;nbTagged++){
+                    MB(nbT,nbTagged) = UnfoldWgt(bUnfType, nbT, nbTagged, 1);
+                }
+            }
+        }
+    }
+    else {
+        lu.Invert(MB);
+        //svd.Invert(MB);
+//         for (int i=0;i<5;i++){
+//             for (int j=0;j<5;j++){
+//                 std::cout << "MB(" << i << "," << j <<")=" << MB(i,j) << std::endl;
+//             }
+//         }
+    }
+
+    //if (nbtagged>4) nbtagged=4;
+    //return MB(nbtrue,nbtagged);
+    return status;
 }

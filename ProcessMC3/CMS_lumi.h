@@ -13,7 +13,8 @@ TString cmsText     = "CMS";
 float cmsTextFont   = 61;  // default is helvetic-bold
 
 bool writeExtraText = true;
-TString extraText   = "Preliminary";
+//TString extraText   = "Preliminary";
+TString extraText   = "Simulation";
 float extraTextFont = 52;  // default is helvetica-italics
 
 // text sizes and text offsets with respect to the top frame
@@ -30,7 +31,8 @@ float relExtraDY = 1.2;
 // ratio of "CMS" and extra text size
 float extraOverCmsTextSize  = 0.76;
 
-TString lumi_13TeV = "20.1 fb^{-1}";
+TString lumi_13TeV = "16.13 fb^{-1}";//16.13 (2016)
+TString lumi_13TeV17 = "14.49 fb^{-1}";//14.487 (2017 B+C)
 TString lumi_8TeV  = "19.7 fb^{-1}";
 TString lumi_7TeV  = "5.1 fb^{-1}";
 TString lumi_sqrtS = "";

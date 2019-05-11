@@ -14,8 +14,8 @@ using std::vector;
 #include <TStyle.h>
 #include <TCanvas.h>
 
-TTree          *fChain;   //!pointer to the analyzed TTree or TChain               
-Int_t           fCurrent; //!current Tree number in a TChain                       
+// TTree          *fChain;   //!pointer to the analyzed TTree or TChain               
+// Int_t           fCurrent; //!current Tree number in a TChain                       
 
 void divide2(const char* inputfilename, const char* hnum, const char* hdenom) {
 

@@ -6,7 +6,7 @@
 #include "QCDhists.h"
 #include "MergeHistsN.h"
 
-void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, std::string ohname, bool donorm, std::string bbname)
+void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string samplename, std::string ohname, bool donorm, std::string dirname)
 {
 
     std::string inputfile;
@@ -16,7 +16,7 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
     // get normalization
     double norm;
     if(donorm) {
-        HistNormN(norm,xsec,nfiles,binname,bbname);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
+        HistNormN(norm,xsec,nfiles,samplename,dirname);  // this gives the total number of events in each bin before all selections using the eventCountPreTrigger histogram
     } else{
         norm=1.;
     }
@@ -34,12 +34,12 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax",
-//         "hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
-//         "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
+        //"hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
+        //"hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
         "hipXYEJ","hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
         "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-//         "hn2maxipnm1","hjptfrb","hjptfra1",
-//         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+        //"hn2maxipnm1","hjptfrb","hjptfra1",
+        //"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
         "hpt3ko","hpt4ko","hmass","hmassFR","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
@@ -56,10 +56,16 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
         "hjptaSR","hjptaFR","hetaaSR","hetaaFR","h_nemgSR","h_nemgFR",
         "hnjetSR","hnjetFR",
     };
+
+    // runtype==1
+//     const int nhist=2;
+//     std::vector<TH1F*> vv(nhist);
+//     std::string histnames[nhist]={"count","acount"};
+
     double outnorm;
     for(int i=0;i<nhist;i++) {
         std::cout<<" entering Histman with i = "<<i<<": "<<histnames[i]<<std::endl;
-        vv[i]=HistManN(goalintlum,histnames[i],norm,outnorm,xsec,nfiles,binname,donorm,bbname);
+        vv[i]=HistManN(goalintlum,histnames[i],norm,outnorm,xsec,nfiles,samplename,donorm,dirname);
     }
 
     // merge 2D histograms
@@ -72,10 +78,25 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
         "htheta2DvipXYSigSR",
         "htheta2DvipXYSigFR",
     };
+
+    //runtype==1
+//     const int nhist2=8;
+//     std::vector<TH2F*> vv2(nhist2);
+//     std::string histnames2[nhist2]={
+//         "btagEff_Den_b",
+//         "btagEff_Den_udsg",
+//         "btagEff_Num_b",
+//         "btagEff_Num_udsg",
+//         "btagEff_Den_b_all",
+//         "btagEff_Den_udsg_all",
+//         "btagEff_Num_b_all",
+//         "btagEff_Num_udsg_all",
+//     };
+
     double outnorm2;
     for(int i=0;i<nhist2;i++) {
         std::cout<<" entering Histman2 with i = "<<i<<": "<<histnames2[i]<<std::endl;
-        vv2[i]=HistMan2N(goalintlum,histnames2[i],norm,outnorm2,xsec,nfiles,binname,donorm,bbname);
+        vv2[i]=HistMan2N(goalintlum,histnames2[i],norm,outnorm2,xsec,nfiles,samplename,donorm,dirname);
     }
 
     // output total event count
@@ -87,7 +108,7 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
     std::cout<<"total is "<<ttotal<<std::endl;;
 
     std::cout<<"outputting histograms"<<std::endl;
-    outputfile=bbname+ohname;
+    outputfile=dirname+ohname;
     std::cout<<outputfile<<std::endl;
     TFile out(outputfile.c_str(),"RECREATE");
 
@@ -102,7 +123,7 @@ void MergeHistsN(float goalintlum, float xsec, int nfiles, std::string binname, 
 }
 
 
-void  HistNormN(double &norm, float xsec, int nfiles, std::string binname, std::string bbname) {
+void  HistNormN(double &norm, float xsec, int nfiles, std::string samplename, std::string dirname) {
 
     std::cout<<"entering HistNorm"<<std::endl; 
 
@@ -112,7 +133,7 @@ void  HistNormN(double &norm, float xsec, int nfiles, std::string binname, std::
     // now add up all the files for one bin
     vector<TH1F> sum(1);
     for(int j=0;j<nfiles;j++) { //for each file for that bin
-        inputfile=bbname+binname+"/SumHistsNoNorm"+binname+"_"+std::to_string(j)+".root";
+        inputfile=dirname+samplename+"/SumHistsNoNorm"+samplename+"_"+std::to_string(j)+".root";
         std::cout<<j<<" "<<inputfile<<std::endl;
         in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}
@@ -137,7 +158,7 @@ void  HistNormN(double &norm, float xsec, int nfiles, std::string binname, std::
 
 
 
-TH1F* HistManN(float goalintlum,std::string thisHIST,double& norm,double& outnorm,float xsec, int nfiles, std::string binname,bool donorm,std::string bbname) {
+TH1F* HistManN(float goalintlum,std::string thisHIST,double& norm,double& outnorm,float xsec, int nfiles, std::string samplename,bool donorm,std::string dirname) {
 
     std::string inputfile;
 
@@ -145,7 +166,7 @@ TH1F* HistManN(float goalintlum,std::string thisHIST,double& norm,double& outnor
     // now add up all the files for one bin
     vector<TH1F> sum(1);
     for(int j=0;j<nfiles;j++) { //for each file for that bin
-        inputfile=bbname+binname+"/SumHistsNoNorm"+binname+"_"+std::to_string(j)+".root";
+        inputfile=dirname+samplename+"/SumHistsNoNorm"+samplename+"_"+std::to_string(j)+".root";
         std::cout << inputfile << std::endl;
         TFile* in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}
@@ -178,7 +199,7 @@ TH1F* HistManN(float goalintlum,std::string thisHIST,double& norm,double& outnor
     return SUM;
 }
 
-TH2F* HistMan2N(float goalintlum,std::string thisHIST,double& norm,double& outnorm,float xsec, int nfiles, std::string binname,bool donorm,std::string bbname) {
+TH2F* HistMan2N(float goalintlum,std::string thisHIST,double& norm,double& outnorm,float xsec, int nfiles, std::string samplename,bool donorm,std::string dirname) {
 
     std::string inputfile;
 
@@ -187,7 +208,7 @@ TH2F* HistMan2N(float goalintlum,std::string thisHIST,double& norm,double& outno
     std::cout<<" adding up histos within a bin"<<std::endl;
     vector<TH2F> sum(1);
     for(int j=0;j<nfiles;j++) { //for each file for that bin
-        inputfile=bbname+binname+"/SumHistsNoNorm"+binname+"_"+std::to_string(j)+".root";
+        inputfile=dirname+samplename+"/SumHistsNoNorm"+samplename+"_"+std::to_string(j)+".root";
         TFile* in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}
         if(j==0) {

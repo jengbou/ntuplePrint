@@ -62,7 +62,7 @@ void TrigEff() {
     colors_["ModelA"] = 2;
     colors_["ModelB"] = 4;
 
-    files_["QCD"] = new TFile("histos/analysis_20170223_v0_UMD/SumHistsQCD74.root");
+    files_["QCD"] = new TFile("histos/analysis_20170223_v0_p20170228_UMD/SumHistsQCD74.root");
     files_["ModelA"] = new TFile("histos/analysis_20170223_v0_p20170228_UMD/SumHistsModelA.root");
     files_["ModelB"] = new TFile("histos/analysis_20170223_v0_p20170228_UMD/SumHistsModelB.root");
 

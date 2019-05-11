@@ -10,22 +10,31 @@ options = parseInputArgs()
 
 Pmode = 9
 ProdTag = options.outtag
+CutSet  = "Cutset"+options.cutset
 OutDir  = "/data/users/jengbou/histos"
-WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD"
+WorkDir = "/home/jengbou/workspace/CMSSW_7_6_3/src/EmergingJetAnalysis/histsQCD/temp/"+ProdTag
 
 JobTime = datetime.now()
 fTag = JobTime.strftime("%Y%m%d_%H%M%S")
 
 sTags = {}
-##sTags["QCD80HT700to1000"]=["15",5352,200] # 1536
-##sTags["QCD80HT1000to1500"]=["16",2214,120] # 47, 651
-##sTags["QCD80HT1500to2000"]=["17",1943,100] # 49, 452
-##sTags["QCD80HT2000toInf"]=["18",867,80]  # 14, 261
-## YH's ntuple
-sTags["QCD80HT1000to1500"]=["16",2126,60]
-sTags["QCD80HT1500to2000"]=["17",1844,50]
-sTags["QCD80HT2000toInf"]=["18",838,40]
-
+sTags["Data"]=["10",6767,120] # G, H only
+## YH's ntuple 8/23
+##sTags["QCD80HT500to700"]=["14",1075,100]
+##sTags["QCD80HT700to1000"]=["15",1904,50]
+##sTags["QCD80HT1000to1500"]=["16",1788,60]
+##sTags["QCD80HT1500to2000"]=["17",1708,60]
+##sTags["QCD80HT2000toInf"]=["18",751,40]
+## YH's ntuple 11/03
+##sTags["QCD80HT500to700"]=["14",1092,100]
+##sTags["QCD80HT700to1000"]=["15",2666,60]
+##sTags["QCD80HT1000to1500"]=["16",2218,60]
+##sTags["QCD80HT1500to2000"]=["17",1942,50]
+##sTags["QCD80HT2000toInf"]=["18",864,40]
+## Note: the num of files per job should be the same as in NoNorm.py
+#test
+##sTags["Data"]=["10",30,20]
+##sTags["QCD80HT700to1000"]=["15",30,20]
 
 jobTags = OrderedDict(sorted(sTags.items(), key=lambda x: x[1]))
 
@@ -34,14 +43,14 @@ jobTags = OrderedDict(sorted(sTags.items(), key=lambda x: x[1]))
 #########################################
 condor_script_template = """
 universe = vanilla
-Executable = condor-executableMergeNorm.sh
+Executable = condor-executableMergeNorm_New.sh
 +IsLocalJob = true
 Should_transfer_files = NO
-Requirements = TARGET.FileSystemDomain == "privnet" && machine != "r510-0-1.privnet"
-Output = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stdout
-Error  = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stderr
-Log    = %(OUTDIR)s/%(MYPREFIX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).condor
-Arguments = %(MYPREFIX)s %(SAMPLENAME)s_$(process) %(WORKDIR)s 0 0 %(IMODE)s 0 0 %(OUTDIR)s %(PMODE)s %(RNGL)s %(RNGH)s %(FIDX)s
+Requirements = TARGET.FileSystemDomain == "privnet" && machine !="compute-0-7.privnet" && machine !="compute-0-10.privnet" && machine !="compute-0-8.privnet" && machine !="r510-0-6.privnet"
+Output = %(OUTDIR)s/%(MYPREFIX)s/%(CUTIDX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stdout
+Error  = %(OUTDIR)s/%(MYPREFIX)s/%(CUTIDX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).stderr
+Log    = %(OUTDIR)s/%(MYPREFIX)s/%(CUTIDX)s/logs/%(SAMPLENAME)s_sce_$(cluster)_$(process).condor
+Arguments = %(MYPREFIX)s %(SAMPLENAME)s_$(process) %(WORKDIR)s 0 0 %(IMODE)s 0 0 %(OUTDIR)s %(PMODE)s %(RNGL)s %(RNGH)s %(FIDX)s %(CUTIDX)s
 Queue 1
 """
 #########################################
@@ -55,7 +64,7 @@ for k,v in jobTags.items():
     filesPerJob_ = v[2]
     numMerg_ = int(numFiles_/filesPerJob_) if numFiles_%filesPerJob_==0 else int(numFiles_/filesPerJob_)+1
 
-    dirname = "jobs/%s_MergeNorm_%s"%(sTag_,fTag)
+    dirname = "jobs/%s_MergeNorm_%s_%s"%(sTag_,CutSet,fTag)
 
     try:
         os.makedirs(dirname)
@@ -74,7 +83,12 @@ for k,v in jobTags.items():
         pass
 
     try:
-        os.makedirs(OutDir+"/"+ProdTag+"/logs")
+        os.makedirs(OutDir+"/"+ProdTag+"/"+CutSet)
+    except:
+        pass
+
+    try:
+        os.makedirs(OutDir+"/"+ProdTag+"/"+CutSet+"/logs")
     except:
         pass
 
@@ -88,6 +102,7 @@ for k,v in jobTags.items():
     kw["FIDX"]       = "%i"%(numMerg_)
     kw["RNGL"]       = "1"
     kw["RNGH"]       = "%i"%(numMerg_)
+    kw["CUTIDX"]     = CutSet
 
     kw["SAMPLENAME"] = "%s_MergeNorm"%(sTag_)
     script_str = condor_script_template % kw
@@ -102,5 +117,5 @@ for k,v in jobTags.items():
     p.wait()
     time.sleep(2)
 
-    print "Histos output dir: %s/%s"%(OutDir,ProdTag)
+    print "Histos output dir: %s/%s/%s"%(OutDir,ProdTag,CutSet)
 

@@ -6,7 +6,7 @@
 #include "QCDhists.h"
 #include "MergeHistsNoNorm.h"
 
-void MergeHistsNoNorm(int fidx, int nrange[2], std::string binname,std::string aaname, std::string bbname)
+void MergeHistsNoNorm(int fidx, int nrange[2], std::string samplename, std::string dirname)
 {
 
     std::string inputfile;
@@ -29,12 +29,12 @@ void MergeHistsNoNorm(int fidx, int nrange[2], std::string binname,std::string a
         "hpt1","hpt2","hpt3",
         "hpt4","hbcut_ntrkpt1","hacut_ntrkpt1","hbcut_nef","hacut_nef",
         "hbcut_cef","hacut_cef","hbcut_alphamax","hacut_alphamax",
-//         "hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
-//         "hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
+        //"hHTnm1","hpt1nm1","hpt2nm1","hpt3nm1","hpt4nm1","halphanm1",
+        //"hmaxipnm1","hnHitsnm1","hntrk1nm1","hnemnm1",
         "hipXYEJ","hipXYnEJ","htvwEJ","htvw","hipXYSigEJ","hipXYSignEJ",
         "hmaxipXYEJ","hmaxipXYnEJ","hmeanipXYEJ","hmeanipXYnEJ","hnmaxipnm1",
-//         "hn2maxipnm1","hjptfrb","hjptfra1",
-//         "hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
+        //"hn2maxipnm1","hjptfrb","hjptfra1",
+        //"hjptfra2","hjptfrbc","hjptfra1c","hjptfra2c","hjptb",
         "hjpta","haMgj","hHTko","hpt1ko","hpt2ko",
         "hpt3ko","hpt4ko","hmass","hmassFR","hlogmedipXYSigEJ","hlogmedipXYSignEJ","hlogmeanipXYSigEJ","hlogmeanipXYSignEJ",
         "hmedipXYSigEJ","hmedipXYSignEJ","hmeanipXYSigEJ","hmeanipXYSignEJ","hmedipXYEJ","hmedipXYnEJ",
@@ -52,9 +52,14 @@ void MergeHistsNoNorm(int fidx, int nrange[2], std::string binname,std::string a
         "hnjetSR","hnjetFR",
     };
 
+    // runtype==1
+//     const int nhist=3;
+//     std::vector<TH1F*> vv(nhist);
+//     std::string histnames[nhist]={"eventCountPreTrigger","count","acount"};
+
     for(int i=0;i<nhist;i++) {
         std::cout<<" entering HistmanNoNorm with i = "<<i<<": "<<histnames[i]<<std::endl;
-        vv[i]=HistManNoNorm(histnames[i],nrange,binname,bbname);
+        vv[i]=HistManNoNorm(histnames[i],nrange,samplename,dirname);
     }
 
     // merge 2D histograms
@@ -68,13 +73,27 @@ void MergeHistsNoNorm(int fidx, int nrange[2], std::string binname,std::string a
         "htheta2DvipXYSigFR",
     };
 
+    //runtype==1
+//     const int nhist2=8;
+//     std::vector<TH2F*> vv2(nhist2);
+//     std::string histnames2[nhist2]={
+//         "btagEff_Den_b",
+//         "btagEff_Den_udsg",
+//         "btagEff_Num_b",
+//         "btagEff_Num_udsg",
+//         "btagEff_Den_b_all",
+//         "btagEff_Den_udsg_all",
+//         "btagEff_Num_b_all",
+//         "btagEff_Num_udsg_all",
+//     };
+
     for(int i=0;i<nhist2;i++) {
         std::cout<<" entering Histman2NoNorm with i = "<<i<<": "<<histnames2[i]<<std::endl;
-        vv2[i]=HistMan2NoNorm(histnames2[i],nrange,binname,bbname);
+        vv2[i]=HistMan2NoNorm(histnames2[i],nrange,samplename,dirname);
     }
 
     std::cout<<"outputting histograms:"<<std::endl;
-    outputfile=bbname+binname+"/SumHistsNoNorm"+binname+"_"+std::to_string(fidx)+".root";
+    outputfile=dirname+samplename+"/SumHistsNoNorm"+samplename+"_"+std::to_string(fidx)+".root";
     std::cout<<outputfile<<std::endl;
     TFile out(outputfile.c_str(),"RECREATE");
 
@@ -89,7 +108,7 @@ void MergeHistsNoNorm(int fidx, int nrange[2], std::string binname,std::string a
 }
 
 
-TH1F* HistManNoNorm(std::string thisHIST, int nrange[2], std::string binname, std::string bbname) {
+TH1F* HistManNoNorm(std::string thisHIST, int nrange[2], std::string samplename, std::string dirname) {
 
     std::string inputfile;
 
@@ -97,7 +116,7 @@ TH1F* HistManNoNorm(std::string thisHIST, int nrange[2], std::string binname, st
     vector<TH1F> sum(1);
     int idx=0;
     for(int j=nrange[0]-1;j<nrange[1];j++) {
-        inputfile=bbname+binname+"/histos"+binname+"_"+std::to_string(j)+".root";
+        inputfile=dirname+samplename+"/histos"+samplename+"_"+std::to_string(j)+".root";
         std::cout << inputfile << std::endl;
         TFile* in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}
@@ -117,7 +136,7 @@ TH1F* HistManNoNorm(std::string thisHIST, int nrange[2], std::string binname, st
     return SUM;
 }
 
-TH2F* HistMan2NoNorm(std::string thisHIST, int nrange[2], std::string binname, std::string bbname) {
+TH2F* HistMan2NoNorm(std::string thisHIST, int nrange[2], std::string samplename, std::string dirname) {
 
     std::string inputfile;
 
@@ -126,7 +145,7 @@ TH2F* HistMan2NoNorm(std::string thisHIST, int nrange[2], std::string binname, s
     vector<TH2F> sum(1);
     int idx=0;
     for(int j=nrange[0]-1;j<nrange[1];j++) {
-        inputfile=bbname+binname+"/histos"+binname+"_"+std::to_string(j)+".root";
+        inputfile=dirname+samplename+"/histos"+samplename+"_"+std::to_string(j)+".root";
         TFile* in = new TFile(inputfile.c_str());
         if (in->IsZombie()) {in->Close(); continue;}
         if(idx==0) {
